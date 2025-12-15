@@ -4,7 +4,9 @@ from openai import OpenAI
 
 from app.config import get_settings
 
+
 settings = get_settings()
+TARGET_LANGUAGE = settings.target_language
 client = OpenAI(api_key=settings.openai_api_key)
 MODEL_NAME = settings.openai_model
 # Nombre de messages par appel OpenAI
@@ -13,22 +15,33 @@ BATCH_SIZE = settings.batch_size
 
 def _translate_subbatch(texts: List[str]) -> List[str]:
     """
-    Traduit un sous-batch de messages vers un français naturel.
+    Traduit un sous-batch de messages depuis l’anglais vers la langue cible (settings.target_language).
     Texte => texte, même ordre.
     """
     if not texts:
         return []
 
+    # Prompt dynamique selon la langue cible
+    lang = TARGET_LANGUAGE
+    if lang.lower() == "fr":
+        lang_label = "français naturel"
+    elif lang.lower() == "es":
+        lang_label = "espagnol naturel"
+    elif lang.lower() == "de":
+        lang_label = "allemand naturel"
+    else:
+        lang_label = f"{lang}"
+
     header = (
-        "Tu es un traducteur professionnel.\n"
-        "Je vais te donner une liste de messages numérotés.\n"
-        "Pour chaque message, réponds STRICTEMENT en JSON Lines :\n"
-        '{"index": <int>, "translation": "<texte traduit>"}\n'
-        "Un seul objet JSON par ligne, même ordre que les index.\n"
-        "Pas de texte hors JSON, pas de commentaire.\n"
-        "IMPORTANT : Traduis chaque message en français naturel, même si le texte original est en anglais ou dans une autre langue.\n"
-        "Si un message contient des noms propres, hashtags, expressions spécifiques ou éléments non traduisibles, conserve-les tels quels et mets-les entre guillemets dans la traduction française.\n"
-        "Messages :\n"
+        f"You are a professional translator.\n"
+        f"I will give you a list of numbered messages in English.\n"
+        f"For each message, reply STRICTLY in JSON Lines format:\n"
+        f'{{"index": <int>, "translation": "<translated text>"}}\n'
+        f"One JSON object per line, same order as the indexes.\n"
+        f"No text outside JSON, no comments.\n"
+        f"IMPORTANT: Translate each message into {lang_label}, even if the original text is already in that language or another.\n"
+        f"If a message contains proper names, hashtags, specific expressions, or untranslatable elements, keep them as is and put them in quotes in the translation.\n"
+        f"Messages:\n"
     )
 
     body_lines = []

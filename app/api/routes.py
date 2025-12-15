@@ -51,7 +51,7 @@ def get_pipeline_status():
 @router.post("/run-pipeline")
 def run_pipeline_real():
     """
-    Lance réellement le pipeline Python (tools/run_pipeline.py) dans un thread et met à jour le statut.
+    Lance réellement le pipeline Python (tools/run_pipeline.py) dans un thread et met à jour le statut en temps réel.
     """
     def target():
         import subprocess
@@ -64,25 +64,36 @@ def run_pipeline_real():
         project_root = Path(__file__).resolve().parent.parent.parent
         script_path = project_root / "tools" / "run_pipeline.py"
 
-        steps = [
-            (20, "Collecte"),
-            (50, "Traduction"),
-            (80, "Traitement"),
-            (100, "Terminé")
-        ]
-        set_pipeline_status(0, "Initialisation")
         proc = subprocess.Popen([
             sys.executable,
             str(script_path)
-        ], cwd=str(project_root))
+        ], cwd=str(project_root), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
         pipeline_process["proc"] = proc
         try:
-            for percent, step in steps:
-                time.sleep(2)
-                set_pipeline_status(percent, step)
+            # Suivi des étapes par analyse de la sortie du script
+            step_map = {
+                "fetch_raw_messages_24h": (20, "Collecte"),
+                "translate_messages": (50, "Traduction"),
+                "enrich_messages": (70, "Enrichissement"),
+                "dedupe_messages": (80, "Traitement"),
+                "store_messages": (90, "Stockage"),
+                "delete_old_messages": (95, "Nettoyage"),
+                "Pipeline terminé": (100, "Terminé")
+            }
+            current_percent = 0
+            current_step = "Initialisation"
+            for line in proc.stdout:
+                line = line.strip()
+                for key, (percent, step) in step_map.items():
+                    if key in line:
+                        set_pipeline_status(percent, step)
+                        current_percent = percent
+                        current_step = step
+                        break
                 # Si annulé, on sort
                 if pipeline_process["proc"] is None:
                     set_pipeline_status(100, "Annulé")
+                    proc.terminate()
                     return
             proc.wait()
             set_pipeline_status(100, "Terminé")

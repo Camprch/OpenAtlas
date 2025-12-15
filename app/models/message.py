@@ -19,6 +19,7 @@ class Message(SQLModel, table=True):
     location: str | None = Field(default=None, index=True)
 
     title: str | None = Field(default=None)
+    event_type: str | None = Field(default=None, index=True)  # Ajouté
     event_timestamp: datetime | None = Field(default=None, index=True)
 
     orientation: str | None = Field(default=None, index=True)

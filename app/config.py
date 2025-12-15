@@ -9,6 +9,7 @@ from typing import ClassVar
 import os
 
 
+
 class Settings(BaseSettings):
     # 🔧 Autoriser des variables en plus dans le .env
     env_file: ClassVar[str] = ".env" if os.path.exists(os.path.join(os.path.dirname(__file__), "..", ".env")) else ".env.example"
@@ -29,6 +30,9 @@ class Settings(BaseSettings):
 
     max_messages_per_channel: int = 50
     batch_size: int = 20
+
+    # Langue cible pour la traduction (ex: fr, es, de)
+    target_language: str = "fr"
 
 
 @lru_cache

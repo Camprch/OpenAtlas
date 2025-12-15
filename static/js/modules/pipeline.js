@@ -12,6 +12,11 @@ export async function startPipeline(pipelineBarBtn, pipelineBarFill, pipelineBar
     pipelineBarFill.style.width = '0';
     pipelineBarLabel.textContent = 'Annuler';
     pipelineBarBtn.classList.add('pipeline-running');
+    const pipelinePercent = document.getElementById('pipeline-percent');
+    if (pipelinePercent) {
+        pipelinePercent.textContent = '0%';
+        pipelinePercent.style.display = 'inline';
+    }
     await fetch('/api/run-pipeline', { method: 'POST' });
     pipelineBarBtn.onclick = stopPipelineCb;
     pipelinePolling = setInterval(async () => {
@@ -19,7 +24,8 @@ export async function startPipeline(pipelineBarBtn, pipelineBarFill, pipelineBar
         if (statusResp.ok) {
             const data = await statusResp.json();
             pipelineBarFill.style.width = data.percent + '%';
-            pipelineBarLabel.textContent = `${data.step || ''}  ${data.percent}%`;
+            pipelineBarLabel.textContent = `${data.step || ''}`;
+            if (pipelinePercent) pipelinePercent.textContent = `${data.percent}%`;
             if (data.percent >= 100 || data.step === 'Annulé') {
                 clearInterval(pipelinePolling);
                 pipelineBarBtn.onclick = null;
@@ -27,12 +33,19 @@ export async function startPipeline(pipelineBarBtn, pipelineBarFill, pipelineBar
                 pipelineBarBtn.disabled = true;
                 pipelineRunning = false;
                 pipelineBarLabel.textContent = data.step === 'Annulé' ? 'Annulé' : 'Terminé !';
+                if (pipelinePercent) {
+                    pipelinePercent.textContent = '100%';
+                    setTimeout(() => { pipelinePercent.style.display = 'none'; }, 2500);
+                }
                 setTimeout(() => {
                     pipelineBarFill.style.width = '0';
                     pipelineBarLabel.textContent = 'Scrap now 🔃';
                     pipelineBarBtn.onclick = startPipelineCb;
                     pipelineBarBtn.style.cursor = 'pointer';
                     pipelineBarBtn.disabled = false;
+                    if (pipelinePercent) pipelinePercent.textContent = '0%';
+                    // Recharge la page pour afficher les nouvelles données
+                    window.location.reload();
                 }, 2500);
             }
         }

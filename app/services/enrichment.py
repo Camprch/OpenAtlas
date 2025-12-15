@@ -5,12 +5,14 @@ import json
 from openai import OpenAI
 from app.config import get_settings
 
+
 settings = get_settings()
+TARGET_LANGUAGE = settings.target_language
 client = OpenAI(api_key=settings.openai_api_key)
 MODEL_NAME = settings.openai_model
 BATCH_SIZE = settings.batch_size
 
-EXPECTED_FIELDS = ["country", "region", "location", "title", "source", "timestamp"]
+EXPECTED_FIELDS = ["country", "region", "location", "title", "event_type", "source", "timestamp"]
 
 
 def _empty_enrichment() -> Dict[str, Optional[str]]:
@@ -28,26 +30,33 @@ def _enrich_subbatch(items: List[Dict[str, Any]]) -> List[Dict[str, Optional[str
     """
     items: [{ "id": int, "text": str }]
     Retourne, dans le même ordre, une liste de dicts avec les champs EXPECTED_FIELDS.
+    L’enrichissement est toujours fait en anglais (prompt et extraction).
+    Ajoute event_type avec une liste fermée de 10 types d’événements.
     """
     if not items:
         return []
 
+    event_types = [
+        "Protest", "Conflict", "Political", "Natural disaster", "Crime",
+        "Cyber Attack", "Public health", "Economic", "Security Alert", "Other"
+    ]
+
     header = (
-        "Tu es un système d'extraction d'information OSINT.\n"
-        "Pour chaque message ci-dessous, produis UNE LIGNE JSON (format JSONL) :\n"
+        "You are an OSINT information extraction system.\n"
+        "For each message below, produce ONE JSON LINE (JSONL format):\n"
         '{"id": <int>, "country": "...", "region": "...", "location": "...", '
-        '"title": "...", "source": "...", "timestamp": "..."}\n\n'
-        "Règles :\n"
-        "- 'id' = identifiant fourni en entrée.\n"
-        "- 'country' = pays principal impacté en français (\"Pays1\", \"Pays2\", ...), "
-        "ou \"\" si incertain.\n"
-        "- 'region' = zone large (province, région, etc.) ou \"\".\n"
-        "- 'location' = ville / lieu précis ou \"\".\n"
-        "- 'title' = phrase courte (8-18 mots) résumant l'événement.\n"
-        "- 'source' = source explicite dans le texte, sinon \"\".\n"
-        "- 'timestamp' = horodatage explicite en ISO 8601, sinon \"\".\n"
-        "Pas de texte hors JSON, pas de commentaires.\n\n"
-        "Messages :\n"
+        '"title": "...", "event_type": "...", "source": "...", "timestamp": "..."}\n\n'
+        "Rules:\n"
+        "- 'id' = identifier provided in input.\n"
+        "- 'country' = main impacted country in English (\"Country1\", \"Country2\", ...), or \"\" if uncertain.\n"
+        "- 'region' = large area (province, region, etc.) or \"\".\n"
+        "- 'location' = city / specific place or \"\".\n"
+        "- 'title' = short sentence (8-18 words) summarizing the event, in English.\n"
+        f"- 'event_type' = one of: {', '.join(event_types)}. Choose the most relevant type for the event.\n"
+        "- 'source' = explicit source in the text, else \"\".\n"
+        "- 'timestamp' = explicit timestamp in ISO 8601, else \"\".\n"
+        "No text outside JSON, no comments.\n\n"
+        "Messages:\n"
     )
 
     body = "\n".join(f"[{it['id']}] {it.get('text','')}" for it in items)
@@ -100,8 +109,8 @@ def _enrich_subbatch(items: List[Dict[str, Any]]) -> List[Dict[str, Optional[str
 
 def enrich_messages(messages: List[dict]) -> List[dict]:
     """
-    Prend une liste de dicts avec 'translated_text' (ou 'text'),
-    enrichit par batchs successifs.
+    Prend une liste de dicts avec 'text' (toujours en anglais !),
+    enrichit par batchs successifs. L’enrichissement est toujours fait en anglais.
     """
     if not messages:
         return messages
@@ -112,11 +121,12 @@ def enrich_messages(messages: List[dict]) -> List[dict]:
         sub = messages[start:end]
 
         items = [
-            {"id": i, "text": (m.get("translated_text") or m.get("text") or "")}
+            {"id": i, "text": (m.get("text") or "")}
             for i, m in enumerate(sub)
         ]
 
         enrichments = _enrich_subbatch(items)
+
 
         for msg, enr in zip(sub, enrichments):
             if enr:
@@ -124,5 +134,6 @@ def enrich_messages(messages: List[dict]) -> List[dict]:
                 msg["region"] = enr.get("region") or None
                 msg["location"] = enr.get("location") or None
                 msg["title"] = enr.get("title") or None
+                msg["event_type"] = enr.get("event_type") or None
 
     return messages

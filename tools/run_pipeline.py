@@ -39,6 +39,7 @@ def store_messages(messages: list[dict]) -> None:
                 region=msg.get("region"),
                 location=msg.get("location"),
                 title=msg.get("title"),
+                event_type=msg.get("event_type"),
                 event_timestamp=msg.get("date"),
                 telegram_message_id=msg.get("telegram_message_id"),
                 orientation=msg.get("orientation"),
@@ -90,32 +91,43 @@ def delete_old_messages(days: int = 10) -> None:
 
 async def run_pipeline_once():
     print("[pipeline] init_db()")
+    sys.stdout.flush()
     init_db()
 
     print("[pipeline] fetch_raw_messages_24h()")
+    sys.stdout.flush()
 
     raw_messages = await fetch_raw_messages_24h()
     if not raw_messages:
         print("[pipeline] Aucun message à traiter.")
+        sys.stdout.flush()
     else:
         # Filtrage des messages déjà présents en base
         raw_messages = filter_existing_messages(raw_messages)
         if not raw_messages:
             print("[pipeline] Tous les messages sont déjà en base. Rien à faire.")
+            sys.stdout.flush()
         else:
             print("[pipeline] translate_messages()")
+            sys.stdout.flush()
             translate_messages(raw_messages)
             print("[pipeline] enrich_messages()")
+            sys.stdout.flush()
             enrich_messages(raw_messages)
             print("[pipeline] dedupe_messages()")
+            sys.stdout.flush()
             deduped = dedupe_messages(raw_messages)
             print(f"[pipeline] Après déduplication : {len(deduped)} messages")
+            sys.stdout.flush()
             print("[pipeline] store_messages()")
+            sys.stdout.flush()
             store_messages(deduped)
 
     print("[pipeline] delete_old_messages()")
+    sys.stdout.flush()
     delete_old_messages(days=10)
     print("[pipeline] Pipeline terminé.")
+    sys.stdout.flush()
 
 
 if __name__ == "__main__":

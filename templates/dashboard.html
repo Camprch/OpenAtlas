@@ -41,6 +41,7 @@
             <div id="pipeline-bar-btn" style="padding:6px 14px; background:#1a1f24; border: 1px solid #444; color:#eee; border-radius:999px; font-size:13px; outline:none; cursor:pointer; transition:background 0.15s, box-shadow 0.15s, transform 0.1s; text-decoration:none; font-weight:normal; display:inline-flex; align-items:center; gap:7px; font-family: Arial, sans-serif; text-transform:none; letter-spacing:normal; position:relative; overflow:hidden; height:auto; min-width:0; width:auto; box-sizing:border-box;">
                 <div id="pipeline-bar-fill" style="position:absolute; left:0; top:0; height:100%; width:0; background:#22c55e; border-radius:999px; z-index:1; transition:width 0.3s;"></div>
                 <span id="pipeline-bar-label" style="position:relative; z-index:2; width:100%; text-align:center; pointer-events:none;">Scrap now 🔃</span>
+                <span id="pipeline-percent" style="display:none; position:relative; z-index:2; margin-left:8px; font-size:13px; color:#22c55e; font-family:monospace;">0%</span>
             </div>
             <a href="/env-editor" title="Paramètres" style="padding:6px 14px; background:#1a1f24; border: 1px solid #444; color:#eee; border-radius:999px; font-size:13px; outline:none; cursor:pointer; transition:background 0.15s, box-shadow 0.15s; text-decoration:none; font-weight:normal; display:inline-flex; align-items:center; gap:7px; font-family: Arial, sans-serif; text-transform:none; letter-spacing:normal;">Settings <span style='font-size:1.2em;'>⚙️</span></a>
         </div>
@@ -69,40 +70,5 @@
 <div id="sidepanel-backdrop"></div>
 
 <script type="module" src="/static/js/modules/main.js"></script>
-<script>
-document.getElementById('run-pipeline-btn').addEventListener('click', function() {
-    const btn = this;
-    btn.disabled = true;
-    btn.textContent = 'Lancement...';
-    const outputDiv = document.getElementById('pipeline-output');
-    const bar = document.getElementById('pipeline-progress-bar');
-    const label = document.getElementById('pipeline-progress-label');
-    bar.style.width = '0';
-    label.textContent = '';
-    outputDiv.textContent = '';
-    const evtSource = new EventSource('/api/run-pipeline');
-    evtSource.onmessage = function(event) {
-        try {
-            const data = JSON.parse(event.data);
-            bar.style.width = data.percent + '%';
-            label.textContent = data.percent + '%';
-            if (data.msg) outputDiv.textContent = data.msg;
-            if (data.percent >= 100) {
-                btn.textContent = 'Terminé !';
-                setTimeout(() => { btn.textContent = 'Scrap now 🔃'; btn.disabled = false; bar.style.width = '0'; label.textContent = ''; outputDiv.textContent = ''; }, 3000);
-                evtSource.close();
-            }
-        } catch(e) {}
-    };
-    evtSource.onerror = function() {
-        btn.textContent = 'Erreur';
-        label.textContent = '';
-        bar.style.width = '0';
-        outputDiv.textContent = 'Erreur lors du lancement du pipeline.';
-        evtSource.close();
-        setTimeout(() => { btn.textContent = 'Scrap now 🔃'; btn.disabled = false; outputDiv.textContent = ''; }, 3000);
-    };
-});
-</script>
 </body>
 </html>
