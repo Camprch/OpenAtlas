@@ -31,6 +31,31 @@ function fillSelect(select, value, dates) {
 async function init() {
     initMap();
     await loadCountryData();
+
+    // Reprise de l'état pipeline au chargement via pipeline.js
+    if (pipelineBarBtn && pipelineBarFill && pipelineBarLabel) {
+        import("./pipeline.js").then(async m => {
+            const resumed = await m.resumePipelineIfRunning(
+                pipelineBarBtn,
+                pipelineBarFill,
+                pipelineBarLabel,
+                () => m.startPipeline(
+                    pipelineBarBtn, pipelineBarFill, pipelineBarLabel,
+                    () => m.stopPipeline(pipelineBarBtn, pipelineBarLabel),
+                    () => m.startPipeline(pipelineBarBtn, pipelineBarFill, pipelineBarLabel, () => m.stopPipeline(pipelineBarBtn, pipelineBarLabel))
+                ),
+                () => m.stopPipeline(pipelineBarBtn, pipelineBarLabel)
+            );
+            // Si aucun pipeline en cours, on assigne le bouton normalement
+            if (!resumed) {
+                pipelineBarBtn.onclick = () => m.startPipeline(
+                    pipelineBarBtn, pipelineBarFill, pipelineBarLabel,
+                    () => m.stopPipeline(pipelineBarBtn, pipelineBarLabel),
+                    () => m.startPipeline(pipelineBarBtn, pipelineBarFill, pipelineBarLabel, () => m.stopPipeline(pipelineBarBtn, pipelineBarLabel))
+                );
+            }
+        });
+    }
     await loadTimeline((dates, globalDate, panelDate) => {
         const selectGlobal = document.getElementById("timeline-global");
         const selectPanel = document.getElementById("timeline-panel");
