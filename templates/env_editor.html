@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Éditeur .env</title>
+    <!-- Favicon emoji 🛰️ -->
+    <link rel="icon" type="image/svg+xml"
+          href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dominant-baseline='central' font-size='52'%3E🛰️%3C/text%3E%3C/svg%3E">
+
+    <link rel="stylesheet" href="/static/css/dashboard.css" />
+    <link rel="stylesheet" href="/static/css/dashboard.css" />
+    <style>
+        .env-form { max-width: 600px; margin: 40px auto; background: #181c25; padding: 24px; border-radius: 10px; }
+        .env-form label { display: block; margin-top: 18px; font-weight: bold; }
+        .env-form input { width: 100%; padding: 8px; margin-top: 4px; background: #23272f; color: #eee; border: 1px solid #444; border-radius: 4px; }
+        .env-form button { margin-top: 24px; padding: 10px 24px; background: #22c55e; color: #111; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
+        .env-form button:hover { background: #16a34a; }
+        .env-form .success { color: #22c55e; margin-top: 16px; }
+        .env-form .error { color: #f87171; margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <div style="display:flex; align-items:center; justify-content:space-between; max-width:600px; margin:32px auto 0 auto;">
+        <h1 style="margin:0;">SETTINGS</h1>
+        <a href="/dashboard" title="Retour Dashboard" style="display:inline-flex; align-items:center; justify-content:center; font-size:2.2rem; background:none; border:none; cursor:pointer; text-decoration:none; margin-left:4px; line-height:1;">🌍</a>
+    </div>
+
+    <form class="env-form" id="env-form">
+        <div id="env-fields"></div>
+        <div id="session-string-row" style="margin-top:18px;">
+            <label for="TELEGRAM_SESSION">TELEGRAM_SESSION</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <input type="text" id="TELEGRAM_SESSION" name="TELEGRAM_SESSION" style="flex:1;" />
+                <button type="button" id="wizard-start-btn" style="padding:8px 14px; background:#1a1f24; color:#22c55e; border:1px solid #444; border-radius:6px; font-size:13px; cursor:pointer;">Generate</button>
+            </div>
+            <div id="wizard-step" style="margin-top:10px;"></div>
+        </div>
+        <button type="submit">SAVE</button>
+        <div class="success" id="env-success" style="display:none;"></div>
+        <div class="error" id="env-error" style="display:none;"></div>
+    </form>
+    <script>
+        async function loadEnv() {
+            const resp = await fetch('/api/env');
+            const data = await resp.json();
+            const fields = document.getElementById('env-fields');
+            fields.innerHTML = '';
+            Object.entries(data).forEach(([key, value]) => {
+                if (key === 'TELEGRAM_SESSION') {
+                    document.getElementById('TELEGRAM_SESSION').value = value || '';
+                    return;
+                }
+                const label = document.createElement('label');
+                label.textContent = key;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = key;
+                input.value = value || '';
+                fields.appendChild(label);
+                fields.appendChild(input);
+            });
+        }
+                document.getElementById('wizard-start-btn').addEventListener('click', function() {
+                    const wizard = document.getElementById('wizard-step');
+                    wizard.innerHTML = '';
+                    // Step 1: phone
+                    const phoneInput = document.createElement('input');
+                    phoneInput.type = 'text';
+                    phoneInput.placeholder = 'Numéro de téléphone (ex: +33612345678)';
+                    phoneInput.style = 'width: 70%; padding: 6px; margin-right: 8px;';
+                    const nextBtn = document.createElement('button');
+                    nextBtn.textContent = 'Envoyer code';
+                    nextBtn.type = 'button';
+                    nextBtn.style = 'padding:6px 14px; background:#1a1f24; color:#22c55e; border:1px solid #444; border-radius:6px; font-size:13px; cursor:pointer;';
+                    wizard.appendChild(phoneInput);
+                    wizard.appendChild(nextBtn);
+                    let sessionId = null;
+                    nextBtn.onclick = async function() {
+                        nextBtn.disabled = true;
+                        nextBtn.textContent = 'Envoi...';
+                        try {
+                            const resp = await fetch('/api/session/start', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ phone: phoneInput.value })
+                            });
+                            if (resp.ok) {
+                                const data = await resp.json();
+                                sessionId = data.session_id;
+                                // Step 2: code
+                                wizard.innerHTML = '';
+                                const codeInput = document.createElement('input');
+                                codeInput.type = 'text';
+                                codeInput.placeholder = 'Code reçu';
+                                codeInput.style = 'width: 40%; padding: 6px; margin-right: 8px;';
+                                const codeBtn = document.createElement('button');
+                                codeBtn.textContent = 'Valider code';
+                                codeBtn.type = 'button';
+                                codeBtn.style = 'padding:6px 14px; background:#1a1f24; color:#22c55e; border:1px solid #444; border-radius:6px; font-size:13px; cursor:pointer;';
+                                wizard.appendChild(codeInput);
+                                wizard.appendChild(codeBtn);
+                                codeBtn.onclick = async function() {
+                                    codeBtn.disabled = true;
+                                    codeBtn.textContent = 'Validation...';
+                                    try {
+                                        const resp2 = await fetch('/api/session/verify', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ session_id: sessionId, phone: phoneInput.value, code: codeInput.value })
+                                        });
+                                        if (resp2.ok) {
+                                            const data2 = await resp2.json();
+                                            console.log('Réponse session verify:', data2); // DEBUG
+                                            document.getElementById('TELEGRAM_SESSION').value = data2.session_string || '';
+                                            // Save to .env directly
+                                            if (data2.session_string) {
+                                                try {
+                                                    const saveResp = await fetch('/api/env', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ TELEGRAM_SESSION: data2.session_string })
+                                                    });
+                                                    if (saveResp.ok) {
+                                                        wizard.innerHTML = '<span style="color:#22c55e;">Session string générée, insérée et enregistrée !</span>';
+                                                    } else {
+                                                        wizard.innerHTML = '<span style="color:#f87171;">Session générée mais erreur lors de l\'enregistrement !</span>';
+                                                    }
+                                                } catch (e) {
+                                                    wizard.innerHTML = '<span style="color:#f87171;">Session générée mais erreur lors de l\'enregistrement !</span>';
+                                                }
+                                            } else {
+                                                wizard.innerHTML = '<span style="color:#f87171;">Session string vide !</span>';
+                                            }
+                                        } else {
+                                            wizard.innerHTML = '<span style="color:#f87171;">Erreur lors de la validation du code.</span>';
+                                        }
+                                    } catch (e) {
+                                        wizard.innerHTML = '<span style="color:#f87171;">Erreur lors de la validation du code.</span>';
+                                    }
+                                };
+                            } else {
+                                wizard.innerHTML = '<span style="color:#f87171;">Erreur lors de l’envoi du code.</span>';
+                            }
+                        } catch (e) {
+                            wizard.innerHTML = '<span style="color:#f87171;">Erreur lors de l’envoi du code.</span>';
+                        }
+                    };
+                });
+        document.getElementById('env-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = {};
+            Array.from(form.elements).forEach(el => {
+                if (el.name) data[el.name] = el.value;
+            });
+            const resp = await fetch('/api/env', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const success = document.getElementById('env-success');
+            const error = document.getElementById('env-error');
+            if (resp.ok) {
+                success.textContent = 'Modifications enregistrées !';
+                success.style.display = 'block';
+                error.style.display = 'none';
+            } else {
+                error.textContent = "Erreur lors de l'enregistrement.";
+                error.style.display = 'block';
+                success.style.display = 'none';
+            }
+        });
+        loadEnv();
+    </script>
+</body>
+</html>

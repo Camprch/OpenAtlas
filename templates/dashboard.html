@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OSINT Dashboard</title>
+
+    <!-- Favicon emoji 🛰️ -->
+    <link rel="icon" type="image/svg+xml"
+          href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dominant-baseline='central' font-size='52'%3E🛰️%3C/text%3E%3C/svg%3E">
+
+    <link rel="stylesheet" href="/static/css/dashboard.css" />
+
+    <!-- Leaflet -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""
+    >
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""
+    ></script>
+</head>
+
+<body>
+
+
+
+<header style="display: flex; align-items: center; gap: 8px; justify-content: space-between;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="logo-icon">🛰️</span>
+        <span style="font-size: 1.5rem; font-weight: bold; letter-spacing: 1px; margin-right:2px;">OSINT</span>
+        <div id="timeline-container-global" style="display: flex; align-items: center; gap: 4px;">
+            <select id="timeline-global"></select>
+        </div>
+    </div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-right:10px;">
+            <div id="pipeline-bar-btn" style="padding:6px 14px; background:#1a1f24; border: 1px solid #444; color:#eee; border-radius:999px; font-size:13px; outline:none; cursor:pointer; transition:background 0.15s, box-shadow 0.15s, transform 0.1s; text-decoration:none; font-weight:normal; display:inline-flex; align-items:center; gap:7px; font-family: Arial, sans-serif; text-transform:none; letter-spacing:normal; position:relative; overflow:hidden; height:auto; min-width:0; width:auto; box-sizing:border-box;">
+                <div id="pipeline-bar-fill" style="position:absolute; left:0; top:0; height:100%; width:0; background:#22c55e; border-radius:999px; z-index:1; transition:width 0.3s;"></div>
+                <span id="pipeline-bar-label" style="position:relative; z-index:2; width:100%; text-align:center; pointer-events:none;">Scrap now 🔃</span>
+            </div>
+            <a href="/env-editor" title="Paramètres" style="padding:6px 14px; background:#1a1f24; border: 1px solid #444; color:#eee; border-radius:999px; font-size:13px; outline:none; cursor:pointer; transition:background 0.15s, box-shadow 0.15s; text-decoration:none; font-weight:normal; display:inline-flex; align-items:center; gap:7px; font-family: Arial, sans-serif; text-transform:none; letter-spacing:normal;">Settings <span style='font-size:1.2em;'>⚙️</span></a>
+        </div>
+</header>
+
+<div id="dashboard-alert"></div>
+
+<div id="map"></div>
+
+<!-- Panneau latéral -->
+<div id="sidepanel">
+    <button id="close-panel">✖</button>
+    <div id="sidepanel-header-row">
+        <h2 id="panel-country-name"><span id="panel-country-text"></span></h2>
+    </div>
+    <div id="sidepanel-content">
+        <div id="sidepanel-events-header" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            <h3 style="margin: 0;">Événements 📰</h3>
+            <div id="timeline-container-panel">
+                <select id="timeline-panel"></select>
+            </div>
+        </div>
+        <div id="events"></div>
+    </div>
+</div>
+<div id="sidepanel-backdrop"></div>
+
+<script src="/static/js/dashboard.js"></script>
+<script>
+document.getElementById('run-pipeline-btn').addEventListener('click', function() {
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Lancement...';
+    const outputDiv = document.getElementById('pipeline-output');
+    const bar = document.getElementById('pipeline-progress-bar');
+    const label = document.getElementById('pipeline-progress-label');
+    bar.style.width = '0';
+    label.textContent = '';
+    outputDiv.textContent = '';
+    const evtSource = new EventSource('/api/run-pipeline');
+    evtSource.onmessage = function(event) {
+        try {
+            const data = JSON.parse(event.data);
+            bar.style.width = data.percent + '%';
+            label.textContent = data.percent + '%';
+            if (data.msg) outputDiv.textContent = data.msg;
+            if (data.percent >= 100) {
+                btn.textContent = 'Terminé !';
+                setTimeout(() => { btn.textContent = '📡 Scrap now 🔃'; btn.disabled = false; bar.style.width = '0'; label.textContent = ''; outputDiv.textContent = ''; }, 3000);
+                evtSource.close();
+            }
+        } catch(e) {}
+    };
+    evtSource.onerror = function() {
+        btn.textContent = 'Erreur';
+        label.textContent = '';
+        bar.style.width = '0';
+        outputDiv.textContent = 'Erreur lors du lancement du pipeline.';
+        evtSource.close();
+        setTimeout(() => { btn.textContent = '📡 Scrap now 🔃'; btn.disabled = false; outputDiv.textContent = ''; }, 3000);
+    };
+});
+</script>
+</body>
+</html>
