@@ -28,6 +28,11 @@
 
     <form class="env-form" id="env-form">
         <div id="env-fields"></div>
+        <div id="sources-section" style="margin-top:28px;">
+            <label style="margin-bottom:8px;">Sources</label>
+            <div id="sources-list"></div>
+            <button type="button" id="add-source-btn" style="margin-top:10px; background:#23272f; color:#22c55e; border:1px solid #444; border-radius:6px; font-size:13px; cursor:pointer; padding:6px 14px;">Ajouter une source</button>
+        </div>
         <div id="session-string-row" style="margin-top:18px;">
             <label for="TELEGRAM_SESSION">TELEGRAM_SESSION</label>
             <div style="display:flex; gap:8px; align-items:center;">
@@ -41,14 +46,62 @@
         <div class="error" id="env-error" style="display:none;"></div>
     </form>
     <script>
+        // --- Gestion dynamique des sources ---
+        function renderSources(sources) {
+            const list = document.getElementById('sources-list');
+            list.innerHTML = '';
+            sources.forEach((src, idx) => {
+                const row = document.createElement('div');
+                row.style = 'display:flex; gap:8px; align-items:center; margin-bottom:8px;';
+                const labelInput = document.createElement('input');
+                labelInput.type = 'text';
+                labelInput.placeholder = 'Label';
+                labelInput.value = src.label || '';
+                labelInput.name = `sources[${idx}][label]`;
+                labelInput.style = 'flex:1;';
+                const sourceInput = document.createElement('input');
+                sourceInput.type = 'text';
+                sourceInput.placeholder = 'Source (URL, ID...)';
+                sourceInput.value = src.value || '';
+                sourceInput.name = `sources[${idx}][value]`;
+                sourceInput.style = 'flex:2;';
+                const delBtn = document.createElement('button');
+                delBtn.type = 'button';
+                delBtn.textContent = '✖';
+                delBtn.title = 'Supprimer';
+                delBtn.style = 'background:none; color:#f87171; border:none; font-size:1.2em; cursor:pointer;';
+                delBtn.onclick = () => {
+                    sources.splice(idx, 1);
+                    renderSources(sources);
+                };
+                row.appendChild(labelInput);
+                row.appendChild(sourceInput);
+                row.appendChild(delBtn);
+                list.appendChild(row);
+            });
+        }
+
+        let sourcesData = [];
+
         async function loadEnv() {
             const resp = await fetch('/api/env');
             const data = await resp.json();
             const fields = document.getElementById('env-fields');
             fields.innerHTML = '';
+            // Extraction des sources depuis SOURCES_TELEGRAM (format CSV: source:label,...)
+            let sourcesRaw = data.SOURCES_TELEGRAM;
+            if (sourcesRaw) {
+                sourcesData = sourcesRaw.split(',').map(pair => {
+                    const [source, label] = pair.split(':');
+                    return { value: source || '', label: label || '' };
+                }).filter(s => s.value);
+            } else {
+                sourcesData = [];
+            }
+            renderSources(sourcesData);
             Object.entries(data).forEach(([key, value]) => {
-                if (key === 'TELEGRAM_SESSION') {
-                    document.getElementById('TELEGRAM_SESSION').value = value || '';
+                if (key === 'TELEGRAM_SESSION' || key === 'SOURCES_TELEGRAM') {
+                    if (key === 'TELEGRAM_SESSION') document.getElementById('TELEGRAM_SESSION').value = value || '';
                     return;
                 }
                 const label = document.createElement('label');
@@ -61,6 +114,11 @@
                 fields.appendChild(input);
             });
         }
+
+        document.getElementById('add-source-btn').addEventListener('click', function() {
+            sourcesData.push({ label: '', value: '' });
+            renderSources(sourcesData);
+        });
                 document.getElementById('wizard-start-btn').addEventListener('click', function() {
                     const wizard = document.getElementById('wizard-step');
                     wizard.innerHTML = '';
@@ -152,8 +210,15 @@
             const form = e.target;
             const data = {};
             Array.from(form.elements).forEach(el => {
-                if (el.name) data[el.name] = el.value;
+                if (el.name && !el.name.startsWith('sources[')) data[el.name] = el.value;
             });
+            // Encode les sources en CSV pour SOURCES_TELEGRAM
+            data.SOURCES_TELEGRAM = sourcesData.map((src, idx) => {
+                // Récupère les valeurs actuelles des inputs (pour éviter le cache closure)
+                const label = form.querySelector(`input[name=\"sources[${idx}][label]\"]`)?.value || '';
+                const value = form.querySelector(`input[name=\"sources[${idx}][value]\"]`)?.value || '';
+                return value ? `${value}:${label}` : '';
+            }).filter(Boolean).join(',');
             const resp = await fetch('/api/env', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

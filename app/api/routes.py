@@ -197,7 +197,16 @@ def update_env_vars(
     env_path = os.path.join(os.path.dirname(__file__), '../../.env')
     print(f"[DEBUG] Writing to .env at: {os.path.abspath(env_path)}")
     if not os.path.exists(env_path):
-        raise HTTPException(status_code=404, detail=".env file not found")
+        # Si .env n'existe pas, on tente de copier .env.example ou créer un fichier vide
+        example_path = os.path.join(os.path.dirname(__file__), '../../.env.example')
+        if os.path.exists(example_path):
+            import shutil
+            shutil.copy(example_path, env_path)
+            print(f"[DEBUG] .env créé à partir de .env.example")
+        else:
+            with open(env_path, 'w', encoding='utf-8') as f:
+                f.write('')
+            print(f"[DEBUG] .env créé vide")
     for key, value in updates.items():
         set_key(env_path, key, str(value))
     return {"success": True, "updated": list(updates.keys())}
