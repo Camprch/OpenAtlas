@@ -68,7 +68,7 @@
 </div>
 <div id="sidepanel-backdrop"></div>
 
-<script src="/static/js/dashboard.js"></script>
+<script type="module" src="/static/js/modules/main.js"></script>
 <script>
 document.getElementById('run-pipeline-btn').addEventListener('click', function() {
     const btn = this;
@@ -89,7 +89,7 @@ document.getElementById('run-pipeline-btn').addEventListener('click', function()
             if (data.msg) outputDiv.textContent = data.msg;
             if (data.percent >= 100) {
                 btn.textContent = 'Terminé !';
-                setTimeout(() => { btn.textContent = '📡 Scrap now 🔃'; btn.disabled = false; bar.style.width = '0'; label.textContent = ''; outputDiv.textContent = ''; }, 3000);
+                setTimeout(() => { btn.textContent = 'Scrap now 🔃'; btn.disabled = false; bar.style.width = '0'; label.textContent = ''; outputDiv.textContent = ''; }, 3000);
                 evtSource.close();
             }
         } catch(e) {}
@@ -100,7 +100,7 @@ document.getElementById('run-pipeline-btn').addEventListener('click', function()
         bar.style.width = '0';
         outputDiv.textContent = 'Erreur lors du lancement du pipeline.';
         evtSource.close();
-        setTimeout(() => { btn.textContent = '📡 Scrap now 🔃'; btn.disabled = false; outputDiv.textContent = ''; }, 3000);
+        setTimeout(() => { btn.textContent = 'Scrap now 🔃'; btn.disabled = false; outputDiv.textContent = ''; }, 3000);
     };
 });
 </script>

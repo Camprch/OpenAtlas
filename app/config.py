@@ -1,14 +1,17 @@
 # app/config.py
+
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import ClassVar
 
 
 
 import os
 
+
 class Settings(BaseSettings):
     # 🔧 Autoriser des variables en plus dans le .env
-    env_file = ".env" if os.path.exists(os.path.join(os.path.dirname(__file__), "..", ".env")) else ".env.example"
+    env_file: ClassVar[str] = ".env" if os.path.exists(os.path.join(os.path.dirname(__file__), "..", ".env")) else ".env.example"
     model_config = SettingsConfigDict(
         env_file=env_file,
         env_file_encoding="utf-8",

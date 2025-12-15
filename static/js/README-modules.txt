@@ -1,0 +1,1 @@
+Ce dossier contient les modules JS extraits de dashboard.js pour une meilleure organisation du code. Importez-les dans main.js et adaptez l'HTML pour utiliser type="module" si besoin.
