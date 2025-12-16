@@ -5,6 +5,7 @@ import { loadTimeline, timelineDates, currentGlobalDate, currentPanelDate } from
 import { pipelinePolling, pipelineRunning, startPipeline, stopPipeline } from "./pipeline.js";
 import { renderEvents } from "./events.js";
 import { openSidePanel, currentCountry } from "./sidepanel.js";
+import { setupFilterMenuSync } from "./filter.js";
 
 window.IS_MOBILE = window.matchMedia("(max-width: 768px)").matches;
 
@@ -28,9 +29,15 @@ function fillSelect(select, value, dates) {
     select.value = value || "ALL";
 }
 
+
 async function init() {
     initMap();
     await loadCountryData();
+
+    // Affiche tous les événements sur la carte au chargement
+    await loadActiveCountries();
+
+    setupFilterMenuSync();
 
     // Reprise de l'état pipeline au chargement via pipeline.js
     if (pipelineBarBtn && pipelineBarFill && pipelineBarLabel) {
@@ -56,42 +63,8 @@ async function init() {
             }
         });
     }
-    await loadTimeline((dates, globalDate, panelDate) => {
-        const selectGlobal = document.getElementById("timeline-global");
-        const selectPanel = document.getElementById("timeline-panel");
-        window.currentGlobalDate = globalDate;
-        window.currentPanelDate = panelDate;
-        if (selectGlobal) fillSelect(selectGlobal, globalDate, dates);
-        if (selectPanel) fillSelect(selectPanel, panelDate, dates);
-
-        // Synchronisation des deux sélecteurs
-        if (selectGlobal && selectPanel) {
-            selectGlobal.addEventListener("change", () => {
-                window.currentGlobalDate = selectGlobal.value;
-                window.currentPanelDate = window.currentGlobalDate;
-                selectPanel.value = window.currentPanelDate;
-                loadActiveCountries(window.currentGlobalDate);
-                if (window.currentCountry) {
-                    import("./events.js").then(m => m.loadEvents(window.currentCountry, window.currentPanelDate));
-                }
-            });
-            selectPanel.addEventListener("change", () => {
-                window.currentPanelDate = selectPanel.value;
-                window.currentGlobalDate = window.currentPanelDate;
-                selectGlobal.value = window.currentGlobalDate;
-                loadActiveCountries(window.currentGlobalDate);
-                if (window.currentCountry) {
-                    import("./events.js").then(m => m.loadEvents(window.currentCountry, window.currentPanelDate));
-                }
-            });
-        }
-    });
-    await loadActiveCountries(window.currentGlobalDate);
-    if (pipelineBarBtn) pipelineBarBtn.onclick = () => startPipeline(
-        pipelineBarBtn, pipelineBarFill, pipelineBarLabel,
-        () => stopPipeline(pipelineBarBtn, pipelineBarLabel),
-        () => startPipeline(pipelineBarBtn, pipelineBarFill, pipelineBarLabel, () => stopPipeline(pipelineBarBtn, pipelineBarLabel))
-    );
 }
 
 window.addEventListener("load", init);
+
+

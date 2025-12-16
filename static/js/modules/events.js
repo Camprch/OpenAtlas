@@ -7,28 +7,29 @@ export async function loadEvents(country, currentPanelDate = null) {
         const select = document.getElementById("timeline-panel");
         currentPanelDate = select ? select.value : null;
     }
-    if (!currentPanelDate) {
-        eventsContainer.textContent = "Aucune date sélectionnée.";
+
+    if (!currentPanelDate || currentPanelDate === "ALL") {
+        // Aucun filtre date sélectionné : on affiche tous les événements du pays (toutes dates)
+        eventsContainer.innerHTML = "Chargement...";
+        const url = `/api/countries/${encodeURIComponent(country)}/all-events`;
+        const resp = await fetch(url);
+        if (!resp.ok) {
+            eventsContainer.textContent = "Erreur de chargement.";
+            return;
+        }
+        const data = await resp.json();
+        renderEvents(data);
         return;
     }
 
     eventsContainer.innerHTML = "Chargement...";
-
-    let url, resp, data;
-    if (currentPanelDate === "ALL") {
-        url = `/api/countries/${encodeURIComponent(country)}/latest-events`;
-        resp = await fetch(url);
-    } else {
-        url = `/api/countries/${encodeURIComponent(country)}/events?date=${currentPanelDate}`;
-        resp = await fetch(url);
-    }
-
+    const url = `/api/countries/${encodeURIComponent(country)}/events?date=${currentPanelDate}`;
+    const resp = await fetch(url);
     if (!resp.ok) {
         eventsContainer.textContent = "Erreur de chargement.";
         return;
     }
-
-    data = await resp.json();
+    const data = await resp.json();
     renderEvents(data);
 }
 // modules/events.js

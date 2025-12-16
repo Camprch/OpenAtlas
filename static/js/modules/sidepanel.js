@@ -14,7 +14,8 @@ export function openSidePanel(country) {
     sidepanel.classList.add('visible');
     backdrop.style.display = 'block';
     document.body.classList.add('no-scroll');
-    loadEvents(country);
+    // Toujours charger tous les événements par défaut (aucun filtre date)
+    loadEvents(country, null);
     function closePanel() {
         sidepanel.classList.remove('visible');
         backdrop.style.display = 'none';

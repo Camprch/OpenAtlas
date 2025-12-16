@@ -1,3 +1,16 @@
+<!-- Menu de filtres flottant -->
+<div id="filter-menu" style="display:none; position:fixed; top:80px; left:50%; transform:translateX(-50%); background:#23272e; color:#eee; border:1px solid #444; border-radius:12px; box-shadow:0 4px 24px #0008; z-index:9999; min-width:260px; padding:18px 20px;">
+    <div id="filter-menu-categories" style="display:flex; flex-direction:column; gap:10px;">
+        <button class="filter-category-btn" data-category="date" style="background:#23272e; color:#eee; border:none; text-align:left; padding:8px 0; font-size:15px; cursor:pointer;">Date</button>
+        <button class="filter-category-btn" data-category="source" style="background:#23272e; color:#eee; border:none; text-align:left; padding:8px 0; font-size:15px; cursor:pointer;">Source</button>
+        <button class="filter-category-btn" data-category="label" style="background:#23272e; color:#eee; border:none; text-align:left; padding:8px 0; font-size:15px; cursor:pointer;">Label</button>
+        <button class="filter-category-btn" data-category="event_type" style="background:#23272e; color:#eee; border:none; text-align:left; padding:8px 0; font-size:15px; cursor:pointer;">Event type</button>
+    </div>
+    <div id="filter-menu-options" style="margin-top:18px;"></div>
+    <div style="margin-top:18px; text-align:right;">
+        <button id="filter-menu-close" style="background:#444; color:#eee; border:none; border-radius:6px; padding:6px 16px; cursor:pointer;">Fermer</button>
+    </div>
+</div>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -33,8 +46,8 @@
     <div style="display: flex; align-items: center; gap: 8px;">
         <span class="logo-icon">🛰️</span>
         <span style="font-size: 1.5rem; font-weight: bold; letter-spacing: 1px; margin-right:2px;">OSINT</span>
-        <div id="timeline-container-global" style="display: flex; align-items: center; gap: 4px;">
-            <select id="timeline-global"></select>
+        <div id="filter-container-global" style="display: flex; align-items: center; gap: 4px;">
+            <button id="filter-btn-global" style="padding:6px 14px; background:#1a1f24; border: 1px solid #444; color:#eee; border-radius:999px; font-size:13px; outline:none; cursor:pointer; transition:background 0.15s, box-shadow 0.15s, transform 0.1s; text-decoration:none; font-weight:normal; display:inline-flex; align-items:center; gap:7px; font-family: Arial, sans-serif; text-transform:none; letter-spacing:normal;">Filter <span style='font-size:1.2em;'>🔎</span></button>
         </div>
     </div>
         <div style="display: flex; align-items: center; gap: 8px; margin-right:10px;">
@@ -43,7 +56,7 @@
                 <span id="pipeline-bar-label" style="position:relative; z-index:2; width:100%; text-align:center; pointer-events:none;">Scrap now 🔃</span>
                 <span id="pipeline-percent" style="display:none; position:relative; z-index:2; margin-left:8px; font-size:13px; color:#22c55e; font-family:monospace;">0%</span>
             </div>
-            <a href="/env-editor" title="Paramètres" style="padding:6px 14px; background:#1a1f24; border: 1px solid #444; color:#eee; border-radius:999px; font-size:13px; outline:none; cursor:pointer; transition:background 0.15s, box-shadow 0.15s; text-decoration:none; font-weight:normal; display:inline-flex; align-items:center; gap:7px; font-family: Arial, sans-serif; text-transform:none; letter-spacing:normal;">Settings <span style='font-size:1.2em;'>⚙️</span></a>
+            <a href="/env-editor" title="Settings" style="padding:6px 14px; background:#1a1f24; border: 1px solid #444; color:#eee; border-radius:999px; font-size:13px; outline:none; cursor:pointer; transition:background 0.15s, box-shadow 0.15s; text-decoration:none; font-weight:normal; display:inline-flex; align-items:center; gap:7px; font-family: Arial, sans-serif; text-transform:none; letter-spacing:normal;">Settings <span style='font-size:1.2em;'>⚙️</span></a>
         </div>
 </header>
 
@@ -59,9 +72,9 @@
     </div>
     <div id="sidepanel-content">
         <div id="sidepanel-events-header" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-            <h3 style="margin: 0;">Événements 📰</h3>
-            <div id="timeline-container-panel">
-                <select id="timeline-panel"></select>
+            <h3 style="margin: 0;">Events 📰</h3>
+            <div id="filter-container-panel">
+                <button id="filter-btn-panel" style="padding:6px 14px; background:#1a1f24; border: 1px solid #444; color:#eee; border-radius:999px; font-size:13px; outline:none; cursor:pointer; transition:background 0.15s, box-shadow 0.15s, transform 0.1s; text-decoration:none; font-weight:normal; display:inline-flex; align-items:center; gap:7px; font-family: Arial, sans-serif; text-transform:none; letter-spacing:normal;">Filter <span style='font-size:1.2em;'>🔎</span></button>
             </div>
         </div>
         <div id="events"></div>

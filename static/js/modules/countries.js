@@ -14,9 +14,14 @@ export async function loadCountryData() {
 
 export async function loadActiveCountries(currentGlobalDate) {
     let url = "/api/countries/active";
-    if (currentGlobalDate && currentGlobalDate !== "ALL") {
+    if (Array.isArray(currentGlobalDate) && currentGlobalDate.length > 0) {
+        // Plusieurs dates sélectionnées : ?date=YYYY-MM-DD&date=YYYY-MM-DD
+        const params = currentGlobalDate.map(d => `date=${encodeURIComponent(d)}`).join('&');
+        url += `?${params}`;
+    } else if (typeof currentGlobalDate === 'string' && currentGlobalDate !== "ALL") {
         url += `?date=${encodeURIComponent(currentGlobalDate)}`;
     }
+    // Si currentGlobalDate est null/undefined/[] => pas de paramètre, on affiche tout
     const resp = await fetch(url);
     if (!resp.ok) {
         console.error("Erreur /api/countries/active", resp.status);
@@ -93,3 +98,4 @@ export async function loadActiveCountries(currentGlobalDate) {
         }
     }
 }
+
