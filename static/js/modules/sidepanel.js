@@ -2,6 +2,7 @@
 import { loadEvents } from "./events.js";
 
 export let currentCountry = null;
+window.currentCountry = null;
 
 export function openSidePanel(country) {
     const sidepanel = document.getElementById('sidepanel');
@@ -10,6 +11,7 @@ export function openSidePanel(country) {
     const countryName = document.getElementById('panel-country-text');
     if (!sidepanel || !backdrop || !closeBtn || !countryName) return;
     currentCountry = country;
+    window.currentCountry = country;
     countryName.textContent = country;
     sidepanel.classList.add('visible');
     backdrop.style.display = 'block';

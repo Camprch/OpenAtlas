@@ -9,11 +9,18 @@ from app.api.models_country import CountryStatus, ActiveCountriesResponse, Count
 def get_active_countries_service(
     days: int = 30,
     date_filter: Optional[List[date]] = None,
+    sources: Optional[List[str]] = None,
     session: Session = None,
 ) -> ActiveCountriesResponse:
     from sqlmodel import func
     ignored_countries = set()
     # Construction du filtre temporel
+
+    def add_sources_filter(stmt):
+        if sources:
+            return stmt.where(Message.source.in_(sources))
+        return stmt
+
     if date_filter:
         all_stats = {}
         for d in date_filter:
@@ -30,8 +37,8 @@ def get_active_countries_service(
                     Message.created_at <= end_dt,
                     Message.country_norm.is_not(None)
                 )
-                .group_by(Message.country_norm)
             )
+            stmt = add_sources_filter(stmt).group_by(Message.country_norm)
             for country_norm, count, last_date in session.exec(stmt):
                 if country_norm in COUNTRY_COORDS:
                     if country_norm not in all_stats:
@@ -48,6 +55,7 @@ def get_active_countries_service(
                 Message.country.is_not(None)
             )
         )
+        stmt_ignored = add_sources_filter(stmt_ignored)
         for row in session.exec(stmt_ignored):
             if row[0]:
                 ignored_countries.add(row[0])
@@ -65,8 +73,8 @@ def get_active_countries_service(
                 Message.created_at >= start_dt,
                 Message.country_norm.is_not(None)
             )
-            .group_by(Message.country_norm)
         )
+        stmt = add_sources_filter(stmt).group_by(Message.country_norm)
         stats = {}
         for country_norm, count, last_date in session.exec(stmt):
             if country_norm in COUNTRY_COORDS:
@@ -80,6 +88,7 @@ def get_active_countries_service(
                 Message.country.is_not(None)
             )
         )
+        stmt_ignored = add_sources_filter(stmt_ignored)
         for row in session.exec(stmt_ignored):
             if row[0]:
                 ignored_countries.add(row[0])
@@ -98,7 +107,8 @@ def get_active_countries_service(
 
 def get_country_latest_events_service(
     country: str,
-    session: Session
+    sources: Optional[List[str]] = None,
+    session: Session = None
 ) -> CountryEventsResponse:
     norm_country = country
     if not norm_country or norm_country not in COUNTRY_COORDS:
@@ -109,6 +119,8 @@ def get_country_latest_events_service(
         select(func.max(Message.created_at))
         .where(Message.country_norm == norm_country)
     )
+    if sources:
+        stmt_last = stmt_last.where(Message.source.in_(sources))
     last_date = session.exec(stmt_last).one()
     if not last_date:
         raise ValueError("Aucun événement pour ce pays")
@@ -120,6 +132,8 @@ def get_country_latest_events_service(
         Message.created_at <= end_dt,
         Message.country_norm == norm_country
     )
+    if sources:
+        stmt = stmt.where(Message.source.in_(sources))
     msgs = session.exec(stmt).all()
     buckets: Dict[Tuple[Optional[str], Optional[str]], List[Message]] = {}
     for m in msgs:
@@ -193,19 +207,27 @@ def get_countries_activity_service(
 
 def get_country_events_service(
     country: str,
-    target_date: date,
-    session: Session
+    target_date: Optional[date],
+    sources: Optional[List[str]] = None,
+    session: Session = None
 ) -> CountryEventsResponse:
     norm_country = country
     if not norm_country or norm_country not in COUNTRY_COORDS:
         raise ValueError("Pays non normalisé ou non géoréférencé")
-    start_dt = datetime.combine(target_date, datetime.min.time())
-    end_dt = datetime.combine(target_date, datetime.max.time())
-    stmt = select(Message).where(
-        Message.created_at >= start_dt,
-        Message.created_at <= end_dt,
-        Message.country_norm == norm_country
-    )
+    if target_date is not None:
+        start_dt = datetime.combine(target_date, datetime.min.time())
+        end_dt = datetime.combine(target_date, datetime.max.time())
+        stmt = select(Message).where(
+            Message.created_at >= start_dt,
+            Message.created_at <= end_dt,
+            Message.country_norm == norm_country
+        )
+    else:
+        stmt = select(Message).where(
+            Message.country_norm == norm_country
+        )
+    if sources:
+        stmt = stmt.where(Message.source.in_(sources))
     msgs = session.exec(stmt).all()
     buckets: Dict[Tuple[Optional[str], Optional[str]], List[Message]] = {}
     for m in msgs:
@@ -244,8 +266,15 @@ def get_country_events_service(
             )
         )
     zones_payload.sort(key=lambda z: z.messages_count, reverse=True)
+    # Pour la date, retourne la plus récente si possible, sinon aujourd'hui
+    if target_date is not None:
+        date_value = target_date
+    elif msgs:
+        date_value = max(m.created_at for m in msgs).date()
+    else:
+        date_value = datetime.utcnow().date()
     return CountryEventsResponse(
-        date=target_date,
+        date=date_value,
         country=country,
         zones=zones_payload,
     )

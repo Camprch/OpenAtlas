@@ -1,7 +1,8 @@
 # app/models/message.py
 from datetime import datetime
+
 from sqlmodel import SQLModel, Field
-from sqlalchemy import Index
+from sqlalchemy import Index, Column, String
 
 
 
@@ -9,7 +10,7 @@ class Message(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
     telegram_message_id: int | None = Field(default=None, index=True)
-    source: str = Field(index=True)
+    source: str = Field(sa_column=Column(String(128)))
     channel: str | None = Field(default=None, index=True)
 
     raw_text: str

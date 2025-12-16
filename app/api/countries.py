@@ -23,9 +23,10 @@ router = APIRouter()
 def get_active_countries(
     days: int = Query(30, ge=1),
     date_filter: Optional[List[date]] = Query(None, alias="date"),
+    sources: Optional[List[str]] = Query(None),
     session: Session = Depends(get_db),
 ):
-    return get_active_countries_service(days=days, date_filter=date_filter, session=session)
+    return get_active_countries_service(days=days, date_filter=date_filter, sources=sources, session=session)
 
 
 @router.get(
@@ -34,10 +35,11 @@ def get_active_countries(
 )
 def get_country_latest_events(
     country: str,
+    sources: Optional[List[str]] = Query(None),
     session: Session = Depends(get_db),
 ):
     try:
-        return get_country_latest_events_service(country=country, session=session)
+        return get_country_latest_events_service(country=country, sources=sources, session=session)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -59,9 +61,10 @@ def get_countries_activity(
 def get_country_events(
     country: str,
     target_date: date = Query(..., alias="date"),
+    sources: Optional[List[str]] = Query(None),
     session: Session = Depends(get_db),
 ):
     try:
-        return get_country_events_service(country=country, target_date=target_date, session=session)
+        return get_country_events_service(country=country, target_date=target_date, sources=sources, session=session)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

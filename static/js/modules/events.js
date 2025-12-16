@@ -1,5 +1,5 @@
 // Ajout de la fonction loadEvents (extrait de dashboard.js)
-export async function loadEvents(country, currentPanelDate = null) {
+export async function loadEvents(country, currentPanelDate = null, sources = null) {
     const eventsContainer = document.getElementById("events");
 
     // Si la date courante n'est pas fournie, on tente de la lire depuis le select
@@ -8,22 +8,22 @@ export async function loadEvents(country, currentPanelDate = null) {
         currentPanelDate = select ? select.value : null;
     }
 
+    let url = "";
+    const params = [];
     if (!currentPanelDate || currentPanelDate === "ALL") {
-        // Aucun filtre date sélectionné : on affiche tous les événements du pays (toutes dates)
-        eventsContainer.innerHTML = "Chargement...";
-        const url = `/api/countries/${encodeURIComponent(country)}/all-events`;
-        const resp = await fetch(url);
-        if (!resp.ok) {
-            eventsContainer.textContent = "Erreur de chargement.";
-            return;
-        }
-        const data = await resp.json();
-        renderEvents(data);
-        return;
+        url = `/api/countries/${encodeURIComponent(country)}/all-events`;
+    } else {
+        url = `/api/countries/${encodeURIComponent(country)}/events`;
+        params.push(`date=${encodeURIComponent(currentPanelDate)}`);
+    }
+    if (Array.isArray(sources) && sources.length > 0) {
+        params.push(...sources.map(s => `sources=${encodeURIComponent(s)}`));
+    }
+    if (params.length > 0) {
+        url += (url.includes("?") ? "&" : "?") + params.join('&');
     }
 
     eventsContainer.innerHTML = "Chargement...";
-    const url = `/api/countries/${encodeURIComponent(country)}/events?date=${currentPanelDate}`;
     const resp = await fetch(url);
     if (!resp.ok) {
         eventsContainer.textContent = "Erreur de chargement.";

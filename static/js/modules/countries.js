@@ -12,16 +12,20 @@ export async function loadCountryData() {
     countryAliases = data.aliases || {};
 }
 
-export async function loadActiveCountries(currentGlobalDate) {
+export async function loadActiveCountries(currentGlobalDate, sources = null) {
     let url = "/api/countries/active";
+    const params = [];
     if (Array.isArray(currentGlobalDate) && currentGlobalDate.length > 0) {
-        // Plusieurs dates sélectionnées : ?date=YYYY-MM-DD&date=YYYY-MM-DD
-        const params = currentGlobalDate.map(d => `date=${encodeURIComponent(d)}`).join('&');
-        url += `?${params}`;
+        params.push(...currentGlobalDate.map(d => `date=${encodeURIComponent(d)}`));
     } else if (typeof currentGlobalDate === 'string' && currentGlobalDate !== "ALL") {
-        url += `?date=${encodeURIComponent(currentGlobalDate)}`;
+        params.push(`date=${encodeURIComponent(currentGlobalDate)}`);
     }
-    // Si currentGlobalDate est null/undefined/[] => pas de paramètre, on affiche tout
+    if (Array.isArray(sources) && sources.length > 0) {
+        params.push(...sources.map(s => `sources=${encodeURIComponent(s)}`));
+    }
+    if (params.length > 0) {
+        url += `?${params.join('&')}`;
+    }
     const resp = await fetch(url);
     if (!resp.ok) {
         console.error("Erreur /api/countries/active", resp.status);

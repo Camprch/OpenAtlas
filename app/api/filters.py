@@ -1,15 +1,27 @@
-### FICHIER MIGRÉ. Voir app/api/filters.py
+
 from fastapi import APIRouter, Depends, Query, HTTPException
 from datetime import date, datetime
 from typing import List, Optional
 from sqlmodel import Session, select
 from app.database import get_db
 from app.models.message import Message
+from app.services.fetch import _parse_sources_env
 
 import json
 from pathlib import Path
 
 router = APIRouter()
+
+@router.get("/sources", response_model=List[str])
+def get_all_sources(session: Session = Depends(get_db)):
+    stmt = select(Message.source).where(Message.source.is_not(None)).distinct()
+    rows = session.exec(stmt).all()
+    # rows peut être une liste de tuples ou de chaînes selon SQLModel/SQLite
+    if rows and isinstance(rows[0], tuple):
+        sources = [row[0] for row in rows if row and row[0]]
+    else:
+        sources = [row for row in rows if row]
+    return sorted(set(sources))
 
 # Charger les alias et coordonnées pays (chemin absolu depuis la racine du projet)
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
