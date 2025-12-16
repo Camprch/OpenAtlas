@@ -11,52 +11,84 @@ def get_active_countries_service(
     date_filter: Optional[List[date]] = None,
     session: Session = None,
 ) -> ActiveCountriesResponse:
+    from sqlmodel import func
+    ignored_countries = set()
+    # Construction du filtre temporel
     if date_filter:
-        all_rows = []
+        all_stats = {}
         for d in date_filter:
             start_dt = datetime.combine(d, datetime.min.time())
             end_dt = datetime.combine(d, datetime.max.time())
-            stmt = select(Message.country, Message.created_at).where(
-                Message.created_at >= start_dt,
-                Message.created_at <= end_dt,
-                Message.country.is_not(None),
+            stmt = (
+                select(
+                    Message.country_norm,
+                    func.count().label("count"),
+                    func.max(Message.created_at).label("last_date")
+                )
+                .where(
+                    Message.created_at >= start_dt,
+                    Message.created_at <= end_dt,
+                    Message.country_norm.is_not(None)
+                )
+                .group_by(Message.country_norm)
             )
-            all_rows.extend(session.exec(stmt).all())
-        rows = all_rows
+            for country_norm, count, last_date in session.exec(stmt):
+                if country_norm in COUNTRY_COORDS:
+                    if country_norm not in all_stats:
+                        all_stats[country_norm] = {"count": 0, "last_date": last_date}
+                    all_stats[country_norm]["count"] += count
+                    if last_date > all_stats[country_norm]["last_date"]:
+                        all_stats[country_norm]["last_date"] = last_date
+        # Pays ignorés (non normalisés) pour ces dates
+        stmt_ignored = (
+            select(Message.country)
+            .where(
+                Message.created_at.in_([datetime.combine(d, datetime.min.time()) for d in date_filter]),
+                Message.country_norm.is_(None),
+                Message.country.is_not(None)
+            )
+        )
+        for row in session.exec(stmt_ignored):
+            if row[0]:
+                ignored_countries.add(row[0])
+        stats = all_stats
     else:
         now = datetime.utcnow()
         start_dt = now - timedelta(days=days)
-        stmt = select(Message.country, Message.created_at).where(
-            Message.created_at >= start_dt,
-            Message.country.is_not(None),
+        stmt = (
+            select(
+                Message.country_norm,
+                func.count().label("count"),
+                func.max(Message.created_at).label("last_date")
+            )
+            .where(
+                Message.created_at >= start_dt,
+                Message.country_norm.is_not(None)
+            )
+            .group_by(Message.country_norm)
         )
-        rows = session.exec(stmt).all()
-
-    stats: Dict[str, Dict[str, object]] = {}
-    ignored_countries = set()
-    for country, created_at in rows:
-        if not country:
-            continue
-        country = country.strip()
-        if not country:
-            continue
-        norm_countries = normalize_country_names(country, COUNTRY_ALIASES)
-        if not norm_countries:
-            ignored_countries.add(country)
-            continue
-        d = created_at.date()
-        for norm_country in norm_countries:
-            if norm_country not in stats:
-                stats[norm_country] = {"count": 0, "last_date": d}
-            stats[norm_country]["count"] += 1
-            if d > stats[norm_country]["last_date"]:
-                stats[norm_country]["last_date"] = d
+        stats = {}
+        for country_norm, count, last_date in session.exec(stmt):
+            if country_norm in COUNTRY_COORDS:
+                stats[country_norm] = {"count": count, "last_date": last_date.date() if last_date else None}
+        # Pays ignorés (non normalisés)
+        stmt_ignored = (
+            select(Message.country)
+            .where(
+                Message.created_at >= start_dt,
+                Message.country_norm.is_(None),
+                Message.country.is_not(None)
+            )
+        )
+        for row in session.exec(stmt_ignored):
+            if row[0]:
+                ignored_countries.add(row[0])
 
     result = [
         CountryStatus(
             country=c,
             events_count=v["count"],
-            last_date=v["last_date"],
+            last_date=v["last_date"].date() if isinstance(v["last_date"], datetime) else v["last_date"],
         )
         for c, v in stats.items() if c in COUNTRY_COORDS
     ]
@@ -71,37 +103,28 @@ def get_country_latest_events_service(
     norm_country = country
     if not norm_country or norm_country not in COUNTRY_COORDS:
         raise ValueError("Pays non normalisé ou non géoréférencé")
-
+    # Trouver la dernière date d'activité pour ce pays (country_norm)
+    from sqlmodel import func
     stmt_last = (
-        select(Message.created_at, Message.country)
-        .order_by(Message.created_at.desc())
+        select(func.max(Message.created_at))
+        .where(Message.country_norm == norm_country)
     )
-    rows = session.exec(stmt_last).all()
-    last_date = None
-    for created_at, raw_country in rows:
-        norm_countries = normalize_country_names(raw_country, COUNTRY_ALIASES)
-        if norm_country in norm_countries:
-            last_date = created_at
-            break
+    last_date = session.exec(stmt_last).one()
     if not last_date:
         raise ValueError("Aucun événement pour ce pays")
-
     target_date = last_date.date()
     start_dt = datetime.combine(target_date, datetime.min.time())
     end_dt = datetime.combine(target_date, datetime.max.time())
-
     stmt = select(Message).where(
         Message.created_at >= start_dt,
         Message.created_at <= end_dt,
+        Message.country_norm == norm_country
     )
     msgs = session.exec(stmt).all()
-    msgs = [m for m in msgs if norm_country in normalize_country_names(m.country, COUNTRY_ALIASES)]
-
     buckets: Dict[Tuple[Optional[str], Optional[str]], List[Message]] = {}
     for m in msgs:
         key = (m.region, m.location)
         buckets.setdefault(key, []).append(m)
-
     zones_payload: List[ZoneEvents] = []
     for (region, location), items in buckets.items():
         event_messages: List[EventMessage] = []
@@ -181,9 +204,9 @@ def get_country_events_service(
     stmt = select(Message).where(
         Message.created_at >= start_dt,
         Message.created_at <= end_dt,
+        Message.country_norm == norm_country
     )
     msgs = session.exec(stmt).all()
-    msgs = [m for m in msgs if norm_country in normalize_country_names(m.country, COUNTRY_ALIASES)]
     buckets: Dict[Tuple[Optional[str], Optional[str]], List[Message]] = {}
     for m in msgs:
         key = (m.region, m.location)

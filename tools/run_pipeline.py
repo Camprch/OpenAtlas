@@ -16,6 +16,7 @@ if str(ROOT_DIR) not in sys.path:
 
 from app.database import init_db, get_session
 from app.models.message import Message
+from app.utils.country_norm import compute_country_norm
 from sqlmodel import select
 
 from app.services.fetch import fetch_raw_messages_24h
@@ -30,12 +31,17 @@ def store_messages(messages: list[dict]) -> None:
     """
     with get_session() as session:
         for msg in messages:
+            raw_country = msg.get("country")
+            country_norm = compute_country_norm(raw_country)
+            if country_norm is None and raw_country:
+                print(f"[ALERTE] country inconnu/non géoréférencé: '{raw_country}' (id: {msg.get('telegram_message_id')})")
             m = Message(
                 source=msg.get("source") or "unknown",
                 channel=msg.get("channel"),
                 raw_text=msg.get("text", ""),
                 translated_text=msg.get("translated_text"),
-                country=msg.get("country"),
+                country=raw_country,
+                country_norm=country_norm,
                 region=msg.get("region"),
                 location=msg.get("location"),
                 title=msg.get("title"),

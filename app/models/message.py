@@ -4,6 +4,7 @@ from sqlmodel import SQLModel, Field
 from sqlalchemy import Index
 
 
+
 class Message(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
@@ -15,6 +16,7 @@ class Message(SQLModel, table=True):
     translated_text: str | None = None
 
     country: str | None = Field(default=None, index=True)
+    country_norm: str | None = Field(default=None, index=True, description="Nom canonique du pays, ou None si inconnu/non géoréférencé.")
     region: str | None = Field(default=None, index=True)
     location: str | None = Field(default=None, index=True)
 
@@ -28,4 +30,7 @@ class Message(SQLModel, table=True):
 
     __table_args__ = (
         Index("ix_message_country_created", "country", "created_at"),
+        Index("ix_message_country_norm", "country_norm"),
+        Index("ix_message_created_at_country_norm", "created_at", "country_norm"),
+        Index("ix_message_country_norm_created_at", "country_norm", "created_at"),
     )
