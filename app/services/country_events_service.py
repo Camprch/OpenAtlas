@@ -19,7 +19,7 @@ def get_active_countries_service(
 
     def add_sources_labels_filter(stmt):
         if sources:
-            stmt = stmt.where(Message.source.in_(sources))
+            stmt = stmt.where(Message.channel.in_(sources))
         if labels:
             stmt = stmt.where(Message.label.in_(labels))
         return stmt
@@ -124,7 +124,7 @@ def get_country_latest_events_service(
         .where(Message.country_norm == norm_country)
     )
     if sources:
-        stmt_last = stmt_last.where(Message.source.in_(sources))
+        stmt_last = stmt_last.where(Message.channel.in_(sources))
     if labels:
         stmt_last = stmt_last.where(Message.label.in_(labels))
     last_date = session.exec(stmt_last).one()
@@ -139,7 +139,7 @@ def get_country_latest_events_service(
         Message.country_norm == norm_country
     )
     if sources:
-        stmt = stmt.where(Message.source.in_(sources))
+        stmt = stmt.where(Message.channel.in_(sources))
     if labels:
         stmt = stmt.where(Message.label.in_(labels))
     msgs = session.exec(stmt).all()
@@ -236,7 +236,7 @@ def get_country_events_service(
             Message.country_norm == norm_country
         )
     if sources:
-        stmt = stmt.where(Message.source.in_(sources))
+        stmt = stmt.where(Message.channel.in_(sources))
     if labels:
         stmt = stmt.where(Message.label.in_(labels))
     msgs = session.exec(stmt).all()
