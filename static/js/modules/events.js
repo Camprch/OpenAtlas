@@ -1,5 +1,5 @@
 // Ajout de la fonction loadEvents (extrait de dashboard.js)
-export async function loadEvents(country, currentPanelDate = null, sources = null) {
+export async function loadEvents(country, currentPanelDate = null, sources = null, labels = null) {
     const eventsContainer = document.getElementById("events");
 
     // Si la date courante n'est pas fournie, on tente de la lire depuis le select
@@ -18,6 +18,9 @@ export async function loadEvents(country, currentPanelDate = null, sources = nul
     }
     if (Array.isArray(sources) && sources.length > 0) {
         params.push(...sources.map(s => `sources=${encodeURIComponent(s)}`));
+    }
+    if (Array.isArray(labels) && labels.length > 0) {
+        params.push(...labels.map(l => `labels=${encodeURIComponent(l)}`));
     }
     if (params.length > 0) {
         url += (url.includes("?") ? "&" : "?") + params.join('&');

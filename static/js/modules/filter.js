@@ -1,3 +1,19 @@
+// Ajoute la fonction fetchDates pour charger les dates depuis l'API
+async function fetchDates() {
+    try {
+        const resp = await fetch("/api/dates");
+        const data = await resp.json();
+        if (Array.isArray(data)) {
+            FILTER_VALUES.date = data;
+        } else if (data && Array.isArray(data.dates)) {
+            FILTER_VALUES.date = data.dates;
+        } else {
+            FILTER_VALUES.date = [];
+        }
+    } catch (e) {
+        FILTER_VALUES.date = [];
+    }
+}
 // modules/filter.js
 
 
@@ -6,7 +22,8 @@ window.lastFilterOpener = "global";
 if (!window.selectedFilters) {
     window.selectedFilters = {
         date: [],
-        source: []
+        source: [],
+        label: []
     };
 }
 
@@ -15,9 +32,23 @@ if (!window.selectedFilters) {
 const FILTER_VALUES = {
     date: [], // sera chargé dynamiquement
     source: [], // sera chargé dynamiquement
-    label: ["Sécurité", "Politique", "Économie"],
+    label: [], // sera chargé dynamiquement
     event_type: ["Attaque", "Manifestation", "Annonce"]
 };
+
+async function fetchLabels() {
+    try {
+        const resp = await fetch("/api/labels");
+        const data = await resp.json();
+        if (Array.isArray(data)) {
+            FILTER_VALUES.label = data;
+        } else {
+            FILTER_VALUES.label = [];
+        }
+    } catch (e) {
+        FILTER_VALUES.label = [];
+    }
+}
 
 async function fetchSources() {
     try {
@@ -33,31 +64,15 @@ async function fetchSources() {
     }
 }
 
-async function fetchDates() {
-    try {
-        const resp = await fetch("/api/dates");
-        const data = await resp.json();
-        // L'API peut retourner un tableau ou un objet {dates: [...]}
-        if (Array.isArray(data)) {
-            FILTER_VALUES.date = data;
-        } else if (data && Array.isArray(data.dates)) {
-            FILTER_VALUES.date = data.dates;
-        } else {
-            FILTER_VALUES.date = [];
-        }
-    } catch (e) {
-        FILTER_VALUES.date = [];
-    }
-}
-
-
 import { loadActiveCountries } from "./countries.js";
 import { currentCountry } from "./sidepanel.js";
 import { loadEvents } from "./events.js";
 
 export async function renderFilterOptions(category) {
-
-
+    // Charge dynamiquement les valeurs de label si besoin
+    if (category === 'label' && FILTER_VALUES.label.length === 0) {
+        await fetchLabels();
+    }
     const optionsDiv = document.getElementById('filter-menu-options');
     optionsDiv.innerHTML = '';
     if (category === 'date' && FILTER_VALUES.date.length === 0) {
@@ -71,16 +86,7 @@ export async function renderFilterOptions(category) {
         optionsDiv.textContent = 'Aucune option.';
         return;
     }
-
-    // Utilitaires pour lire la sélection courante globale (tous filtres)
-    function getAllSelectedDates() {
-        return window.selectedFilters.date;
-    }
-    function getAllSelectedSources() {
-        return window.selectedFilters.source;
-    }
-
-    values.forEach(val => {
+    for (const val of values) {
         const label = document.createElement('label');
         label.style.display = 'block';
         label.style.marginBottom = '6px';
@@ -94,9 +100,7 @@ export async function renderFilterOptions(category) {
         label.appendChild(document.createTextNode(val));
         optionsDiv.appendChild(label);
 
-        // Ajout du comportement pour chaque case à cocher (date ou source)
         checkbox.addEventListener('change', async () => {
-            // Met à jour l'état global synchronisé
             if (checkbox.checked) {
                 if (!window.selectedFilters[category].includes(val)) {
                     window.selectedFilters[category].push(val);
@@ -104,28 +108,28 @@ export async function renderFilterOptions(category) {
             } else {
                 window.selectedFilters[category] = window.selectedFilters[category].filter(v => v !== val);
             }
-
-            // Synchronise toutes les cases à cocher de tous les menus ouverts
-            document.querySelectorAll('input[type=checkbox][value="' + val + '"]').forEach(cb => {
-                if (cb !== checkbox) cb.checked = checkbox.checked;
-            });
-
+            document.querySelectorAll('input[type=checkbox][value="' + val + '"]')
+                .forEach(cb => { if (cb !== checkbox) cb.checked = checkbox.checked; });
             const selectedDates = window.selectedFilters.date;
             const selectedSources = window.selectedFilters.source;
-            // Recharge la carte même si menu panel
-            await loadActiveCountries(selectedDates.length > 0 ? selectedDates : null, selectedSources.length > 0 ? selectedSources : null);
+            const selectedLabels = window.selectedFilters.label;
+            await loadActiveCountries(
+                selectedDates.length > 0 ? selectedDates : null,
+                selectedSources.length > 0 ? selectedSources : null,
+                selectedLabels.length > 0 ? selectedLabels : null
+            );
             if (window.lastFilterOpener === "panel" && currentCountry) {
                 const allDates = FILTER_VALUES.date;
                 const allChecked = selectedDates.length === allDates.length;
                 if (selectedDates.length === 0 || allChecked) {
-                    await loadEvents(currentCountry, null, selectedSources.length > 0 ? selectedSources : null);
+                    await loadEvents(currentCountry, null, selectedSources.length > 0 ? selectedSources : null, selectedLabels.length > 0 ? selectedLabels : null);
                 } else {
-                    await loadEvents(currentCountry, selectedDates[0], selectedSources.length > 0 ? selectedSources : null);
+                    await loadEvents(currentCountry, selectedDates[0], selectedSources.length > 0 ? selectedSources : null, selectedLabels.length > 0 ? selectedLabels : null);
                 }
             }
         });
-    }); // <-- ferme le forEach
-} // <-- ferme la fonction renderFilterOptions
+    }
+}
 
 export function setupFilterMenuSync() {
     const filterBtnGlobal = document.getElementById('filter-btn-global');
@@ -180,5 +184,5 @@ export function setupFilterMenuSync() {
             const cat = btn.getAttribute('data-category');
             await renderFilterOptions(cat);
         });
-    }); 
+    });
 }

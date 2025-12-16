@@ -12,7 +12,7 @@ export async function loadCountryData() {
     countryAliases = data.aliases || {};
 }
 
-export async function loadActiveCountries(currentGlobalDate, sources = null) {
+export async function loadActiveCountries(currentGlobalDate, sources = null, labels = null) {
     let url = "/api/countries/active";
     const params = [];
     if (Array.isArray(currentGlobalDate) && currentGlobalDate.length > 0) {
@@ -22,6 +22,9 @@ export async function loadActiveCountries(currentGlobalDate, sources = null) {
     }
     if (Array.isArray(sources) && sources.length > 0) {
         params.push(...sources.map(s => `sources=${encodeURIComponent(s)}`));
+    }
+    if (Array.isArray(labels) && labels.length > 0) {
+        params.push(...labels.map(l => `labels=${encodeURIComponent(l)}`));
     }
     if (params.length > 0) {
         url += `?${params.join('&')}`;

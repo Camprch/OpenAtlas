@@ -18,13 +18,14 @@ router = APIRouter()
 def get_country_all_events(
     country: str,
     sources: Optional[List[str]] = Query(None),
+    labels: Optional[List[str]] = Query(None),
     session: Session = Depends(get_db),
 ):
     """
     Retourne tous les événements pour un pays, toutes dates confondues (groupés par région/location).
     """
     try:
-        return get_country_events_service(country, target_date=None, sources=sources, session=session)
+        return get_country_events_service(country, target_date=None, sources=sources, labels=labels, session=session)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -122,12 +123,13 @@ def get_country_events(
     country: str,
     target_date: date = Query(..., alias="date"),
     sources: Optional[List[str]] = Query(None),
+    labels: Optional[List[str]] = Query(None),
     session: Session = Depends(get_db),
 ):
     """
     Liste des événements pour un pays + date (groupés par région / location).
     """
     try:
-        return get_country_events_service(country, target_date=target_date, sources=sources, session=session)
+        return get_country_events_service(country, target_date=target_date, sources=sources, labels=labels, session=session)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

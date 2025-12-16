@@ -6,6 +6,7 @@ from sqlalchemy import Index, Column, String
 
 
 
+
 class Message(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
@@ -26,6 +27,8 @@ class Message(SQLModel, table=True):
     event_timestamp: datetime | None = Field(default=None, index=True)
 
     orientation: str | None = Field(default=None, index=True)
+
+    label: str | None = Field(default=None, sa_column=Column(String(255)), description="Label dynamique pour filtrage.")
 
     created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
 

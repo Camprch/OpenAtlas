@@ -7,21 +7,42 @@ from app.database import get_db
 from app.models.message import Message
 from app.services.fetch import _parse_sources_env
 
+
 import json
+import re
 from pathlib import Path
 
 router = APIRouter()
 
+@router.get("/labels", response_model=List[str])
+def get_labels():
+    # Retourne les labels du mapping settings (.env)
+    labels = set()
+    with open('.env') as f:
+        for line in f:
+            if line.strip().startswith('SOURCES_TELEGRAM'):
+                value = line.split('=', 1)[-1].strip().strip("'\"")
+                pairs = re.split(r',\s*', value)
+                for pair in pairs:
+                    if ':' in pair:
+                        _, label = pair.split(':', 1)
+                        labels.add(label.strip())
+    return sorted(labels)
+
 @router.get("/sources", response_model=List[str])
-def get_all_sources(session: Session = Depends(get_db)):
-    stmt = select(Message.source).where(Message.source.is_not(None)).distinct()
-    rows = session.exec(stmt).all()
-    # rows peut être une liste de tuples ou de chaînes selon SQLModel/SQLite
-    if rows and isinstance(rows[0], tuple):
-        sources = [row[0] for row in rows if row and row[0]]
-    else:
-        sources = [row for row in rows if row]
-    return sorted(set(sources))
+def get_sources():
+    # Retourne les sources du mapping settings (.env)
+    sources = []
+    with open('.env') as f:
+        for line in f:
+            if line.strip().startswith('SOURCES_TELEGRAM'):
+                value = line.split('=', 1)[-1].strip().strip("'\"")
+                pairs = re.split(r',\s*', value)
+                for pair in pairs:
+                    if ':' in pair:
+                        src, _ = pair.split(':', 1)
+                        sources.append(src.strip())
+    return sorted(sources)
 
 # Charger les alias et coordonnées pays (chemin absolu depuis la racine du projet)
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
