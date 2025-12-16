@@ -1,3 +1,4 @@
+### FICHIER MIGRÉ. Voir app/api/pipeline.py
 from fastapi import APIRouter
 from starlette.responses import StreamingResponse
 from typing import Dict

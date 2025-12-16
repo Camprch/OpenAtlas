@@ -1,3 +1,4 @@
+### FICHIER MIGRÉ. Voir app/api/env.py
 import os
 from fastapi import APIRouter, Body
 from dotenv import dotenv_values, set_key

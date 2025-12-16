@@ -1,16 +1,19 @@
+### FICHIER MIGRÉ. Voir app/api/filters.py
 from fastapi import APIRouter, Depends, Query, HTTPException
 from datetime import date, datetime
 from typing import List, Optional
 from sqlmodel import Session, select
 from app.database import get_db
 from app.models.message import Message
-import os
+
 import json
+from pathlib import Path
 
 router = APIRouter()
 
-# Charger les alias et coordonnées pays
-COUNTRIES_JSON_PATH = os.path.join(os.path.dirname(__file__), '../../../static/data/countries.json')
+# Charger les alias et coordonnées pays (chemin absolu depuis la racine du projet)
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+COUNTRIES_JSON_PATH = BASE_DIR / "static" / "data" / "countries.json"
 with open(COUNTRIES_JSON_PATH, encoding='utf-8') as f:
     _countries_data = json.load(f)
     COUNTRY_ALIASES = _countries_data.get('aliases', {})
