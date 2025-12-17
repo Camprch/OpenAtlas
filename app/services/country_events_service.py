@@ -11,6 +11,7 @@ def get_active_countries_service(
     date_filter: Optional[List[date]] = None,
     sources: Optional[List[str]] = None,
     labels: Optional[List[str]] = None,
+    event_types: Optional[List[str]] = None,
     session: Session = None,
 ) -> ActiveCountriesResponse:
     from sqlmodel import func
@@ -22,6 +23,8 @@ def get_active_countries_service(
             stmt = stmt.where(Message.channel.in_(sources))
         if labels:
             stmt = stmt.where(Message.label.in_(labels))
+        if event_types:
+            stmt = stmt.where(Message.event_type.in_(event_types))
         return stmt
 
     if date_filter:
@@ -112,6 +115,7 @@ def get_country_latest_events_service(
     country: str,
     sources: Optional[List[str]] = None,
     labels: Optional[List[str]] = None,
+    event_types: Optional[List[str]] = None,
     session: Session = None
 ) -> CountryEventsResponse:
     norm_country = country
@@ -127,6 +131,8 @@ def get_country_latest_events_service(
         stmt_last = stmt_last.where(Message.channel.in_(sources))
     if labels:
         stmt_last = stmt_last.where(Message.label.in_(labels))
+    if event_types:
+        stmt_last = stmt_last.where(Message.event_type.in_(event_types))
     last_date = session.exec(stmt_last).one()
     if not last_date:
         raise ValueError("Aucun événement pour ce pays")
@@ -142,6 +148,8 @@ def get_country_latest_events_service(
         stmt = stmt.where(Message.channel.in_(sources))
     if labels:
         stmt = stmt.where(Message.label.in_(labels))
+    if event_types:
+        stmt = stmt.where(Message.event_type.in_(event_types))
     msgs = session.exec(stmt).all()
     buckets: Dict[Tuple[Optional[str], Optional[str]], List[Message]] = {}
     for m in msgs:
@@ -218,6 +226,7 @@ def get_country_events_service(
     target_date: Optional[date],
     sources: Optional[List[str]] = None,
     labels: Optional[List[str]] = None,
+    event_types: Optional[List[str]] = None,
     session: Session = None
 ) -> CountryEventsResponse:
     norm_country = country
@@ -239,6 +248,8 @@ def get_country_events_service(
         stmt = stmt.where(Message.channel.in_(sources))
     if labels:
         stmt = stmt.where(Message.label.in_(labels))
+    if event_types:
+        stmt = stmt.where(Message.event_type.in_(event_types))
     msgs = session.exec(stmt).all()
     buckets: Dict[Tuple[Optional[str], Optional[str]], List[Message]] = {}
     for m in msgs:

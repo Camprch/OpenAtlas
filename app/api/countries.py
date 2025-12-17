@@ -17,6 +17,12 @@ from app.services.country_events_service import (
 
 router = APIRouter()
 
+@router.get("/event_types", response_model=List[str])
+def get_event_types(session: Session = Depends(get_db)):
+    # Retourne la liste distincte des event_type non nuls
+    q = session.query(Message.event_type).distinct().filter(Message.event_type.isnot(None)).order_by(Message.event_type)
+    return [row[0] for row in q if row[0]]
+
 # --- ROUTES PAYS/EVENTS ---
 
 @router.get("/countries/active", response_model=ActiveCountriesResponse)
@@ -25,9 +31,10 @@ def get_active_countries(
     date_filter: Optional[List[date]] = Query(None, alias="date"),
     sources: Optional[List[str]] = Query(None),
     labels: Optional[List[str]] = Query(None),
+    event_types: Optional[List[str]] = Query(None),
     session: Session = Depends(get_db),
 ):
-    return get_active_countries_service(days=days, date_filter=date_filter, sources=sources, labels=labels, session=session)
+    return get_active_countries_service(days=days, date_filter=date_filter, sources=sources, labels=labels, event_types=event_types, session=session)
 
 
 @router.get(
@@ -38,10 +45,11 @@ def get_country_latest_events(
     country: str,
     sources: Optional[List[str]] = Query(None),
     labels: Optional[List[str]] = Query(None),
+    event_types: Optional[List[str]] = Query(None),
     session: Session = Depends(get_db),
 ):
     try:
-        return get_country_latest_events_service(country=country, sources=sources, labels=labels, session=session)
+        return get_country_latest_events_service(country=country, sources=sources, labels=labels, event_types=event_types, session=session)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -65,9 +73,10 @@ def get_country_events(
     target_date: date = Query(..., alias="date"),
     sources: Optional[List[str]] = Query(None),
     labels: Optional[List[str]] = Query(None),
+    event_types: Optional[List[str]] = Query(None),
     session: Session = Depends(get_db),
 ):
     try:
-        return get_country_events_service(country=country, target_date=target_date, sources=sources, labels=labels, session=session)
+        return get_country_events_service(country=country, target_date=target_date, sources=sources, labels=labels, event_types=event_types, session=session)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

@@ -19,13 +19,14 @@ def get_country_all_events(
     country: str,
     sources: Optional[List[str]] = Query(None),
     labels: Optional[List[str]] = Query(None),
+    event_types: Optional[List[str]] = Query(None),
     session: Session = Depends(get_db),
 ):
     """
     Retourne tous les événements pour un pays, toutes dates confondues (groupés par région/location).
     """
     try:
-        return get_country_events_service(country, target_date=None, sources=sources, labels=labels, session=session)
+        return get_country_events_service(country, target_date=None, sources=sources, labels=labels, event_types=event_types, session=session)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

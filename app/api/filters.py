@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, Query, HTTPException
 from datetime import date, datetime
 from typing import List, Optional
@@ -13,6 +12,13 @@ import re
 from pathlib import Path
 
 router = APIRouter()
+
+@router.get("/event_types")
+def get_event_types():
+    return [
+        "Protest", "Conflict", "Political", "Natural disaster", "Crime",
+        "Cyber Attack", "Public health", "Economic", "Security Alert", "Other"
+    ]
 
 @router.get("/labels", response_model=List[str])
 def get_labels():

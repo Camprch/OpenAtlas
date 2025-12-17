@@ -16,8 +16,18 @@ export function openSidePanel(country) {
     sidepanel.classList.add('visible');
     backdrop.style.display = 'block';
     document.body.classList.add('no-scroll');
-    // Toujours charger tous les événements par défaut (aucun filtre date)
-    loadEvents(country, null);
+    // Toujours charger les événements avec tous les filtres sélectionnés
+    const selectedDates = window.selectedFilters?.date || [];
+    const selectedSources = window.selectedFilters?.source || [];
+    const selectedLabels = window.selectedFilters?.label || [];
+    const selectedEventTypes = window.selectedFilters?.event_type || [];
+    loadEvents(
+        country,
+        selectedDates.length > 0 ? selectedDates[0] : null,
+        selectedSources.length > 0 ? selectedSources : null,
+        selectedLabels.length > 0 ? selectedLabels : null,
+        selectedEventTypes.length > 0 ? selectedEventTypes : null
+    );
     function closePanel() {
         sidepanel.classList.remove('visible');
         backdrop.style.display = 'none';
