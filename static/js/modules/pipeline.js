@@ -8,7 +8,7 @@ export async function resumePipelineIfRunning(pipelineBarBtn, pipelineBarFill, p
         pipelineBarBtn.style.cursor = 'not-allowed';
         pipelineBarBtn.style.background = '#23272f';
         pipelineBarBtn.classList.add('pipeline-running');
-        pipelineBarLabel.textContent = data.step || 'Annuler';
+        pipelineBarLabel.textContent = data.step || 'Cancel';
         pipelineBarFill.style.width = data.percent + '%';
         if (pipelinePercent) {
             pipelinePercent.textContent = `${data.percent}%`;
@@ -22,13 +22,13 @@ export async function resumePipelineIfRunning(pipelineBarBtn, pipelineBarFill, p
                 pipelineBarFill.style.width = d.percent + '%';
                 pipelineBarLabel.textContent = `${d.step || ''}`;
                 if (pipelinePercent) pipelinePercent.textContent = `${d.percent}%`;
-                if (d.percent >= 100 || d.step === 'Annulé') {
+                if (d.percent >= 100 || d.step === 'Cancelled') {
                     clearInterval(pipelinePolling);
                     pipelineBarBtn.onclick = null;
                     pipelineBarBtn.style.cursor = 'default';
                     pipelineBarBtn.disabled = true;
                     pipelineRunning = false;
-                    pipelineBarLabel.textContent = d.step === 'Annulé' ? 'Annulé' : 'Terminé !';
+                    pipelineBarLabel.textContent = d.step === 'Cancelled' ? 'Cancelled' : 'Done!';
                     if (pipelinePercent) {
                         pipelinePercent.textContent = '100%';
                         setTimeout(() => { pipelinePercent.style.display = 'none'; }, 2500);
@@ -61,7 +61,7 @@ export async function startPipeline(pipelineBarBtn, pipelineBarFill, pipelineBar
     pipelineBarBtn.style.cursor = 'not-allowed';
     pipelineBarBtn.style.background = '#23272f';
     pipelineBarFill.style.width = '0';
-    pipelineBarLabel.textContent = 'Annuler';
+    pipelineBarLabel.textContent = 'Cancel';
     pipelineBarBtn.classList.add('pipeline-running');
     const pipelinePercent = document.getElementById('pipeline-percent');
     if (pipelinePercent) {
@@ -77,20 +77,20 @@ export async function startPipeline(pipelineBarBtn, pipelineBarFill, pipelineBar
             pipelineBarFill.style.width = data.percent + '%';
             pipelineBarLabel.textContent = `${data.step || ''}`;
             if (pipelinePercent) pipelinePercent.textContent = `${data.percent}%`;
-            if (data.percent >= 100 || data.step === 'Annulé') {
+            if (data.percent >= 100 || data.step === 'Cancelled') {
                 clearInterval(pipelinePolling);
                 pipelineBarBtn.onclick = null;
                 pipelineBarBtn.style.cursor = 'default';
                 pipelineBarBtn.disabled = true;
                 pipelineRunning = false;
-                pipelineBarLabel.textContent = data.step === 'Annulé' ? 'Annulé' : 'Terminé !';
+                pipelineBarLabel.textContent = data.step === 'Cancelled' ? 'Cancelled' : 'Done!';
                 if (pipelinePercent) {
                     pipelinePercent.textContent = '100%';
                     setTimeout(() => { pipelinePercent.style.display = 'none'; }, 2500);
                 }
                 setTimeout(() => {
                     pipelineBarFill.style.width = '0';
-                    pipelineBarLabel.textContent = 'Scrap now 🔃';
+                    pipelineBarLabel.textContent = 'Run pipeline 🔃';
                     pipelineBarBtn.onclick = startPipelineCb;
                     pipelineBarBtn.style.cursor = 'pointer';
                     pipelineBarBtn.disabled = false;
@@ -107,7 +107,7 @@ export async function stopPipeline(pipelineBarBtn, pipelineBarLabel) {
     if (!pipelineRunning) return;
     pipelineBarBtn.onclick = null;
     pipelineBarBtn.disabled = true;
-    pipelineBarLabel.textContent = 'Annulation...';
+    pipelineBarLabel.textContent = 'Cancelling...';
     await fetch('/api/stop-pipeline', { method: 'POST' });
     pipelineRunning = false;
 }

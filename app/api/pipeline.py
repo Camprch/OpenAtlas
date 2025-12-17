@@ -48,13 +48,13 @@ def run_pipeline_real():
         pipeline_process["proc"] = proc
         try:
             step_map = {
-                "fetch_raw_messages_24h": (20, "Collecte"),
-                "translate_messages": (50, "Traduction"),
-                "enrich_messages": (70, "Enrichissement"),
-                "dedupe_messages": (80, "Traitement"),
-                "store_messages": (90, "Stockage"),
-                "delete_old_messages": (95, "Nettoyage"),
-                "Pipeline terminé": (100, "Terminé")
+                "fetch_raw_messages_24h": (20, "Fetching"),
+                "translate_messages": (50, "Translation"),
+                "enrich_messages": (70, "Enrichment"),
+                "dedupe_messages": (80, "Deduplication"),
+                "store_messages": (90, "Storing"),
+                "delete_old_messages": (95, "Cleaning"),
+                "Pipeline terminé": (100, "Done!")
             }
             current_percent = 0
             current_step = "Initialisation"
@@ -67,11 +67,11 @@ def run_pipeline_real():
                         current_step = step
                         break
                 if pipeline_process["proc"] is None:
-                    set_pipeline_status(100, "Annulé")
+                    set_pipeline_status(100, "Cancelled")
                     proc.terminate()
                     return
             proc.wait()
-            set_pipeline_status(100, "Terminé")
+            set_pipeline_status(100, "Done!")
         finally:
             pipeline_process["proc"] = None
 
@@ -85,6 +85,6 @@ def stop_pipeline():
     if proc and proc.poll() is None:
         proc.terminate()
         pipeline_process["proc"] = None
-        set_pipeline_status(100, "Annulé")
+        set_pipeline_status(100, "Cancelled")
         return {"status": "stopped"}
     return {"status": "no-process"}
