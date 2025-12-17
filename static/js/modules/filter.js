@@ -173,6 +173,24 @@ export function setupFilterMenuSync() {
         filterMenu.style.display = 'block';
         lastOpener = opener;
         window.lastFilterOpener = opener;
+        if (opener === 'panel') {
+            // Affichage centré dans le panneau latéral
+            const sidepanel = document.getElementById('sidepanel');
+            if (sidepanel) {
+                filterMenu.style.position = 'absolute';
+                filterMenu.style.top = '100px';
+                filterMenu.style.left = '50%';
+                filterMenu.style.transform = 'translateX(-50%)';
+                sidepanel.appendChild(filterMenu);
+            }
+        } else {
+            // Affichage classique sur la carte principale
+            filterMenu.style.position = 'fixed';
+            filterMenu.style.top = '60px';
+            filterMenu.style.left = '80px';
+            filterMenu.style.transform = 'none';
+            document.body.appendChild(filterMenu);
+        }
         renderFilterOptions(lastCategory);
     }
     function closeMenu() {
