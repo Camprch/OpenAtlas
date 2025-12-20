@@ -3,7 +3,6 @@
 Tableau de bord interactif pour l'analyse et la visualisation d'événements issus de sources ouvertes (OSINT), avec extraction automatisée depuis Telegram et enrichissement des données.
 
 [![Aperçu dashboard](static/img/dashboard1.png)](static/img/dashboard1.png)
-[![Extraction Telegram](static/img/telegram_extract.png)](static/img/telegram_extract.png)
 [![Éditeur .env](static/img/env_editor.png)](static/img/env_editor.png)
 
 ## 🎯 Fonctionnalités principales
