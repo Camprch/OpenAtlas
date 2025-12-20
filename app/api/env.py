@@ -8,12 +8,16 @@ router = APIRouter()
 @router.get("/env")
 def get_env_vars():
     """
-    Retourne les variables du .env sous forme de dict.
+    Retourne les variables du .env ou .env.example sous forme de dict.
     """
     env_path = os.path.join(os.path.dirname(__file__), '../../.env')
-    if not os.path.exists(env_path):
+    example_path = os.path.join(os.path.dirname(__file__), '../../.env.example')
+    if os.path.exists(env_path):
+        return dotenv_values(env_path)
+    elif os.path.exists(example_path):
+        return dotenv_values(example_path)
+    else:
         return {}
-    return dotenv_values(env_path)
 
 @router.post("/env")
 def update_env_vars(
