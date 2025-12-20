@@ -28,9 +28,8 @@ if (!window.selectedFilters) {
     };
 }
 
+
 // Gestion du menu de filtres synchronisé (header & sidepanel) + affichage dynamique des cases à cocher
-
-
 const FILTER_VALUES = {
     date: [], // sera chargé dynamiquement
     source: [], // sera chargé dynamiquement
@@ -84,82 +83,95 @@ import { loadActiveCountries } from "./countries.js";
 import { currentCountry } from "./sidepanel.js";
 import { loadEvents } from "./events.js";
 
-export async function renderFilterOptions(category) {
-    // Charge dynamiquement les valeurs de chaque filtre si besoin
-    if (category === 'label' && FILTER_VALUES.label.length === 0) {
-        await fetchLabels();
-    }
-    if (category === 'event_type' && FILTER_VALUES.event_type.length === 0) {
-        await fetchEventTypes();
-    }
+
+// Nouvelle version : affiche les 4 catégories côte à côte, chaque colonne avec ses options
+export async function renderAllFilterOptions() {
+    // Charge dynamiquement toutes les valeurs si besoin
+    const fetchers = [];
+    if (FILTER_VALUES.date.length === 0) fetchers.push(fetchDates());
+    if (FILTER_VALUES.source.length === 0) fetchers.push(fetchSources());
+    if (FILTER_VALUES.label.length === 0) fetchers.push(fetchLabels());
+    if (FILTER_VALUES.event_type.length === 0) fetchers.push(fetchEventTypes());
+    await Promise.all(fetchers);
+
     const optionsDiv = document.getElementById('filter-menu-options');
     optionsDiv.innerHTML = '';
-    if (category === 'date' && FILTER_VALUES.date.length === 0) {
-        await fetchDates();
-    }
-    if (category === 'source' && FILTER_VALUES.source.length === 0) {
-        await fetchSources();
-    }
-    const values = FILTER_VALUES[category] || [];
-    if (!window.selectedFilters[category]) {
-        window.selectedFilters[category] = [];
-    }
-    if (values.length === 0) {
-        optionsDiv.textContent = 'Aucune option.';
-        return;
-    }
-    for (const val of values) {
-        const label = document.createElement('label');
-        label.style.display = 'block';
-        label.style.marginBottom = '6px';
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.value = val;
-        checkbox.style.marginRight = '8px';
-        // Synchronise l'état coché avec window.selectedFilters
-        checkbox.checked = window.selectedFilters[category] && window.selectedFilters[category].includes(val);
-        label.appendChild(checkbox);
-        label.appendChild(document.createTextNode(val));
-        optionsDiv.appendChild(label);
 
-        checkbox.addEventListener('change', async () => {
-            if (!window.selectedFilters[category]) {
-                window.selectedFilters[category] = [];
+    // Structure : 4 colonnes côte à côte
+    const columns = document.createElement('div');
+    columns.id = 'filter-columns';
+    const categories = [
+        { key: 'date', label: 'Date' },
+        { key: 'source', label: 'Source' },
+        { key: 'label', label: 'Label' },
+        { key: 'event_type', label: 'Type' }
+    ];
+    for (const cat of categories) {
+        const col = document.createElement('div');
+        col.className = 'filter-col';
+        const title = document.createElement('div');
+        title.className = 'filter-col-title';
+        title.textContent = cat.label;
+        col.appendChild(title);
+        const list = document.createElement('div');
+        list.className = 'filter-options-list';
+        const values = FILTER_VALUES[cat.key] || [];
+        if (!window.selectedFilters[cat.key]) window.selectedFilters[cat.key] = [];
+        if (values.length === 0) {
+            list.textContent = 'Aucune option.';
+        } else {
+            for (const val of values) {
+                const label = document.createElement('label');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = val;
+                checkbox.checked = window.selectedFilters[cat.key].includes(val);
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(val));
+                list.appendChild(label);
+
+                checkbox.addEventListener('change', async () => {
+                    if (!window.selectedFilters[cat.key]) window.selectedFilters[cat.key] = [];
+                    if (checkbox.checked) {
+                        if (!window.selectedFilters[cat.key].includes(val)) {
+                            window.selectedFilters[cat.key].push(val);
+                        }
+                    } else {
+                        window.selectedFilters[cat.key] = window.selectedFilters[cat.key].filter(v => v !== val);
+                    }
+                    // Synchronise tous les checkboxes de même valeur/catégorie
+                    document.querySelectorAll('.filter-options-list input[type=checkbox][value="' + val + '"]')
+                        .forEach(cb => { if (cb !== checkbox) cb.checked = checkbox.checked; });
+                    const selectedDates = window.selectedFilters.date;
+                    const selectedSources = window.selectedFilters.source;
+                    const selectedLabels = window.selectedFilters.label;
+                    const selectedEventTypes = window.selectedFilters.event_type;
+                    await loadActiveCountries(
+                        selectedDates.length > 0 ? selectedDates : null,
+                        selectedSources.length > 0 ? selectedSources : null,
+                        selectedLabels.length > 0 ? selectedLabels : null,
+                        selectedEventTypes.length > 0 ? selectedEventTypes : null
+                    );
+                    // Recharge le panneau latéral si ouvert et un pays sélectionné
+                    const sidepanel = document.getElementById('sidepanel');
+                    if (sidepanel && sidepanel.classList.contains('visible') && window.currentCountry) {
+                        await loadEvents(
+                            window.currentCountry,
+                            selectedDates.length > 0 ? selectedDates[0] : null,
+                            selectedSources.length > 0 ? selectedSources : null,
+                            selectedLabels.length > 0 ? selectedLabels : null,
+                            selectedEventTypes.length > 0 ? selectedEventTypes : null
+                        );
+                    }
+                });
             }
-            if (checkbox.checked) {
-                if (!window.selectedFilters[category].includes(val)) {
-                    window.selectedFilters[category].push(val);
-                }
-            } else {
-                window.selectedFilters[category] = window.selectedFilters[category].filter(v => v !== val);
-            }
-            document.querySelectorAll('input[type=checkbox][value="' + val + '"]')
-                .forEach(cb => { if (cb !== checkbox) cb.checked = checkbox.checked; });
-            const selectedDates = window.selectedFilters.date;
-            const selectedSources = window.selectedFilters.source;
-            const selectedLabels = window.selectedFilters.label;
-            const selectedEventTypes = window.selectedFilters.event_type;
-            await loadActiveCountries(
-                selectedDates.length > 0 ? selectedDates : null,
-                selectedSources.length > 0 ? selectedSources : null,
-                selectedLabels.length > 0 ? selectedLabels : null,
-                selectedEventTypes.length > 0 ? selectedEventTypes : null
-            );
-            // Recharge le panneau latéral si ouvert et un pays sélectionné
-            const sidepanel = document.getElementById('sidepanel');
-            if (sidepanel && sidepanel.classList.contains('visible') && window.currentCountry) {
-                // Toujours utiliser la date sélectionnée dans les filtres (ou null)
-                await loadEvents(
-                    window.currentCountry,
-                    selectedDates.length > 0 ? selectedDates[0] : null,
-                    selectedSources.length > 0 ? selectedSources : null,
-                    selectedLabels.length > 0 ? selectedLabels : null,
-                    selectedEventTypes.length > 0 ? selectedEventTypes : null
-                );
-            }
-        });
+        }
+        col.appendChild(list);
+        columns.appendChild(col);
     }
+    optionsDiv.appendChild(columns);
 }
+
 
 export function setupFilterMenuSync() {
     const filterBtnGlobal = document.getElementById('filter-btn-global');
@@ -168,7 +180,6 @@ export function setupFilterMenuSync() {
     const filterMenuClose = document.getElementById('filter-menu-close');
     let lastOpener = null; // "global" ou "panel"
 
-    let lastCategory = 'source';
     function openMenu(opener) {
         filterMenu.style.display = 'block';
         lastOpener = opener;
@@ -191,7 +202,8 @@ export function setupFilterMenuSync() {
             filterMenu.style.transform = 'none';
             document.body.appendChild(filterMenu);
         }
-        renderFilterOptions(lastCategory);
+        // Affiche toutes les options de filtres en colonnes
+        renderAllFilterOptions();
     }
     function closeMenu() {
         filterMenu.style.display = 'none';
@@ -223,15 +235,5 @@ export function setupFilterMenuSync() {
         if (filterMenu.style.display === 'block' && !filterMenu.contains(e.target) && e.target !== filterBtnGlobal && e.target !== filterBtnPanel) {
             closeMenu();
         }
-    });
-
-    // Ajout de l'écoute sur les boutons de catégorie
-    const categoryBtns = document.querySelectorAll('.filter-category-btn');
-    categoryBtns.forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const cat = btn.getAttribute('data-category');
-            lastCategory = cat;
-            await renderFilterOptions(cat);
-        });
     });
 }

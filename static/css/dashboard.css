@@ -1,3 +1,147 @@
+/* Affichage du menu filtre dans le sidepanel (pleinement visible, pas de débordement) */
+#sidepanel #filter-menu {
+    position: absolute !important;
+    left: 0 !important;
+    top: 80px !important;
+    width: 100% !important;
+    min-width: 520px !important;
+    max-width: 100% !important;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+    z-index: 1201;
+    padding: 20px 28px 18px 28px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+    #sidepanel #filter-menu {
+        top: 60px !important;
+        min-width: 90vw !important;
+        padding: 12px 2vw 12px 2vw;
+    }
+}
+/* ----------- Filtres multi-colonnes ----------- */
+#filter-menu {
+    display: none;
+    background: #181c25;
+    border: 1px solid #333;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+    padding: 18px 18px 14px 18px;
+    z-index: 1200;
+    min-width: 600px;
+    max-width: 98vw;
+}
+
+#filter-columns {
+    display: flex;
+    flex-direction: row;
+    gap: 18px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.filter-col {
+    flex: 1 1 160px;
+    min-width: 120px;
+    max-width: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    box-sizing: border-box;
+}
+
+.filter-col-title {
+    font-weight: bold;
+    color: #facc15;
+    margin-bottom: 8px;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+}
+
+.filter-options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 160px;
+    overflow-y: auto;
+    width: 100%;
+}
+
+.filter-options-list label {
+    display: flex;
+    align-items: center;
+    background: #23272f;
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-size: 13px;
+    color: #eee;
+    cursor: pointer;
+    margin: 0;
+    min-width: 80px;
+    transition: background 0.15s, color 0.15s;
+}
+.filter-options-list label:hover {
+    background: #2d3542;
+    color: #facc15;
+}
+
+.filter-options-list input[type="checkbox"] {
+    margin-right: 7px;
+    accent-color: #facc15;
+}
+
+#filter-menu-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    color: #aaa;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+#filter-menu-close:hover {
+    color: #fff;
+}
+
+@media (max-width: 900px) {
+    #filter-menu {
+        min-width: 98vw;
+        padding: 8px 2vw 8px 2vw;
+    }
+    #filter-columns {
+        gap: 8px;
+    }
+    .filter-col {
+        min-width: 90px;
+        max-width: 160px;
+        flex: 1 1 90px;
+    }
+    .filter-options-list {
+        max-height: 90px;
+    }
+}
+
+@media (max-width: 600px) {
+    #filter-menu {
+        min-width: 0;
+        max-width: 100vw;
+        padding: 4px 0 4px 0;
+    }
+    #filter-columns {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .filter-col {
+        max-width: 100vw;
+        min-width: 0;
+        flex: 1 1 100%;
+    }
+}
 #pipeline-bar-btn:hover {
     background: #222832;
     border-color: #666;
