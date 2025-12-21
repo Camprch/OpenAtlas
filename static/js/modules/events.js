@@ -59,7 +59,7 @@ export function renderEvents(data) {
                     const postLink = m.url ? `<a href="${m.url}" target="_blank">post n° ${m.telegram_message_id}</a>` : "";
                     const timeStr = new Date(m.event_timestamp || m.created_at).toLocaleString();
                     return `
-            <li class="event">
+            <li class="event" data-msg-id="${m.id}">
                 <div class="evt-title" data-zone="${idx}" data-msg="${mIdx}" style="cursor:pointer;">${title}</div>
                 <div class="evt-text" style="display:none;">
                     ${fullText}

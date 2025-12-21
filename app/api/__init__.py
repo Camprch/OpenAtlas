@@ -15,5 +15,10 @@ router.include_router(filters_router)
 
 from app.api.events import router as events_router
 router.include_router(events_router)
+
 from app.api.session_wizard import router as session_wizard_router
 router.include_router(session_wizard_router)
+
+# Ajout du routeur de recherche
+from app.api.search import router as search_router
+router.include_router(search_router)

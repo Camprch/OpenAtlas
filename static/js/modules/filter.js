@@ -101,10 +101,10 @@ export async function renderAllFilterOptions() {
     const columns = document.createElement('div');
     columns.id = 'filter-columns';
     const categories = [
-        { key: 'date', label: 'Date' },
-        { key: 'source', label: 'Source' },
-        { key: 'label', label: 'Label' },
-        { key: 'event_type', label: 'Type' }
+        { key: 'date', label: 'Date 🗓️' },
+        { key: 'source', label: 'Source 📡' },
+        { key: 'label', label: 'Label 🏷️' },
+        { key: 'event_type', label: 'Type 📝' }
     ];
     for (const cat of categories) {
         const col = document.createElement('div');

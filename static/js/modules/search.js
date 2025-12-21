@@ -1,0 +1,184 @@
+// modules/search.js
+
+
+// Mapping pays (clé normalisée) pour correspondance côté frontend
+let COUNTRY_ALIASES = {};
+let COUNTRY_COORDS = {};
+fetch('/static/data/countries.json')
+    .then(r => r.json())
+    .then(data => {
+        COUNTRY_ALIASES = data.aliases || {};
+        COUNTRY_COORDS = data.coordinates || {};
+    });
+
+export function setupSearch() {
+    const input = document.getElementById('search-input');
+    if (!input) return;
+
+    function normalize(str) {
+        return str.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+    }
+    // Fonction utilitaire pour surligner le texte recherché (insensible à la casse et aux accents)
+    function highlightQuery(text, query) {
+        if (!query) return text;
+        // Normalisation sans accents, insensible à la casse
+        const norm = s => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+        const normText = norm(text);
+        const normQuery = norm(query);
+        if (!normQuery) return text;
+        let result = '';
+        let i = 0;
+        while (i < text.length) {
+            // Cherche la position de la prochaine occurrence normalisée
+            let found = -1;
+            for (let j = i; j <= text.length - query.length; j++) {
+                if (normText.substr(j, normQuery.length) === normQuery) {
+                    found = j;
+                    break;
+                }
+            }
+            if (found === -1) {
+                result += text.slice(i);
+                break;
+            }
+            result += text.slice(i, found) + `<span class="search-hl">` + text.slice(found, found + query.length) + '</span>';
+            i = found + query.length;
+        }
+        return result;
+    }
+
+    async function doSearch() {
+        const q = input.value.trim();
+        if (!q) return;
+        input.disabled = true;
+        try {
+            const resp = await fetch(`/api/search/events?q=${encodeURIComponent(q)}`);
+            if (!resp.ok) throw new Error('Erreur API');
+            const results = await resp.json();
+            if (results.length === 0) {
+                alert('Aucun résultat.');
+            } else {
+                // Affichage simple : liste des résultats dans une modale avec surbrillance
+                const html = results.map((m, i) =>
+                    `<div class='search-result-item' data-country="${encodeURIComponent(m.country || '')}" data-country-norm="${encodeURIComponent(m.country_norm || '')}" data-region="${encodeURIComponent(m.region || '')}" data-location="${encodeURIComponent(m.location || '')}" data-msgid="${m.id}" style='margin-bottom:12px; cursor:pointer; border-radius:8px; padding:8px 6px; transition:background 0.15s;' tabindex="0">
+                        <b>${highlightQuery((m.country || '') + ' ' + (m.region || '') + ' ' + (m.location || ''), q)}</b><br>
+                        <span style='color:#22c55e;'>${highlightQuery(m.event_type || '', q)}</span> <span style='color:#888;'>${highlightQuery(m.label || '', q)}</span><br>
+                        ${highlightQuery(m.translated_text || '', q)}
+                    </div>`
+                ).join('');
+                showSearchModal(html);
+            }
+        } catch (e) {
+            alert('Erreur recherche: ' + e.message);
+        } finally {
+            input.disabled = false;
+        }
+    }
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') doSearch();
+    });
+
+    // Petite modale pour afficher les résultats
+    function showSearchModal(html) {
+        let modal = document.getElementById('search-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'search-modal';
+            modal.style.position = 'fixed';
+            modal.style.top = '60px';
+            modal.style.left = '50%';
+            modal.style.transform = 'translateX(-50%)';
+            modal.style.background = '#181c25';
+            modal.style.color = '#eee';
+            modal.style.border = '1px solid #444';
+            modal.style.borderRadius = '12px';
+            modal.style.boxShadow = '0 4px 24px #0008';
+            modal.style.zIndex = '9999';
+            modal.style.minWidth = '320px';
+            modal.style.maxWidth = '90vw';
+            modal.style.padding = '18px 24px 18px 24px';
+            modal.style.maxHeight = '70vh';
+            modal.style.overflow = 'hidden';
+            modal.innerHTML = `<button id='close-search-modal' style='position:absolute; top:8px; right:12px; background:#444; color:#eee; border:none; border-radius:6px; padding:4px 12px; cursor:pointer;'>×</button><div id='search-modal-content' style='overflow-y:auto; max-height:60vh;'></div>`;
+            document.body.appendChild(modal);
+            modal.querySelector('#close-search-modal').onclick = () => modal.remove();
+        }
+        modal.querySelector('#search-modal-content').innerHTML = html;
+        // Ajoute les listeners sur chaque résultat
+        modal.querySelectorAll('.search-result-item').forEach(item => {
+            // Utilise le champ country brut (non normalisé) pour ouvrir le panneau latéral
+            // Utilise country_norm (clé attendue par l'API) si dispo, sinon fallback sur country
+            const countryNorm = decodeURIComponent(item.dataset.country_norm || '');
+            const countryRaw = decodeURIComponent(item.dataset.country || '');
+            let country = countryNorm;
+            if (!country) {
+                // Tentative de correspondance via les alias (en minuscule)
+                const key = countryRaw.trim().toLowerCase();
+                if (COUNTRY_ALIASES[key]) {
+                    country = COUNTRY_ALIASES[key];
+                } else {
+                    // Tentative de correspondance directe dans les clés de coordonnées
+                    for (const k in COUNTRY_COORDS) {
+                        if (k.toLowerCase().endsWith(countryRaw.toLowerCase())) {
+                            country = k;
+                            break;
+                        }
+                    }
+                }
+            }
+            console.log('[Recherche] country_norm:', countryNorm, '| country:', countryRaw, '| utilisé pour openSidePanel:', country);
+            item.onclick = () => {
+                const msgId = item.dataset.msgid;
+                if (!country) {
+                    console.warn('Champ country vide pour l\'événement', msgId, item);
+                }
+                if (window.openSidePanel && country) {
+                    console.log('[Recherche] Ouverture du panneau latéral pour le pays :', country);
+                    window.openSidePanel(country);
+                    // Attend que l'événement soit présent dans le DOM avant de scroller/surligner
+                    function openAllZones() {
+                        document.querySelectorAll('.zone-header').forEach(header => {
+                            const btn = header.querySelector('.toggle-btn');
+                            const listId = header.getAttribute('data-idx');
+                            const listEl = document.getElementById(`zone-list-${listId}`);
+                            if (listEl && listEl.style.display === 'none') {
+                                header.click();
+                            }
+                        });
+                    }
+                    let tries = 0;
+                    function tryHighlight() {
+                        openAllZones();
+                        const evt = document.querySelector(`[data-msg-id='${msgId}']`);
+                        if (evt) {
+                            evt.scrollIntoView({behavior:'smooth', block:'center'});
+                            evt.classList.add('search-match');
+                            setTimeout(()=>{evt.classList.remove('search-match');}, 2000);
+                        } else if (tries < 30) { // jusqu'à 3 secondes
+                            tries++;
+                            setTimeout(tryHighlight, 100);
+                        } else {
+                            console.warn('Événement non trouvé dans le DOM après 3s', msgId);
+                        }
+                    }
+                    tryHighlight();
+                } else {
+                    alert(`Impossible d'ouvrir le panneau latéral : pays non reconnu pour l'événement ${msgId} (country='${country}')`);
+                }
+                modal.remove();
+            };
+            item.onkeydown = (e) => { if (e.key === 'Enter') item.click(); };
+        });
+    }
+
+    // Style pour la surbrillance des zones trouvées (une seule fois)
+    if (!document.getElementById('search-match-style')) {
+        const style = document.createElement('style');
+        style.id = 'search-match-style';
+        style.innerHTML = `
+            .search-match { background: #2e5c8a !important; color: #fff !important; box-shadow: 0 0 0 3px #22c55e; transition: background 0.2s; }
+            .search-hl { background: #ffe066; color: #222; border-radius: 3px; padding: 0 2px; }
+        `;
+        document.head.appendChild(style);
+    }
+}

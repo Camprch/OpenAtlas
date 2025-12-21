@@ -1,3 +1,4 @@
+import { setupSearch } from "./search.js";
 // modules/main.js
 import { initMap } from "./map.js";
 import { loadCountryData, loadActiveCountries } from "./countries.js";
@@ -38,6 +39,11 @@ async function init() {
     await loadActiveCountries();
 
     setupFilterMenuSync();
+
+    setupSearch();
+
+    // Expose openSidePanel pour la recherche (search.js)
+    window.openSidePanel = openSidePanel;
 
     // Reprise de l'état pipeline au chargement via pipeline.js
     if (pipelineBarBtn && pipelineBarFill && pipelineBarLabel) {

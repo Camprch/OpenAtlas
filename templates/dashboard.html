@@ -8,7 +8,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OSINT Dashboard</title>
+    <title>MAP</title>
 
     <!-- Favicon emoji 🛰️ -->
     <link rel="icon" type="image/svg+xml"
@@ -33,19 +33,19 @@
 <body>
 
 
-
 <header style="display: flex; align-items: center; gap: 8px; justify-content: space-between;">
     <div style="display: flex; align-items: center; gap: 8px;">
-        <span class="logo-icon">🛰️</span>
-        <span style="font-size: 1.5rem; font-weight: bold; letter-spacing: 1px; margin-right:2px;">OSINT</span>
+        <span class="logo-icon" style="font-size:1.5rem;">🌍</span>
+        <span style="font-size: 1.5rem; font-weight: bold; letter-spacing: 1px; margin-right:2px;">MAP</span>
         <div id="filter-container-global" style="display: flex; align-items: center; gap: 4px;">
-            <button id="filter-btn-global" style="padding:6px 14px; background:#1a1f24; border: 1px solid #444; color:#eee; border-radius:999px; font-size:13px; outline:none; cursor:pointer; transition:background 0.15s, box-shadow 0.15s, transform 0.1s; text-decoration:none; font-weight:normal; display:inline-flex; align-items:center; gap:7px; font-family: Arial, sans-serif; text-transform:none; letter-spacing:normal;">Filter <span style='font-size:1.2em;'>🔎</span></button>
+            <button id="filter-btn-global" style="padding:6px 14px; background:#1a1f24; border: 1px solid #444; color:#eee; border-radius:999px; font-size:13px; outline:none; cursor:pointer; transition:background 0.15s, box-shadow 0.15s, transform 0.1s; text-decoration:none; font-weight:normal; display:inline-flex; align-items:center; gap:7px; font-family: Arial, sans-serif; text-transform:none; letter-spacing:normal;">Filters <span style='font-size:1.2em;'>🔬</span></button>
+            <input id="search-input" type="text" placeholder="🔎 Search..." style="padding:6px 12px; background:#23272e; border:1px solid #444; color:#eee; border-radius:999px; font-size:13px; outline:none; font-family: Arial, sans-serif; width:160px; transition:box-shadow 0.15s; margin-left:4px;" />
         </div>
     </div>
         <div style="display: flex; align-items: center; gap: 8px; margin-right:10px;">
             <div id="pipeline-bar-btn" style="padding:6px 14px; background:#1a1f24; border: 1px solid #444; color:#eee; border-radius:999px; font-size:13px; outline:none; cursor:pointer; transition:background 0.15s, box-shadow 0.15s, transform 0.1s; text-decoration:none; font-weight:normal; display:inline-flex; align-items:center; gap:7px; font-family: Arial, sans-serif; text-transform:none; letter-spacing:normal; position:relative; overflow:hidden; height:auto; min-width:0; width:auto; box-sizing:border-box;">
                 <div id="pipeline-bar-fill" style="position:absolute; left:0; top:0; height:100%; width:0; background:#22c55e; border-radius:999px; z-index:1; transition:width 0.3s;"></div>
-                <span id="pipeline-bar-label" style="position:relative; z-index:2; width:100%; text-align:center; pointer-events:none;">Scrap now 🔃</span>
+                <span id="pipeline-bar-label" style="position:relative; z-index:2; width:100%; text-align:center; pointer-events:none;">Refresh 🔃</span>
                 <span id="pipeline-percent" style="display:none; position:relative; z-index:2; margin-left:8px; font-size:13px; color:#22c55e; font-family:monospace;">0%</span>
             </div>
             <a href="/env-editor" title="Settings" style="padding:6px 14px; background:#1a1f24; border: 1px solid #444; color:#eee; border-radius:999px; font-size:13px; outline:none; cursor:pointer; transition:background 0.15s, box-shadow 0.15s; text-decoration:none; font-weight:normal; display:inline-flex; align-items:center; gap:7px; font-family: Arial, sans-serif; text-transform:none; letter-spacing:normal;">Settings <span style='font-size:1.2em;'>⚙️</span></a>
@@ -75,5 +75,6 @@
 <div id="sidepanel-backdrop"></div>
 
 <script type="module" src="/static/js/modules/main.js"></script>
+<script type="module">import '/static/js/modules/search.js';</script>
 </body>
 </html>
