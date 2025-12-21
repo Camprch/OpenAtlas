@@ -35,11 +35,10 @@
 }
 
 #filter-columns {
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
     gap: 18px;
-    justify-content: space-between;
-    flex-wrap: wrap;
     width: 100%;
     box-sizing: border-box;
 }
@@ -56,7 +55,7 @@
 
 .filter-col-title {
     font-weight: bold;
-    color: #facc15;
+    color: #22c55e;
     margin-bottom: 8px;
     font-size: 15px;
     letter-spacing: 0.5px;
@@ -86,12 +85,12 @@
 }
 .filter-options-list label:hover {
     background: #2d3542;
-    color: #facc15;
+    color: #22c55e;
 }
 
 .filter-options-list input[type="checkbox"] {
     margin-right: 7px;
-    accent-color: #facc15;
+    accent-color: #22c55e;
 }
 
 #filter-menu-close {
