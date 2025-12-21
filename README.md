@@ -55,4 +55,4 @@ uvicorn app.main:app --reload
 
 ## 📄 Licence
 
-MIT
+100% open source !
