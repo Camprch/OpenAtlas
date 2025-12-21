@@ -2,8 +2,9 @@
 
 Tableau de bord ergonomique pour la collecte, la traduction, l'enrichissement et la visualisation d'événements issus de sources Telegram.
 
-[![Aperçu dashboard](static/img/dashboard1.png)](static/img/dashboard1.png)
-[![Éditeur .env](static/img/env_editor.png)](static/img/env_editor.png)
+[![Carte principale](static/img/screen1.png)](static/img/screen1.png)
+[![Panneau latéral](static/img/screen2.png)](static/img/screen2.png)
+[![Formulaire de rélage](static/img/screen3.png)](static/img/screen3.png)
 
 ## 🎯 Fonctionnalités principales
 
