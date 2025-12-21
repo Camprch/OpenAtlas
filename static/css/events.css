@@ -1,0 +1,92 @@
+/* Styles des événements */
+
+.zone-header {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: background 0.15s ease,
+                transform 0.1s ease,
+                box-shadow 0.15s ease;
+}
+
+.zone-header:hover {
+    background: #1b222c;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.event {
+    padding: 8px 0;
+    border-bottom: 1px solid #333;
+}
+
+.evt-title {
+    font-weight: bold;
+    color: #ddd;
+    margin-bottom: 4px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+.evt-title:hover {
+    background: #23272f;
+    color: #fff;
+}
+
+.evt-text {
+    color: #ccc;
+    margin-bottom: 4px;
+    white-space: pre-wrap;
+    display: none;
+}
+
+.evt-meta {
+    font-size: 11px;
+    color: #777;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.evt-meta .evt-source {
+    color: #aaa;
+    font-weight: normal;
+}
+
+.evt-meta .evt-link a {
+    color: #58a6ff;
+    text-decoration: underline;
+}
+
+.evt-source a {
+    transition: transform 0.1s ease,
+                filter 0.15s ease,
+                box-shadow 0.15s ease;
+}
+
+.evt-source a:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.15);
+    text-decoration: underline;
+}
+
+.evt-link a {
+    display: inline-block;
+    transition: transform 0.1s ease,
+                filter 0.15s ease,
+                text-decoration-color 0.15s ease;
+}
+
+.evt-link a:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.2);
+    text-decoration: underline;
+}

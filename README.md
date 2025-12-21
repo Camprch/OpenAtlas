@@ -1,6 +1,6 @@
 # 🛰️ OSINT Dashboard
 
-Tableau de bord interactif pour l'analyse et la visualisation d'événements issus de sources ouvertes (OSINT), avec extraction automatisée depuis Telegram et enrichissement des données.
+Tableau de bord ergonomique pour la collecte, la traduction, l'enrichissement et la visualisation d'événements issus de sources Telegram.
 
 [![Aperçu dashboard](static/img/dashboard1.png)](static/img/dashboard1.png)
 [![Éditeur .env](static/img/env_editor.png)](static/img/env_editor.png)
@@ -11,7 +11,7 @@ Tableau de bord interactif pour l'analyse et la visualisation d'événements iss
 - **Extraction et normalisation** des pays, types d'événements, labels, etc.
 - **Traduction automatique** des messages (OpenAI)
 - **Déduplication** et enrichissement des données
-- **Visualisation web** : dashboard interactif (FastAPI + Jinja2 + JS)
+- **Visualisation web** : dashboard interactif (fast api + leaflet)
 - **Éditeur .env** intégré pour la configuration
 
 ---
@@ -46,7 +46,7 @@ uvicorn app.main:app --reload
 
 - `app/` : code principal (API, modèles, services, utils)
 - `static/` : fichiers statiques (JS, CSS, images)
-- `templates/` : templates HTML (Jinja2)
+- `templates/` : templates HTML
 - `data/` : base SQLite et données
 - `tools/` : scripts utilitaires (pipeline, export, etc.)
 

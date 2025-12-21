@@ -71,8 +71,25 @@ export async function loadActiveCountries(currentGlobalDate, sources = null, lab
             pane: 'markerPane',
         });
         const marker = L.circleMarker([lat, lon], style);
+        // Récupère l'emoji drapeau à partir du nom du pays (clé)
+        let flag = '';
+        if (key.match(/^\p{Emoji}/u)) {
+            flag = key.split(' ')[0];
+        } else {
+            // fallback: essaie de trouver dans les aliases
+            for (const alias in countryAliases) {
+                if (countryAliases[alias] === key && alias.match(/^\p{Emoji}/u)) {
+                    flag = alias.split(' ')[0];
+                    break;
+                }
+            }
+        }
+        // Affiche un popup avec le drapeau (gros) et le nom du pays sans drapeau
         if (window.IS_MOBILE === false) {
-            marker.bindPopup(`<b>${key}</b><br>Événements : ${count}`);
+            // Nettoie le nom du pays pour enlever l'emoji drapeau au début
+            // Supprime tous les emojis et caractères non-lettres/digits/espaces au début
+            const countryName = key.replace(/^[^\p{L}\p{N}]+/u, '').trim();
+            marker.bindPopup(`<div style='text-align:center;min-width:70px;'><span style='font-size:2.2em;line-height:1;'>${flag}</span><br><b>${countryName}</b></div>`);
         }
         interactiveCircle.on("mouseover", function (e) {
             marker.setStyle({ radius: style.radius * 1.15 });

@@ -1,0 +1,37 @@
+/* Styles de base : body, header, titres, etc. */
+
+body {
+    margin: 0;
+    background: #000000;
+    color: #ddd;
+    font-family: Arial, sans-serif;
+}
+
+header {
+    padding: 10px 20px;
+    background: #11161c;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 32px;
+    position: relative;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 26px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-icon {
+    font-size: 24px;
+}
+
+#dashboard-alert {
+    background: #332200;
+    color: #facc15;
+    padding: 5px 10px;
+    display: none;
+}
