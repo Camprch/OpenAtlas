@@ -59,8 +59,13 @@ async function init() {
                 ),
                 () => m.stopPipeline(pipelineBarBtn, pipelineBarLabel)
             );
-            // Si aucun pipeline en cours, on assigne le bouton normalement
-            if (!resumed) {
+            // Log pour vérifier l'assignation du onclick
+            console.log('[main.js] pipelineBarBtn.onclick:', pipelineBarBtn.onclick);
+            // Si pipeline running, force l'assignation du callback d'annulation
+            if (window.pipelineRunning) {
+                pipelineBarBtn.onclick = () => m.stopPipeline(pipelineBarBtn, pipelineBarLabel);
+                console.log('[main.js] Forçage du callback d\'annulation sur le bouton pipelineBarBtn');
+            } else if (!resumed) {
                 pipelineBarBtn.onclick = () => m.startPipeline(
                     pipelineBarBtn, pipelineBarFill, pipelineBarLabel,
                     () => m.stopPipeline(pipelineBarBtn, pipelineBarLabel),

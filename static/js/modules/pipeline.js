@@ -4,8 +4,8 @@ export async function resumePipelineIfRunning(pipelineBarBtn, pipelineBarFill, p
     const resp = await fetch('/api/pipeline-status');
     const data = await resp.json();
     if (data.running) {
-        pipelineBarBtn.disabled = true;
-        pipelineBarBtn.style.cursor = 'not-allowed';
+        pipelineBarBtn.disabled = false;
+        pipelineBarBtn.style.cursor = 'pointer';
         pipelineBarBtn.style.background = '#23272f';
         pipelineBarBtn.classList.add('pipeline-running');
         pipelineBarLabel.textContent = data.step || 'Cancel';
@@ -14,6 +14,7 @@ export async function resumePipelineIfRunning(pipelineBarBtn, pipelineBarFill, p
             pipelinePercent.textContent = `${data.percent}%`;
             pipelinePercent.style.display = 'inline';
         }
+        pipelineBarBtn.onclick = stopPipelineCb;
         pipelineRunning = true;
         pipelinePolling = setInterval(async () => {
             const statusResp = await fetch('/api/pipeline-status');
@@ -104,10 +105,16 @@ export async function startPipeline(pipelineBarBtn, pipelineBarFill, pipelineBar
 }
 
 export async function stopPipeline(pipelineBarBtn, pipelineBarLabel) {
+    console.log('[Pipeline] stopPipeline appelé, pipelineRunning =', pipelineRunning);
     if (!pipelineRunning) return;
     pipelineBarBtn.onclick = null;
     pipelineBarBtn.disabled = true;
     pipelineBarLabel.textContent = 'Cancelling...';
-    await fetch('/api/stop-pipeline', { method: 'POST' });
+    try {
+        const resp = await fetch('/api/stop-pipeline', { method: 'POST' });
+        console.log('[Pipeline] Requête /api/stop-pipeline envoyée, status:', resp.status);
+    } catch (e) {
+        console.error('[Pipeline] Erreur lors de l\'envoi de /api/stop-pipeline', e);
+    }
     pipelineRunning = false;
 }

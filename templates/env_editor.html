@@ -82,7 +82,7 @@
     <form class="env-form" id="env-form">
         <div class="env-header-bar" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
             <h1 style="margin:0;">SETTINGS</h1>
-            <a href="/dashboard" title="Retour Dashboard" style="display:inline-flex; align-items:center; justify-content:center; font-size:2.2rem; background:none; border:none; cursor:pointer; text-decoration:none; margin-left:4px; line-height:1;">🌍</a>
+            <a href="/dashboard" id="dashboard-link" title="Retour Dashboard" style="display:inline-flex; align-items:center; justify-content:center; font-size:2.2rem; background:none; border:none; cursor:pointer; text-decoration:none; margin-left:4px; line-height:1;">🌍</a>
         </div>
         <div class="env-horizontal-layout">
             <div class="env-fields-col">
@@ -300,6 +300,11 @@
                 error.style.display = 'block';
                 success.style.display = 'none';
             }
+        });
+        // Force un reload complet du dashboard pour garantir la reprise du JS pipeline
+        document.getElementById('dashboard-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = '/dashboard';
         });
         loadEnv();
     </script>

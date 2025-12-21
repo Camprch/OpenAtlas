@@ -46,6 +46,10 @@ def run_pipeline_real():
             str(script_path)
         ], cwd=str(project_root), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
         pipeline_process["proc"] = proc
+        # Stocke le PID dans un fichier temporaire
+        pid_file = Path("/tmp/pipeline.pid")
+        with open(pid_file, "w") as f:
+            f.write(str(proc.pid))
         try:
             step_map = {
                 "fetch_raw_messages_24h": (20, "Fetching"),
@@ -74,6 +78,11 @@ def run_pipeline_real():
             set_pipeline_status(100, "Done!")
         finally:
             pipeline_process["proc"] = None
+            # Supprime le fichier PID
+            try:
+                pid_file.unlink()
+            except Exception:
+                pass
 
     t = threading.Thread(target=target, daemon=True)
     t.start()
@@ -81,10 +90,26 @@ def run_pipeline_real():
 
 @router.post("/stop-pipeline")
 def stop_pipeline():
+    import os
+    from pathlib import Path
     proc = pipeline_process.get("proc")
+    pid_file = Path("/tmp/pipeline.pid")
+    killed = False
     if proc and proc.poll() is None:
         proc.terminate()
         pipeline_process["proc"] = None
         set_pipeline_status(100, "Cancelled")
+        killed = True
+    elif pid_file.exists():
+        try:
+            with open(pid_file) as f:
+                pid = int(f.read().strip())
+            os.kill(pid, 15)  # SIGTERM
+            set_pipeline_status(100, "Cancelled")
+            killed = True
+            pid_file.unlink()
+        except Exception as e:
+            return {"status": "error", "detail": str(e)}
+    if killed:
         return {"status": "stopped"}
     return {"status": "no-process"}
