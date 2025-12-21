@@ -1,52 +1,60 @@
-/* Overrides critiques pour Leaflet et éléments interactifs */
-
-.leaflet-control-zoom a {
-    background: #151a21 !important;
-    color: #eee !important;
-    border: 1px solid #222 !important;
-    box-shadow: 0 0 0 1px #000 !important;
+/* Effet pop sur tous les boutons et liens de la bannière du haut */
+.banner-btn, .banner-btn:visited, .banner-btn:active {
+	transition: background 0.15s, border-color 0.15s, transform 0.1s, box-shadow 0.15s, filter 0.15s;
+}
+.banner-btn:hover {
+	background: #222832 !important;
+	border-color: #666 !important;
+	transform: translateY(-1px) scale(1.04) !important;
+	box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+	filter: brightness(1.08) !important;
 }
 
-.leaflet-control-zoom a:hover {
-    background: #1f2630 !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5) !important;
+/* Cible les boutons/links de la bannière par style inline si besoin */
+button[style*="border-radius:999px"],
+a[style*="border-radius:999px"] {
+	transition: background 0.15s, border-color 0.15s, transform 0.1s, box-shadow 0.15s, filter 0.15s;
 }
-
-.leaflet-popup-content-wrapper {
-    background: #181c25 !important;
-    color: #eee !important;
-    border: 1px solid #333 !important;
+button[style*="border-radius:999px"]:hover,
+a[style*="border-radius:999px"]:hover {
+	background: #222832 !important;
+	border-color: #666 !important;
+	transform: translateY(-1px) scale(1.04) !important;
+	box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+	filter: brightness(1.08) !important;
 }
-
-.leaflet-popup-tip {
-    background: #181c25 !important;
-    border-top: 1px solid #333 !important;
-    border-left: 1px solid #333 !important;
-}
-
-/* Effet pop sur les boutons, liens et contrôles interactifs */
-button,
-a,
-.leaflet-control a {
-    transition: transform 0.1s ease,
-                box-shadow 0.15s ease,
-                filter 0.15s ease;
-}
-
-button:hover,
-a:hover,
-.leaflet-control a:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.05);
-}
-
-/* Effet pop spécifique pour les boutons principaux (filtres, scrap now, settings) si besoin */
+/* Effet pop sur les boutons de la bannière du haut */
 #pipeline-bar-btn:hover,
 #filter-btn:hover,
 #settings-btn:hover {
-    background: #222832;
-    border-color: #666;
-    transform: translateY(-1px) scale(1.04);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+	background: #222832;
+	border-color: #666;
+	transform: translateY(-1px) scale(1.04);
+	box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+	filter: brightness(1.08);
+	transition: background 0.15s, border-color 0.15s, transform 0.1s, box-shadow 0.15s, filter 0.15s;
+}
+/* Boutons de zoom Leaflet foncés */
+.leaflet-control-zoom a {
+	background: #151a21 !important;
+	color: #eee !important;
+	border: 1px solid #222 !important;
+	box-shadow: 0 0 0 1px #000 !important;
+}
+.leaflet-control-zoom a:hover {
+	background: #1f2630 !important;
+	transform: translateY(-1px) !important;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Popup Leaflet foncé */
+.leaflet-popup-content-wrapper {
+	background: #181c25 !important;
+	color: #eee !important;
+	border: 1px solid #333 !important;
+}
+.leaflet-popup-tip {
+	background: #181c25 !important;
+	border-top: 1px solid #333 !important;
+	border-left: 1px solid #333 !important;
 }

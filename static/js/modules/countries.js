@@ -91,20 +91,19 @@ export async function loadActiveCountries(currentGlobalDate, sources = null, lab
             const countryName = key.replace(/^[^\p{L}\p{N}]+/u, '').trim();
             marker.bindPopup(`<div style='text-align:center;min-width:70px;'><span style='font-size:2.2em;line-height:1;'>${flag}</span><br><b>${countryName}</b></div>`);
         }
-        interactiveCircle.on("mouseover", function (e) {
+        marker.on("mouseover", function (e) {
             marker.setStyle({ radius: style.radius * 1.15 });
             if (window.IS_MOBILE === false) {
                 marker.openPopup && marker.openPopup();
             }
         });
-        interactiveCircle.on("mouseout", function (e) {
+        marker.on("mouseout", function (e) {
             marker.setStyle({ radius: style.radius });
             if (window.IS_MOBILE === false) {
                 marker.closePopup && marker.closePopup();
             }
         });
-        interactiveCircle.on("click", () => openSidePanel(key));
-        interactiveCircle.addTo(map);
+        marker.on("click", () => openSidePanel(key));
         marker.addTo(map);
         markersByCountry[key] = marker;
     });
