@@ -1,6 +1,6 @@
-# 🛰️ OSINT Dashboard
+# 🛰️ OpenAtlas
 
-Tableau de bord ergonomique pour la collecte, la traduction, l'enrichissement et la visualisation d'événements issus de sources Telegram.
+Ce programme vise à simplifier la veille informationnelle en automatisant la collecte, la traduction, l’enrichissement et la visualisation sur carte d’événements issus de sources Telegram sélectionnées par l’utilisateur
 
 [![Carte principale](static/img/screen1.png)](static/img/screen1.png)
 [![Panneau latéral](static/img/screen2.png)](static/img/screen2.png)
@@ -55,4 +55,4 @@ uvicorn app.main:app --reload
 
 ## 📄 Licence
 
-100% open source !
+Projet 100% open source.
