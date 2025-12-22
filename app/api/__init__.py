@@ -20,5 +20,8 @@ from app.api.session_wizard import router as session_wizard_router
 router.include_router(session_wizard_router)
 
 # Ajout du routeur de recherche
+
+from app.api.admin import router as admin_router
+router.include_router(admin_router)
 from app.api.search import router as search_router
 router.include_router(search_router)

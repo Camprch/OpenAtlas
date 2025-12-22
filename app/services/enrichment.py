@@ -51,7 +51,7 @@ def _enrich_subbatch(items: List[Dict[str, Any]]) -> List[Dict[str, Optional[str
         "- 'country' = main impacted country in English (\"Country1\", \"Country2\", ...), or \"\" if uncertain.\n"
         "- 'region' = large area (province, region, etc.) or \"\".\n"
         "- 'location' = city / specific place or \"\".\n"
-        "- 'title' = short sentence (8-18 words) summarizing the event, in English.\n"
+        f"- 'title' = short sentence (8-18 words) summarizing the event, in {TARGET_LANGUAGE}.\n"
         f"- 'event_type' = one of: {', '.join(event_types)}. Choose the most relevant type for the event.\n"
         "- 'source' = explicit source in the text, else \"\".\n"
         "- 'timestamp' = explicit timestamp in ISO 8601, else \"\".\n"

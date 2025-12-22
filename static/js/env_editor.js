@@ -106,6 +106,32 @@ async function loadEnv() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+        // Bouton Effacer la base
+        const clearBtn = document.getElementById('clear-db-btn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', async function() {
+                if (!confirm("Effacer toute la base de données ? Cette action est irréversible.")) return;
+                const success = document.getElementById('clear-db-success');
+                const error = document.getElementById('clear-db-error');
+                success.style.display = 'none';
+                error.style.display = 'none';
+                try {
+                    const resp = await fetch('/api/admin/clear-db', { method: 'POST' });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        success.textContent = data.message || 'Base effacée.';
+                        success.style.display = 'block';
+                    } else {
+                        const err = await resp.json();
+                        error.textContent = err.detail || "Erreur lors de l'effacement.";
+                        error.style.display = 'block';
+                    }
+                } catch (e) {
+                    error.textContent = "Erreur lors de l'effacement.";
+                    error.style.display = 'block';
+                }
+            });
+        }
     // Injecte l'aide contextuelle sur le label statique Session Telegram
     const telegramLabel = document.querySelector('label[for="TELEGRAM_SESSION"]');
     if (telegramLabel && LABEL_HELP.TELEGRAM_SESSION) {

@@ -18,7 +18,7 @@ class Message(SQLModel, table=True):
     translated_text: str | None = None
 
     country: str | None = Field(default=None, index=True)
-    country_norm: str | None = Field(default=None, index=True, description="Nom canonique du pays, ou None si inconnu/non géoréférencé.")
+    country_norm: str | None = Field(default=None, description="Nom canonique du pays, ou None si inconnu/non géoréférencé.")
     region: str | None = Field(default=None, index=True)
     location: str | None = Field(default=None, index=True)
 
