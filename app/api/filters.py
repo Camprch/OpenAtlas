@@ -140,7 +140,8 @@ def get_country_event_types(
 
 @router.get("/dates", response_model=List[date])
 def get_available_dates(session: Session = Depends(get_db)):
-    stmt = select(Message.created_at).order_by(Message.created_at.desc())
+    # Utilise la date d'événement réelle (event_timestamp)
+    stmt = select(Message.event_timestamp).where(Message.event_timestamp != None).order_by(Message.event_timestamp.desc())
     rows = session.exec(stmt).all()
     seen = set()
     dates_list = []

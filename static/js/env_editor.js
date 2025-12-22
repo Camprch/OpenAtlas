@@ -50,12 +50,13 @@ const LABELS = {
     MAX_MESSAGES_PER_CHANNEL: "Scrap size 📨",
     BATCH_SIZE: "Batch Size 📦",
     TARGET_LANGUAGE: "Target Language 🌐",
+    FETCH_WINDOW_HOURS: "Fetch Window (hours) ⏳",
+    AUTO_DELETE_DAYS: "Auto-delete Messages (days) 🗑️",
 };
 
 // Aide contextuelle pour chaque rubrique (en anglais)
 const LABEL_HELP = {
-    TELEGRAM_SESSION: "Paste here your Telegram session string. You can generate it.",
-    SOURCES_TELEGRAM: "Add a source and choose a label for it.",
+    TELEGRAM_SESSION: "Paste here your Telegram session string.",
     OPENAI_API_KEY: "Enter your OpenAI API or LM Studio key.",
     OPENAI_MODEL: "Specify the model name",
     TELEGRAM_API_ID: "Get your API ID https://my.telegram.org.",
@@ -64,6 +65,9 @@ const LABEL_HELP = {
     MAX_MESSAGES_PER_CHANNEL: "Max number of msg to fetch per channel.",
     BATCH_SIZE: "Number of messages processed per batch.",
     TARGET_LANGUAGE: "Target language for translation.",
+    FETCH_WINDOW_HOURS: "Number of hours back to fetch messages from.",
+    AUTO_DELETE_DAYS: "Delete messages older than X days.",
+    SOURCES_TELEGRAM: "Add a source and choose a label for it.",
 };
 
 async function loadEnv() {
@@ -83,8 +87,17 @@ async function loadEnv() {
     }
     renderSources(sourcesData);
     Object.entries(data).forEach(([key, value]) => {
-        if (key === 'TELEGRAM_SESSION' || key === 'SOURCES_TELEGRAM') {
+        // On ignore les champs Telegram déjà présents dans la colonne de droite
+        if ([
+            'TELEGRAM_SESSION',
+            'TELEGRAM_API_ID',
+            'TELEGRAM_API_HASH',
+            'SOURCES_TELEGRAM'
+        ].includes(key)) {
+            // On remplit quand même la valeur statique si besoin
             if (key === 'TELEGRAM_SESSION') document.getElementById('TELEGRAM_SESSION').value = value || '';
+            if (key === 'TELEGRAM_API_ID') document.getElementById('TELEGRAM_API_ID').value = value || '';
+            if (key === 'TELEGRAM_API_HASH') document.getElementById('TELEGRAM_API_HASH').value = value || '';
             return;
         }
         const label = document.createElement('label');
@@ -133,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     // Injecte l'aide contextuelle sur le label statique Session Telegram
-    const telegramLabel = document.querySelector('label[for="TELEGRAM_SESSION"]');
+    const telegramLabel = document.querySelector('#session-string-row label[for="TELEGRAM_SESSION"]');
     if (telegramLabel && LABEL_HELP.TELEGRAM_SESSION) {
         const help = document.createElement('span');
         help.textContent = '  ' + LABEL_HELP.TELEGRAM_SESSION;
@@ -141,7 +154,8 @@ document.addEventListener('DOMContentLoaded', function() {
         telegramLabel.appendChild(help);
     }
     // Injecte l'aide contextuelle sur le label statique Sources
-    const sourcesLabel = document.querySelector('.env-sources-col label');
+    const sourcesSection = document.getElementById('sources-section');
+    const sourcesLabel = sourcesSection ? sourcesSection.querySelector('label') : null;
     if (sourcesLabel && LABEL_HELP.SOURCES_TELEGRAM) {
         const help = document.createElement('span');
         help.textContent = '  ' + LABEL_HELP.SOURCES_TELEGRAM;

@@ -49,6 +49,7 @@ def store_messages(messages: list[dict]) -> None:
                 event_timestamp=msg.get("date"),
                 telegram_message_id=msg.get("telegram_message_id"),
                 orientation=msg.get("orientation"),
+                label=msg.get("label"),
             )
             session.add(m)
         session.commit()
@@ -82,6 +83,9 @@ def delete_old_messages(days: int = 10) -> None:
     Supprime les messages dont l'event_timestamp est plus vieux que X jours.
     """
     from datetime import timezone
+    from app.config import get_settings
+    settings = get_settings()
+    days = settings.auto_delete_days
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     with get_session() as session:
         from sqlmodel import delete
@@ -96,43 +100,63 @@ def delete_old_messages(days: int = 10) -> None:
 
 
 async def run_pipeline_once():
+    from app.config import get_settings
+    settings = get_settings()
+    print(f"[pipeline] Fenêtre de collecte (FETCH_WINDOW_HOURS) utilisée : {settings.fetch_window_hours}")
+    sys.stdout.flush()
     print("[pipeline] init_db()")
     sys.stdout.flush()
     init_db()
 
+    print("fetch_raw_messages_24h")
+    sys.stdout.flush()
     print("[pipeline] fetch_raw_messages_24h()")
     sys.stdout.flush()
-
     raw_messages = await fetch_raw_messages_24h()
+    print(f"[pipeline] [FETCH] Terminé : {len(raw_messages)} messages collectés.")
+    sys.stdout.flush()
     if not raw_messages:
         print("[pipeline] Aucun message à traiter.")
         sys.stdout.flush()
-    else:
-        # Filtrage des messages déjà présents en base
-        raw_messages = filter_existing_messages(raw_messages)
-        if not raw_messages:
-            print("[pipeline] Tous les messages sont déjà en base. Rien à faire.")
-            sys.stdout.flush()
-        else:
-            print("[pipeline] translate_messages()")
-            sys.stdout.flush()
-            translate_messages(raw_messages)
-            print("[pipeline] enrich_messages()")
-            sys.stdout.flush()
-            enrich_messages(raw_messages)
-            print("[pipeline] dedupe_messages()")
-            sys.stdout.flush()
-            deduped = dedupe_messages(raw_messages)
-            print(f"[pipeline] Après déduplication : {len(deduped)} messages")
-            sys.stdout.flush()
-            print("[pipeline] store_messages()")
-            sys.stdout.flush()
-            store_messages(deduped)
+        return
+    print("dedupe_messages")
+    sys.stdout.flush()
+    print("[pipeline] [DÉDUP] Début filtrage doublons...")
+    sys.stdout.flush()
+    raw_messages = filter_existing_messages(raw_messages)
+    if not raw_messages:
+        print("[pipeline] Tous les messages sont déjà en base. Rien à faire.")
+        sys.stdout.flush()
+        return
+    print("translate_messages")
+    sys.stdout.flush()
+    print("[pipeline] [TRAD] Traduction des messages par lot...")
+    sys.stdout.flush()
+    translate_messages(raw_messages)
+    print("enrich_messages")
+    sys.stdout.flush()
+    print("[pipeline] [ENRICH] Enrichissement des messages...")
+    sys.stdout.flush()
+    enrich_messages(raw_messages)
+    print("dedupe_messages")
+    sys.stdout.flush()
+    print("[pipeline] [DÉDUP] Déduplication des messages...")
+    sys.stdout.flush()
+    deduped = dedupe_messages(raw_messages)
+    print(f"[pipeline] [ENRICH] Après déduplication : {len(deduped)} messages.")
+    sys.stdout.flush()
+    print("store_messages")
+    sys.stdout.flush()
+    print("[pipeline] [STOCKAGE] Stockage en base...")
+    sys.stdout.flush()
+    store_messages(deduped)
 
+    print("delete_old_messages")
+    sys.stdout.flush()
     print("[pipeline] delete_old_messages()")
     sys.stdout.flush()
     delete_old_messages(days=10)
-    print("[pipeline] Pipeline terminé.")
+    print("Pipeline terminé")
     sys.stdout.flush()
 
 

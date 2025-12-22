@@ -36,11 +36,11 @@ def get_active_countries_service(
                 select(
                     Message.country_norm,
                     func.count().label("count"),
-                    func.max(Message.created_at).label("last_date")
+                    func.max(Message.event_timestamp).label("last_date")
                 )
                 .where(
-                    Message.created_at >= start_dt,
-                    Message.created_at <= end_dt,
+                    Message.event_timestamp >= start_dt,
+                    Message.event_timestamp <= end_dt,
                     Message.country_norm.is_not(None)
                 )
             )
@@ -50,13 +50,13 @@ def get_active_countries_service(
                     if country_norm not in all_stats:
                         all_stats[country_norm] = {"count": 0, "last_date": last_date}
                     all_stats[country_norm]["count"] += count
-                    if last_date > all_stats[country_norm]["last_date"]:
+                    if last_date and (all_stats[country_norm]["last_date"] is None or last_date > all_stats[country_norm]["last_date"]):
                         all_stats[country_norm]["last_date"] = last_date
         # Pays ignorés (non normalisés) pour ces dates
         stmt_ignored = (
             select(Message.country)
             .where(
-                Message.created_at.in_([datetime.combine(d, datetime.min.time()) for d in date_filter]),
+                Message.event_timestamp.in_([datetime.combine(d, datetime.min.time()) for d in date_filter]),
                 Message.country_norm.is_(None),
                 Message.country.is_not(None)
             )
@@ -73,10 +73,10 @@ def get_active_countries_service(
             select(
                 Message.country_norm,
                 func.count().label("count"),
-                func.max(Message.created_at).label("last_date")
+                func.max(Message.event_timestamp).label("last_date")
             )
             .where(
-                Message.created_at >= start_dt,
+                Message.event_timestamp >= start_dt,
                 Message.country_norm.is_not(None)
             )
         )
@@ -89,7 +89,7 @@ def get_active_countries_service(
         stmt_ignored = (
             select(Message.country)
             .where(
-                Message.created_at >= start_dt,
+                Message.event_timestamp >= start_dt,
                 Message.country_norm.is_(None),
                 Message.country.is_not(None)
             )
@@ -124,7 +124,7 @@ def get_country_latest_events_service(
     # Trouver la dernière date d'activité pour ce pays (country_norm)
     from sqlmodel import func
     stmt_last = (
-        select(func.max(Message.created_at))
+        select(func.max(Message.event_timestamp))
         .where(Message.country_norm == norm_country)
     )
     if sources:
@@ -140,8 +140,8 @@ def get_country_latest_events_service(
     start_dt = datetime.combine(target_date, datetime.min.time())
     end_dt = datetime.combine(target_date, datetime.max.time())
     stmt = select(Message).where(
-        Message.created_at >= start_dt,
-        Message.created_at <= end_dt,
+        Message.event_timestamp >= start_dt,
+        Message.event_timestamp <= end_dt,
         Message.country_norm == norm_country
     )
     if sources:
@@ -202,8 +202,8 @@ def get_countries_activity_service(
     start_dt = datetime.combine(target_date, datetime.min.time())
     end_dt = datetime.combine(target_date, datetime.max.time())
     stmt = select(Message).where(
-        Message.created_at >= start_dt,
-        Message.created_at <= end_dt,
+        Message.event_timestamp >= start_dt,
+        Message.event_timestamp <= end_dt,
     )
     msgs = session.exec(stmt).all()
     counts: Dict[str, int] = {}
@@ -236,8 +236,8 @@ def get_country_events_service(
         start_dt = datetime.combine(target_date, datetime.min.time())
         end_dt = datetime.combine(target_date, datetime.max.time())
         stmt = select(Message).where(
-            Message.created_at >= start_dt,
-            Message.created_at <= end_dt,
+            Message.event_timestamp >= start_dt,
+            Message.event_timestamp <= end_dt,
             Message.country_norm == norm_country
         )
     else:

@@ -76,6 +76,70 @@ async function init() {
     }
 }
 
-window.addEventListener("load", init);
+
+window.addEventListener("load", () => {
+    init();
+
+    // Gestion du bouton 🧬 pour logs pipeline sur le dashboard
+    const logsToggle = document.getElementById('pipeline-logs-toggle');
+    const logsPanel = document.getElementById('pipeline-logs-panel');
+    const logsContent = document.getElementById('pipeline-logs-content');
+    const logsClose = document.getElementById('pipeline-logs-close');
+    let logsVisible = false;
+    let logsStreamAbort = null;
+    let logsStreamReader = null;
+    if (logsToggle && logsPanel && logsContent) {
+        logsToggle.addEventListener('click', async function() {
+            if (!logsVisible) {
+                logsPanel.style.display = 'block';
+                logsVisible = true;
+                logsContent.textContent = '';
+                // Stream logs pipeline
+                logsStreamAbort = new AbortController();
+                try {
+                    const resp = await fetch('/api/pipeline-logs', { signal: logsStreamAbort.signal });
+                    if (resp.body) {
+                        const reader = resp.body.getReader();
+                        logsStreamReader = reader;
+                        const decoder = new TextDecoder('utf-8');
+                        let buffer = '';
+                        (async function readLogs() {
+                            while (logsVisible) {
+                                const { value, done } = await reader.read();
+                                if (done) break;
+                                buffer += decoder.decode(value, { stream: true });
+                                let lines = buffer.split('\n');
+                                buffer = lines.pop();
+                                for (const line of lines) {
+                                    logsContent.textContent += line + '\n';
+                                }
+                                logsContent.scrollTop = logsContent.scrollHeight;
+                            }
+                            if (buffer) {
+                                logsContent.textContent += buffer + '\n';
+                                logsContent.scrollTop = logsContent.scrollHeight;
+                            }
+                        })();
+                    }
+                } catch (e) {}
+            } else {
+                logsPanel.style.display = 'none';
+                logsVisible = false;
+                if (logsStreamAbort) logsStreamAbort.abort();
+                logsStreamAbort = null;
+                logsStreamReader = null;
+            }
+        });
+    }
+    if (logsClose && logsPanel) {
+        logsClose.addEventListener('click', function() {
+            logsPanel.style.display = 'none';
+            logsVisible = false;
+            if (logsStreamAbort) logsStreamAbort.abort();
+            logsStreamAbort = null;
+            logsStreamReader = null;
+        });
+    }
+});
 
 

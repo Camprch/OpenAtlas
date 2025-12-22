@@ -4,13 +4,13 @@ from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import ClassVar
 
-
-
 import os
 
-
-
 class Settings(BaseSettings):
+    # Fenêtre de fetching (en heures)
+    fetch_window_hours: int = 24
+    # Suppression automatique (en jours)
+    auto_delete_days: int = 7
     # 🔧 Autoriser des variables en plus dans le .env
     env_file: ClassVar[str] = ".env" if os.path.exists(os.path.join(os.path.dirname(__file__), "..", ".env")) else ".env.example"
     model_config = SettingsConfigDict(

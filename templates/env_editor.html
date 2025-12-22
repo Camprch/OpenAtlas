@@ -16,7 +16,7 @@
                     transition: transform 0.15s cubic-bezier(.4,2,.6,1);
                 }
         .env-form {
-            max-width: 1100px;
+            max-width: 1280px;
             margin: 40px auto;
             background: #181c25;
             padding: 24px;
@@ -87,19 +87,32 @@
         <div class="env-horizontal-layout">
             <div class="env-fields-col">
                 <div id="env-fields"></div>
-                <div id="session-string-row" style="margin-top:18px;">
-                    <label for="TELEGRAM_SESSION" style="display:inline-block;">Session Telegram 🤖</label>
+            </div>
+            <div class="env-sources-col">
+                <div id="telegram-section" style="margin-bottom:24px;">
+                    <label for="TELEGRAM_API_ID" style="display:block; font-weight:bold; margin-top:18px;">
+                        Telegram API ID 🆔
+                        <span style="font-size: 0.78em; color: #b7b7b7; opacity: 0.55; margin-left:10px; vertical-align:middle;">Get your API ID https://my.telegram.org.</span>
+                    </label>
+                    <input type="text" id="TELEGRAM_API_ID" name="TELEGRAM_API_ID" style="width:100%;margin-bottom:8px;" />
+                    <label for="TELEGRAM_API_HASH" style="display:block; font-weight:bold; margin-top:18px;">
+                        Telegram API Hash 🔐
+                        <span style="font-size: 0.78em; color: #b7b7b7; opacity: 0.55; margin-left:10px; vertical-align:middle;">Get your API Hash https://my.telegram.org.</span>
+                    </label>
+                    <input type="text" id="TELEGRAM_API_HASH" name="TELEGRAM_API_HASH" style="width:100%;margin-bottom:8px;" />
+                    <label for="TELEGRAM_SESSION" style="display:block; font-weight:bold; margin-top:18px;">
+                        Session Telegram 🤖
+                        <span style="font-size: 0.78em; color: #b7b7b7; opacity: 0.55; margin-left:10px; vertical-align:middle;">Paste here your Telegram session string.</span>
+                    </label>
                     <div style="display:flex; gap:8px; align-items:center;">
                         <input type="text" id="TELEGRAM_SESSION" name="TELEGRAM_SESSION" style="flex:1;" />
                         <button type="button" id="wizard-start-btn" style="padding:8px 14px; background:#1a1f24; color:#22c55e; border:1px solid #444; border-radius:6px; font-size:13px; cursor:pointer;">Generate 🔑</button>
                     </div>
                     <div id="wizard-step" style="margin-top:10px;"></div>
                 </div>
-            </div>
-            <div class="env-sources-col">
                 <div id="sources-section" style="margin-top:0;">
                     <label style="margin-bottom:8px; display:inline-block;">Telegram Sources 📡</label>
-                    <div id="sources-list"></div>
+                    <div id="sources-list" style="max-height:176px; overflow-y:auto; padding-right:24px;"></div>
                     <button type="button" id="add-source-btn" style="margin-top:10px; background:#23272f; color:#22c55e; border:1px solid #444; border-radius:6px; font-size:13px; cursor:pointer; padding:6px 14px;">Add source ➕</button>
                 </div>
             </div>

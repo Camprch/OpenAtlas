@@ -185,20 +185,19 @@ export function setupFilterMenuSync() {
         lastOpener = opener;
         window.lastFilterOpener = opener;
         if (opener === 'panel') {
-            // Affichage centré dans le panneau latéral
-            const sidepanel = document.getElementById('sidepanel');
-            if (sidepanel) {
-                filterMenu.style.position = 'absolute';
-                filterMenu.style.top = '100px';
-                filterMenu.style.left = '50%';
-                filterMenu.style.transform = 'translateX(-50%)';
-                sidepanel.appendChild(filterMenu);
-            }
+            // Affichage à gauche du sidepanel (hors du panneau)
+            filterMenu.style.position = 'fixed';
+            filterMenu.style.top = '80px';
+            filterMenu.style.right = '420px'; // largeur du sidepanel
+            filterMenu.style.left = '';
+            filterMenu.style.transform = 'none';
+            document.body.appendChild(filterMenu);
         } else {
             // Affichage classique sur la carte principale
             filterMenu.style.position = 'fixed';
             filterMenu.style.top = '60px';
             filterMenu.style.left = '80px';
+            filterMenu.style.right = '';
             filterMenu.style.transform = 'none';
             document.body.appendChild(filterMenu);
         }

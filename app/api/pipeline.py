@@ -1,10 +1,13 @@
 ### FICHIER MIGRÉ. Voir app/api/pipeline.py
+
 from fastapi import APIRouter
 from starlette.responses import StreamingResponse
 from typing import Dict
 import threading
 import sys
 from pathlib import Path
+import time
+from collections import deque
 
 router = APIRouter()
 
@@ -14,6 +17,11 @@ pipeline_status = {
     "running": False
 }
 
+
+# Buffer circulaire pour logs pipeline (thread-safe)
+PIPELINE_LOG_MAX_LINES = 500
+pipeline_logs = deque(maxlen=PIPELINE_LOG_MAX_LINES)
+pipeline_logs_lock = threading.Lock()
 pipeline_process = {"proc": None}
 
 def set_pipeline_status(percent, step):
@@ -24,6 +32,30 @@ def set_pipeline_status(percent, step):
 @router.get("/pipeline-status")
 def get_pipeline_status():
     return pipeline_status
+
+def append_pipeline_log(line):
+    with pipeline_logs_lock:
+        pipeline_logs.append(line.rstrip())
+
+@router.get("/pipeline-logs")
+def stream_pipeline_logs():
+    """
+    Stream les logs du pipeline en temps réel (texte brut, type text/event-stream ou text/plain).
+    """
+    def event_stream():
+        last_idx = 0
+        while True:
+            with pipeline_logs_lock:
+                logs = list(pipeline_logs)
+            # Envoie les nouvelles lignes
+            for line in logs[last_idx:]:
+                yield line + "\n"
+            last_idx = len(logs)
+            time.sleep(0.5)
+            # Arrêt si pipeline terminé et plus de nouvelles lignes
+            if not pipeline_status["running"] and last_idx >= len(logs):
+                break
+    return StreamingResponse(event_stream(), media_type="text/plain")
 
 @router.post("/run-pipeline")
 def run_pipeline_real():
@@ -63,7 +95,8 @@ def run_pipeline_real():
             current_percent = 0
             current_step = "Initialisation"
             for line in proc.stdout:
-                line = line.strip()
+                line = line.rstrip("\n")
+                append_pipeline_log(line)
                 for key, (percent, step) in step_map.items():
                     if key in line:
                         set_pipeline_status(percent, step)

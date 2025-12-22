@@ -54,20 +54,19 @@ def _parse_sources_env() -> Dict[str, str | None]:
 
 async def fetch_raw_messages_24h() -> List[Dict]:
     """
-    Récupère les messages des 24 dernières heures (max N par canal).
+    Récupère les messages de la fenêtre de collecte paramétrable (FETCH_WINDOW_HOURS, ex: 24h, 72h, etc.) (max N par canal).
     """
     sources_map = _parse_sources_env()
     if not sources_map:
         print("[fetch] Aucun canal dans SOURCES_TELEGRAM.")
         return []
 
-    max_per_channel = settings.max_messages_per_channel
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+    # On prépare un mapping canal -> label
+    channel_to_label = {chan: label for chan, label in sources_map.items()}
 
-    # 🔑 Choix de la session :
-    # - si TG_SESSION est présente (GitHub Actions) -> StringSession
-    # - sinon, si TELEGRAM_SESSION (settings.telegram_session) est présent -> StringSession
-    # - sinon, erreur explicite
+    max_per_channel = settings.max_messages_per_channel
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=settings.fetch_window_hours)
+
     session_str = os.environ.get("TG_SESSION") or settings.telegram_session
     if session_str and session_str.strip():
         client = TelegramClient(
@@ -109,6 +108,7 @@ async def fetch_raw_messages_24h() -> List[Dict]:
                     continue
 
                 real_source = getattr(entity, "title", None) or getattr(entity, "username", chan)
+                label = channel_to_label.get(chan)
 
                 results.append(
                     {
@@ -118,6 +118,7 @@ async def fetch_raw_messages_24h() -> List[Dict]:
                         "text": text,
                         "date": dt,
                         "telegram_message_id": m.id,
+                        "label": label,
                     }
                 )
 

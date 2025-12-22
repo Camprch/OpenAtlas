@@ -1,19 +1,33 @@
 /* Styles du menu de filtres */
 
-#sidepanel #filter-menu {
-    position: absolute !important;
-    left: 0 !important;
-    top: 80px !important;
-    width: 100% !important;
-    min-width: 520px !important;
-    max-width: 100% !important;
-    border-radius: 0 0 12px 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.7);
-    z-index: 1201;
-    padding: 20px 28px 18px 28px;
+
+#filter-menu {
+    position: fixed;
+    top: 80px;
+    right: 420px; /* largeur du sidepanel */
+    width: 420px;
+    min-width: 320px;
+    max-width: 95vw;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.85);
+    z-index: 2001;
+    padding: 24px 32px 20px 32px;
     box-sizing: border-box;
+    background: #181c25;
+    border: 1px solid #333;
+    display: none;
 }
 
+@media (max-width: 1200px) {
+    #filter-menu {
+        right: 10px !important;
+        top: 60px !important;
+        width: 95vw !important;
+        min-width: 0 !important;
+        padding: 10px 2vw 10px 2vw;
+        border-radius: 8px;
+    }
+}
 @media (max-width: 900px) {
     #sidepanel #filter-menu {
         top: 60px !important;

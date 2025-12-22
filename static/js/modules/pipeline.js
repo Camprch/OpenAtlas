@@ -1,3 +1,61 @@
+// --- LOGS PIPELINE ---
+let pipelineLogController = null;
+let pipelineLogReader = null;
+let pipelineLogActive = false;
+
+export function showPipelineLogs() {
+    const container = document.getElementById('pipeline-logs-container');
+    if (container) container.style.display = 'block';
+}
+
+export function hidePipelineLogs() {
+    const container = document.getElementById('pipeline-logs-container');
+    if (container) container.style.display = 'none';
+    const logs = document.getElementById('pipeline-logs');
+    if (logs) logs.textContent = '';
+}
+
+export async function streamPipelineLogs() {
+    showPipelineLogs();
+    const logs = document.getElementById('pipeline-logs');
+    if (!logs) return;
+    pipelineLogActive = true;
+    pipelineLogController = new AbortController();
+    try {
+        const resp = await fetch('/api/pipeline-logs', { signal: pipelineLogController.signal });
+        if (!resp.body) return;
+        const reader = resp.body.getReader();
+        pipelineLogReader = reader;
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        while (pipelineLogActive) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            // Découpe par lignes
+            let lines = buffer.split('\n');
+            buffer = lines.pop(); // la dernière ligne peut être incomplète
+            for (const line of lines) {
+                logs.textContent += line + '\n';
+            }
+            logs.scrollTop = logs.scrollHeight;
+        }
+        if (buffer) {
+            logs.textContent += buffer + '\n';
+            logs.scrollTop = logs.scrollHeight;
+        }
+    } catch (e) {
+        // ignore si abort
+    }
+}
+
+export function stopPipelineLogs() {
+    pipelineLogActive = false;
+    if (pipelineLogController) pipelineLogController.abort();
+    pipelineLogController = null;
+    pipelineLogReader = null;
+    hidePipelineLogs();
+}
 
 export async function resumePipelineIfRunning(pipelineBarBtn, pipelineBarFill, pipelineBarLabel, startPipelineCb, stopPipelineCb) {
     const pipelinePercent = document.getElementById('pipeline-percent');
@@ -69,6 +127,8 @@ export async function startPipeline(pipelineBarBtn, pipelineBarFill, pipelineBar
         pipelinePercent.textContent = '0%';
         pipelinePercent.style.display = 'inline';
     }
+    showPipelineLogs();
+    streamPipelineLogs();
     await fetch('/api/run-pipeline', { method: 'POST' });
     pipelineBarBtn.onclick = stopPipelineCb;
     pipelinePolling = setInterval(async () => {
@@ -96,6 +156,7 @@ export async function startPipeline(pipelineBarBtn, pipelineBarFill, pipelineBar
                     pipelineBarBtn.style.cursor = 'pointer';
                     pipelineBarBtn.disabled = false;
                     if (pipelinePercent) pipelinePercent.textContent = '0%';
+                    stopPipelineLogs();
                     // Recharge la page pour afficher les nouvelles données
                     window.location.reload();
                 }, 2500);
