@@ -9,9 +9,9 @@ Un outil complet conçu pour rendre la veille informationnelle bien plus efficac
 ## 🎯 Fonctionnalités principales
 
 - **Collecte automatisée** de messages Telegram via API
-- **Extraction et normalisation** des pays, types d'événements, labels, etc.
-- **Traduction automatique** des messages (OpenAI)
-- **Déduplication** et enrichissement des données
+- **Déduplication** des données
+- **Traduction automatique** des messages (IA)
+- **Enrichissement et normalisation** des pays, zones, types d'événements (IA)
 - **Visualisation web** : dashboard interactif (fast api + leaflet)
 - **Éditeur .env** intégré pour la configuration
 
@@ -21,8 +21,8 @@ Un outil complet conçu pour rendre la veille informationnelle bien plus efficac
 
 -  **Cloner le repo**
    ```bash
-   git clone https://github.com/Camprch/map-intel
-   cd map-intel
+   git clone https://github.com/Camprch/OpenAtlas
+   cd openatlas
    ```
 -  **Installer les dépendances**
    ```bash
