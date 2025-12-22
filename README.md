@@ -2,9 +2,9 @@
 
 Ce programme vise à simplifier la veille informationnelle en automatisant la collecte, la traduction, l’enrichissement et la visualisation sur carte d’événements issus de sources Telegram sélectionnées par l’utilisateur
 
-[![Carte principale](static/img/screen1.png)](static/img/screen1.png)
-[![Panneau latéral](static/img/screen2.png)](static/img/screen2.png)
-[![Formulaire de rélage](static/img/screen3.png)](static/img/screen3.png)
+[![Carte principale](static/img/screenA.png)](static/img/screenA.png)
+[![Panneau latéral](static/img/screenB.png)](static/img/screenB.png)
+[![Formulaire de rélage](static/img/screenC.png)](static/img/screenC.png)
 
 ## 🎯 Fonctionnalités principales
 
