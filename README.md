@@ -1,6 +1,7 @@
 # 🛰️ OpenAtlas
 
-Un outil complet conçu pour rendre la veille informationnelle bien plus efficace et accessible. Il automatise la collecte, la traduction, l’enrichissement et la visualisation cartographique d’événements issus de sources Telegram sélectionnées par l’utilisateur. Grâce à sa fonction de recherche avancée, il permet d’explorer rapidement et précisément la base de donnée.
+Un outil complet conçu pour faciliter la veille informationnelle. Il automatise la collecte, la traduction, l'enrichissement et la visualisation cartographique d’événements issus de sources Telegram sélectionnées par l’utilisateur. 
+Grâce à sa fonction de recherche avancée, il permet d’explorer rapidement et précisément la base de donnée.
 
 [![Carte principale](static/img/screenA.png)](static/img/screenA.png)
 [![Panneau latéral](static/img/screenB.png)](static/img/screenB.png)
