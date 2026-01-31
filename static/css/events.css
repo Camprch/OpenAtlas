@@ -90,3 +90,10 @@
     filter: brightness(1.2);
     text-decoration: underline;
 }
+
+.search-hl {
+    background: #ffe066;
+    color: #222;
+    border-radius: 3px;
+    padding: 0 2px;
+}
