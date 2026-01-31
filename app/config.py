@@ -19,8 +19,8 @@ class Settings(BaseSettings):
         extra="ignore"   
     )
 
-    openai_api_key: str
-    openai_model: str 
+    openai_api_key: str | None = None
+    openai_model: str | None = None
 
     telegram_api_id: int
     telegram_api_hash: str
@@ -33,6 +33,8 @@ class Settings(BaseSettings):
 
     # Target language for translation (e.g., fr, es, de)
     target_language: str = "fr"
+
+    enrichment_version: str = "1"
 
 
 @lru_cache

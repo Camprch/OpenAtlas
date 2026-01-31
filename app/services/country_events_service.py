@@ -18,6 +18,19 @@ def get_active_countries_service(
     ignored_countries = set()
     # Helper to apply optional filters consistently
 
+    def add_ignored_country(raw_country: Optional[str]) -> None:
+        if not raw_country:
+            return
+        country = str(raw_country).strip()
+        if len(country) == 1:
+            return
+        norm_list = normalize_country_names(country, COUNTRY_ALIASES)
+        if norm_list:
+            ignored_countries.add(f"{country} → {norm_list[0]}")
+        else:
+            # Country not in aliases/coords: mark as non-georeferenced
+            ignored_countries.add(country)
+
     def add_sources_labels_filter(stmt):
         if sources:
             stmt = stmt.where(Message.source.in_(sources))
@@ -71,8 +84,7 @@ def get_active_countries_service(
             stmt_ignored = stmt_ignored.where(*date_clauses)
         stmt_ignored = add_sources_labels_filter(stmt_ignored)
         for row in session.exec(stmt_ignored):
-            if row[0]:
-                ignored_countries.add(row[0])
+            add_ignored_country(row[0])
         stats = all_stats
     else:
         if days is None:
@@ -103,8 +115,7 @@ def get_active_countries_service(
             )
             stmt_ignored = add_sources_labels_filter(stmt_ignored)
             for row in session.exec(stmt_ignored):
-                if row[0]:
-                    ignored_countries.add(row[0])
+                add_ignored_country(row[0])
         else:
             # Aggregate counts and last dates within a rolling window
             now = datetime.utcnow()
@@ -136,8 +147,7 @@ def get_active_countries_service(
             )
             stmt_ignored = add_sources_labels_filter(stmt_ignored)
             for row in session.exec(stmt_ignored):
-                if row[0]:
-                    ignored_countries.add(row[0])
+                add_ignored_country(row[0])
 
     # Format and sort the response payload
     result = [

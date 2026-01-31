@@ -92,9 +92,9 @@ def run_pipeline_real():
             step_map = {
                 "init_db()": (5, "Init"),
                 "fetch_raw_messages_24h": (20, "Fetching"),
-                "translate_messages": (50, "Translation"),
-                "enrich_messages": (70, "Enrichment"),
-                "dedupe_messages": (80, "Deduplication"),
+                "enrich_messages": (50, "Enrichment"),
+                "dedupe_messages": (70, "Deduplication"),
+                "translate_messages": (80, "Translation"),
                 "store_messages": (90, "Storing"),
                 "delete_old_messages": (95, "Cleaning"),
                 "Pipeline terminé": (100, "Done!")

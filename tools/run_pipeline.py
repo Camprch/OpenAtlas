@@ -17,11 +17,12 @@ if str(ROOT_DIR) not in sys.path:
 from app.database import init_db, get_session
 from app.models.message import Message
 from app.utils.country_norm import compute_country_norm
+from app.api.filters import COUNTRY_ALIASES, normalize_country_names
 from sqlmodel import select
 
 from app.services.fetch import fetch_raw_messages_24h
 from app.services.translation import translate_messages
-from app.services.enrichment import enrich_messages
+from app.services.enrichment import enrich_messages, EnrichmentConfig
 from app.services.dedupe import dedupe_messages
 
 
@@ -144,7 +145,15 @@ def store_messages(messages: list[dict]) -> None:
             raw_country = msg.get("country")
             country_norm = compute_country_norm(raw_country)
             if country_norm is None and raw_country:
-                unknown_countries.append(str(raw_country))
+                raw_str = str(raw_country).strip()
+                if len(raw_str) == 1:
+                    pass
+                else:
+                    normalized = normalize_country_names(raw_str, COUNTRY_ALIASES)
+                    if normalized:
+                        unknown_countries.append(f"{raw_str} -> {normalized[0]}")
+                    else:
+                        unknown_countries.append(raw_str)
             m = Message(
                 source=msg.get("source") or "unknown",
                 channel=msg.get("channel"),
@@ -259,19 +268,13 @@ async def run_pipeline_once():
         log("[DEDUP] All messages already in DB. Nothing to do.")
         return
 
-    log("translate_messages")
-    log("[TRAD] Translating messages...")
-    try:
-        translate_messages(raw_messages)
-    except Exception as e:
-        log(f"[TRAD][ERROR] {e}")
-        raise
-    summarize_messages(raw_messages, "TRAD")
-
+    # IMPORTANT:
+    # Enrichment MUST run on original text BEFORE any translation.
+    # Translation is a final presentation step and must never affect enrichment.
     log("enrich_messages")
     log("[ENRICH] Enriching messages...")
     try:
-        enrich_messages(raw_messages)
+        enrich_messages(raw_messages, config=None)
     except Exception as e:
         log(f"[ENRICH][ERROR] {e}")
         raise
@@ -281,6 +284,15 @@ async def run_pipeline_once():
     log("[DEDUP] De-duplicating messages...")
     deduped = dedupe_messages(raw_messages)
     log(f"[DEDUP] After dedupe: {len(deduped)} messages.")
+
+    log("translate_messages")
+    log("[TRAD] Translating messages...")
+    try:
+        translate_messages(deduped)
+    except Exception as e:
+        log(f"[TRAD][ERROR] {e}")
+        raise
+    summarize_messages(deduped, "TRAD")
 
     log("store_messages")
     log("[STORE] Writing to DB...")

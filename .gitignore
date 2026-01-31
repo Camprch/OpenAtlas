@@ -23,6 +23,7 @@ telegram_session*
 venv/
 .venv/
 venv
+.venv
 
 # OS files
 .DS_Store
@@ -34,13 +35,18 @@ data/*
 *.db
 data
 /data
-
+static_site/
+static_site
 
 # Logs
 *.log
 
 # Byte-compiled
 *.swp
+
+# IDE files
+.vscode/
+.idea/
 
 # Cache
 .cache/
