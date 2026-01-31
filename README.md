@@ -46,10 +46,10 @@ uvicorn app.main:app --reload
 
 ---
 
-## 📰 Export statique (newsletter / GitHub Action)
+## 📰 Export statique
 
-Le script `tools/build_static_site.py` génère un site statique minimal à partir des données DB.
-Cet export est destiné à alimenter newsletter sous forme de planisphère.
+OpenAtlas peut générer une version statique et légère du dashboard à partir des données de la base.
+Cette version permet de consulter la carte des événements sans backend, idéale pour un partage public ou une publication automatisée.
 
 ```bash
 python tools/build_static_site.py
