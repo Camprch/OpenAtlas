@@ -83,3 +83,8 @@
     padding-right: 10px;
     flex-shrink: 0;
 }
+
+.panel-flag {
+    font-size: 1.2em;
+    margin-right: 6px;
+}

@@ -8,123 +8,66 @@
     <link rel="icon" type="image/svg+xml"
           href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dominant-baseline='central' font-size='52'%3E🛰️%3C/text%3E%3C/svg%3E">
 
+    <link rel="stylesheet" href="/static/css/env_editor.css" />
     <link rel="stylesheet" href="/static/css/dashboard.css" />
-    <link rel="stylesheet" href="/static/css/dashboard.css" />
-    <style>
-                .env-header-bar a:hover {
-                    transform: scale(1.25);
-                    transition: transform 0.15s cubic-bezier(.4,2,.6,1);
-                }
-        .env-form {
-            max-width: 1280px;
-            margin: 40px auto;
-            background: #181c25;
-            padding: 24px;
-            border-radius: 10px;
-        }
-        .env-horizontal-layout {
-            display: flex;
-            flex-direction: row;
-            gap: 48px;
-        }
-        .env-fields-col, .env-sources-col {
-            flex: 1 1 0;
-            min-width: 320px;
-        }
-        .env-form label {
-            display: block;
-            margin-top: 18px;
-            font-weight: bold;
-        }
-        .env-form input {
-            width: 100%;
-            padding: 8px;
-            margin-top: 4px;
-            background: #23272f;
-            color: #eee;
-            border: 1px solid #444;
-            border-radius: 4px;
-        }
-        .env-form button[type="submit"] {
-            margin-top: 0;
-            padding: 10px 24px;
-            background: #22c55e;
-            color: #111;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .env-form button[type="submit"]:hover {
-            background: #16a34a;
-        }
-        .env-form .success {
-            color: #22c55e;
-            margin-top: 16px;
-        }
-        .env-form .error {
-            color: #f87171;
-            margin-top: 16px;
-        }
-        /* Responsive */
-        @media (max-width: 900px) {
-            .env-horizontal-layout {
-                flex-direction: column;
-                gap: 0;
-            }
-            .env-fields-col, .env-sources-col {
-                min-width: 0;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/sidepanel.css" />
+    <link rel="stylesheet" href="/static/css/base.css" />
+    <link rel="stylesheet" href="/static/css/dashboard_ui.css" />
+    <link rel="stylesheet" href="/static/css/events.css" />
+    <link rel="stylesheet" href="/static/css/filters.css" />
+    <link rel="stylesheet" href="/static/css/map.css" />
+    <link rel="stylesheet" href="/static/css/overrides.css" />
+    <link rel="stylesheet" href="/static/css/responsive.css" />
+
+>
 </head>
 <body>
     <form class="env-form" id="env-form">
-        <div class="env-header-bar" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
-            <h1 style="margin:0;">SETTINGS ⚙️</h1>
-            <a href="/dashboard" id="dashboard-link" title="Retour Dashboard" style="display:inline-flex; align-items:center; justify-content:center; font-size:2.2rem; background:none; border:none; cursor:pointer; text-decoration:none; margin-left:4px; line-height:1;">🌍</a>
+        <div class="env-header-bar">
+            <h1 class="env-title">SETTINGS ⚙️</h1>
+            <a href="/dashboard" id="dashboard-link" title="Retour Dashboard">🌍</a>
         </div>
         <div class="env-horizontal-layout">
             <div class="env-fields-col">
                 <div id="env-fields"></div>
             </div>
             <div class="env-sources-col">
-                <div id="telegram-section" style="margin-bottom:24px;">
-                    <label for="TELEGRAM_API_ID" style="display:block; font-weight:bold; margin-top:18px;">
+                <div id="telegram-section">
+                    <label for="TELEGRAM_API_ID">
                         Telegram API ID 🆔
-                        <span style="font-size: 0.78em; color: #b7b7b7; opacity: 0.55; margin-left:10px; vertical-align:middle;">Get your API ID https://my.telegram.org.</span>
+                        <span class="env-help">Get your API ID https://my.telegram.org.</span>
                     </label>
-                    <input type="text" id="TELEGRAM_API_ID" name="TELEGRAM_API_ID" style="width:100%;margin-bottom:8px;" />
-                    <label for="TELEGRAM_API_HASH" style="display:block; font-weight:bold; margin-top:18px;">
+                    <input type="text" id="TELEGRAM_API_ID" name="TELEGRAM_API_ID" class="env-input-spaced" />
+                    <label for="TELEGRAM_API_HASH">
                         Telegram API Hash 🔐
-                        <span style="font-size: 0.78em; color: #b7b7b7; opacity: 0.55; margin-left:10px; vertical-align:middle;">Get your API Hash https://my.telegram.org.</span>
+                        <span class="env-help">Get your API Hash https://my.telegram.org.</span>
                     </label>
-                    <input type="text" id="TELEGRAM_API_HASH" name="TELEGRAM_API_HASH" style="width:100%;margin-bottom:8px;" />
-                    <label for="TELEGRAM_SESSION" style="display:block; font-weight:bold; margin-top:18px;">
+                    <input type="text" id="TELEGRAM_API_HASH" name="TELEGRAM_API_HASH" class="env-input-spaced" />
+                    <label for="TELEGRAM_SESSION">
                         Session Telegram 🤖
-                        <span style="font-size: 0.78em; color: #b7b7b7; opacity: 0.55; margin-left:10px; vertical-align:middle;">Paste here your Telegram session string.</span>
+                        <span class="env-help">Paste here your Telegram session string.</span>
                     </label>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <input type="text" id="TELEGRAM_SESSION" name="TELEGRAM_SESSION" style="flex:1;" />
-                        <button type="button" id="wizard-start-btn" style="padding:8px 14px; background:#1a1f24; color:#22c55e; border:1px solid #444; border-radius:6px; font-size:13px; cursor:pointer;">Generate 🔑</button>
+                    <div class="env-row">
+                        <input type="text" id="TELEGRAM_SESSION" name="TELEGRAM_SESSION" class="env-input-grow" />
+                        <button type="button" id="wizard-start-btn">Generate 🔑</button>
                     </div>
-                    <div id="wizard-step" style="margin-top:10px;"></div>
+                    <div id="wizard-step"></div>
                 </div>
-                <div id="sources-section" style="margin-top:0;">
-                    <label style="margin-bottom:8px; display:inline-block;">Telegram Sources 📡</label>
-                    <div id="sources-list" style="max-height:176px; overflow-y:auto; padding-right:24px;"></div>
-                    <button type="button" id="add-source-btn" style="margin-top:10px; background:#23272f; color:#22c55e; border:1px solid #444; border-radius:6px; font-size:13px; cursor:pointer; padding:6px 14px;">Add source ➕</button>
+                <div id="sources-section">
+                    <label class="env-sources-label">Telegram Sources 📡</label>
+                    <div id="sources-list"></div>
+                    <button type="button" id="add-source-btn">Add source ➕</button>
                 </div>
             </div>
         </div>
-        <div style="display:flex; justify-content:flex-end; margin-top:24px;">
+        <div class="env-actions">
             <button type="submit">SAVE 💾</button>
-            <button type="button" id="clear-db-btn" style="margin-left:18px; background:#f87171; color:#fff; border:none; border-radius:6px; font-size:16px; padding:10px 24px; cursor:pointer;">Clear database 🗑️</button>
+            <button type="button" id="clear-db-btn">Clear database 🗑️</button>
         </div>
-        <div class="success" id="env-success" style="display:none;"></div>
-        <div class="error" id="env-error" style="display:none;"></div>
-        <div class="success" id="clear-db-success" style="display:none;"></div>
-        <div class="error" id="clear-db-error" style="display:none;"></div>
+        <div class="success env-message" id="env-success"></div>
+        <div class="error env-message" id="env-error"></div>
+        <div class="success env-message" id="clear-db-success"></div>
+        <div class="error env-message" id="clear-db-error"></div>
     </form>
     <script src="/static/js/env_editor.js"></script>
 </body>

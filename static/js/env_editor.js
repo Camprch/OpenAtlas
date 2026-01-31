@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const nextBtn = document.createElement('button');
         nextBtn.textContent = 'Envoyer code';
         nextBtn.type = 'button';
-        nextBtn.style = 'padding:6px 14px; background:#1a1f24; color:#22c55e; border:1px solid #444; border-radius:6px; font-size:13px; cursor:pointer;';
+        nextBtn.id = 'wizard-next-btn';
         wizard.appendChild(phoneInput);
         wizard.appendChild(nextBtn);
         let sessionId = null;
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const codeBtn = document.createElement('button');
                     codeBtn.textContent = 'Valider code';
                     codeBtn.type = 'button';
-                    codeBtn.style = 'padding:6px 14px; background:#1a1f24; color:#22c55e; border:1px solid #444; border-radius:6px; font-size:13px; cursor:pointer;';
+                    codeBtn.id = 'wizard-code-btn';
                     wizard.appendChild(codeInput);
                     wizard.appendChild(codeBtn);
                     codeBtn.onclick = async function() {

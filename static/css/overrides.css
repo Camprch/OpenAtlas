@@ -23,17 +23,6 @@ a[style*="border-radius:999px"]:hover {
 	box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
 	filter: brightness(1.08) !important;
 }
-/* Effet pop sur les boutons de la bannière du haut */
-#pipeline-bar-btn:hover,
-#filter-btn:hover,
-#settings-btn:hover {
-	background: #222832;
-	border-color: #666;
-	transform: translateY(-1px) scale(1.04);
-	box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-	filter: brightness(1.08);
-	transition: background 0.15s, border-color 0.15s, transform 0.1s, box-shadow 0.15s, filter 0.15s;
-}
 /* Boutons de zoom Leaflet foncés */
 .leaflet-control-zoom a {
 	background: #151a21 !important;
