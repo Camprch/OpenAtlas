@@ -1,9 +1,9 @@
 # 🛰️ OpenAtlas
 
-EN : OpenAtlas is an OSINT dashboard that automates Telegram data collection, translation, enrichment, and map-based visualization. It lets you explore events by country, date, label, and source, with a searchable database and an integrated .env editor for configuration.
-
-FR : Un outil complet conçu pour faciliter la veille informationnelle. Il automatise la collecte, la traduction, l'enrichissement et la visualisation cartographique d’événements issus de sources Telegram sélectionnées par l’utilisateur. 
+🇫🇷 : Un outil complet conçu pour faciliter la veille informationnelle. Il automatise la collecte, la traduction, l'enrichissement et la visualisation cartographique d’événements issus de sources Telegram sélectionnées par l’utilisateur. 
 Grâce à sa fonction de recherche avancée, il permet d’explorer rapidement et précisément la base de donnée.
+
+🇬🇧 : OpenAtlas is an OSINT dashboard that automates Telegram data collection, translation, enrichment, and map-based visualization. It lets you explore events by country, date, label, and source, with a searchable database and an integrated .env editor for configuration.
 
 [![Carte principale](static/img/screenA.png)](static/img/screenA.png)
 [![Panneau latéral](static/img/screenB.png)](static/img/screenB.png)
