@@ -6,10 +6,7 @@ import os
 
 from sqlmodel import SQLModel, create_engine, Session
 
-# Nouvelle logique :
-# 1. Si pas de db locale -> on regarde DB_URL
-# 2. Si pas de DB_URL -> on crée une db locale
-
+# Resolve the database URL (prefer DB_URL, fallback to local SQLite)
 DB_PATH = Path("data/osint.db")
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 db_url = os.getenv("DB_URL")
@@ -20,7 +17,7 @@ else:
     DATABASE_URL = f"sqlite:///{DB_PATH}"
     is_sqlite = True
 
-# 2) Création de l'engine
+# Create the SQLModel engine (SQLite needs check_same_thread disabled)
 engine = create_engine(
     DATABASE_URL,
     echo=False,
@@ -30,18 +27,20 @@ engine = create_engine(
 
 
 def init_db() -> None:
-    # importe les modèles pour que SQLModel connaisse les tables
+    # Import models so SQLModel registers table metadata
     from app.models.message import Message  # noqa: F401
     SQLModel.metadata.create_all(engine)
 
 
 @contextmanager
 def get_session() -> Session:
+    # Context-managed session helper for non-FastAPI use
     with Session(engine) as session:
         yield session
 
 
 # Dépendance FastAPI
 def get_db():
+    # FastAPI dependency that yields a DB session
     with Session(engine) as session:
         yield session

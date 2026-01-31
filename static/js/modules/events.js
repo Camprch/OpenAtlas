@@ -1,13 +1,14 @@
-// Ajout de la fonction loadEvents (extrait de dashboard.js)
+// Load and render events for a selected country
 export async function loadEvents(country, currentPanelDate = null, sources = null, labels = null, event_types = null) {
     const eventsContainer = document.getElementById("events");
 
-    // Si la date courante n'est pas fournie, on tente de la lire depuis le select
+    // Fall back to the panel date selector when no date is provided
     if (!currentPanelDate) {
         const select = document.getElementById("timeline-panel");
         currentPanelDate = select ? select.value : null;
     }
 
+    // Build endpoint and query parameters based on filters
     let url = "";
     const params = [];
     if (!currentPanelDate || currentPanelDate === "ALL") {
@@ -45,6 +46,7 @@ export function renderEvents(data) {
         eventsContainer.textContent = "Aucun événement.";
         return;
     }
+    // Render zones and their messages as collapsible sections
     const html = data.zones
         .map((zone, idx) => {
             const header =
@@ -53,7 +55,7 @@ export function renderEvents(data) {
             const msgs = zone.messages
                 .map((m, mIdx) => {
                     const title = m.title || "(Sans titre)";
-                    // Affiche toujours le texte traduit (même si vide)
+                    // Always display translated text (even if empty)
                     const fullText = m.translated_text || "";
                     const orientation = m.orientation ? ` • ${m.orientation}` : "";
                     const postLink = m.url ? `<a href="${m.url}" target="_blank">post n° ${m.telegram_message_id}</a>` : "";
@@ -87,7 +89,7 @@ export function renderEvents(data) {
         })
         .join("");
     eventsContainer.innerHTML = html;
-    // Listeners pour dérouler les zones
+    // Wire up click handlers to expand/collapse zones and messages
     data.zones.forEach((zone, idx) => {
         const headerEl = document.querySelector(
             `.zone-header[data-idx='${idx}']`
@@ -98,7 +100,7 @@ export function renderEvents(data) {
             if (listEl.style.display === "none") {
                 listEl.style.display = "";
                 btn.textContent = "▼";
-                // Ajout/refresh listeners à chaque ouverture
+                // Attach message toggle listeners when the zone opens
                 listEl.querySelectorAll('.evt-title').forEach(titleEl => {
                     if (!titleEl.dataset.listener) {
                         titleEl.addEventListener('click', function(e) {

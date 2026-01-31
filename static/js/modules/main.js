@@ -16,6 +16,7 @@ const pipelineBarLabel = document.getElementById('pipeline-bar-label');
 
 
 function fillSelect(select, value, dates) {
+    // Populate a select with available dates and an "ALL" option
     select.innerHTML = "";
     const allOpt = document.createElement("option");
     allOpt.value = "ALL";
@@ -32,20 +33,21 @@ function fillSelect(select, value, dates) {
 
 
 async function init() {
+    // Boot sequence for the dashboard
     initMap();
     await loadCountryData();
 
-    // Affiche tous les événements sur la carte au chargement
+    // Load all events on the map at startup
     await loadActiveCountries();
 
     setupFilterMenuSync();
 
     setupSearch();
 
-    // Expose openSidePanel pour la recherche (search.js)
+    // Expose openSidePanel for search results
     window.openSidePanel = openSidePanel;
 
-    // Reprise de l'état pipeline au chargement via pipeline.js
+    // Resume pipeline UI state on page load
     if (pipelineBarBtn && pipelineBarFill && pipelineBarLabel) {
         import("./pipeline.js").then(async m => {
             const resumed = await m.resumePipelineIfRunning(
@@ -59,9 +61,9 @@ async function init() {
                 ),
                 () => m.stopPipeline(pipelineBarBtn, pipelineBarLabel)
             );
-            // Log pour vérifier l'assignation du onclick
+            // Debug logging for button handlers
             console.log('[main.js] pipelineBarBtn.onclick:', pipelineBarBtn.onclick);
-            // Si pipeline running, force l'assignation du callback d'annulation
+            // Ensure cancel callback is wired when pipeline is already running
             if (window.pipelineRunning) {
                 pipelineBarBtn.onclick = () => m.stopPipeline(pipelineBarBtn, pipelineBarLabel);
                 console.log('[main.js] Forçage du callback d\'annulation sur le bouton pipelineBarBtn');
@@ -80,7 +82,7 @@ async function init() {
 window.addEventListener("load", () => {
     init();
 
-    // Gestion du bouton 🧬 pour logs pipeline sur le dashboard
+    // Wire up the pipeline log panel toggle
     const logsToggle = document.getElementById('pipeline-logs-toggle');
     const logsPanel = document.getElementById('pipeline-logs-panel');
     const logsContent = document.getElementById('pipeline-logs-content');
@@ -94,7 +96,7 @@ window.addEventListener("load", () => {
                 logsPanel.style.display = 'block';
                 logsVisible = true;
                 logsContent.textContent = '';
-                // Stream logs pipeline
+                // Stream pipeline logs while panel is open
                 logsStreamAbort = new AbortController();
                 try {
                     const resp = await fetch('/api/pipeline-logs', { signal: logsStreamAbort.signal });
@@ -141,5 +143,4 @@ window.addEventListener("load", () => {
         });
     }
 });
-
 

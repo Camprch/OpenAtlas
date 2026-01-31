@@ -5,6 +5,7 @@ export let currentCountry = null;
 window.currentCountry = null;
 
 export function openSidePanel(country) {
+    // Open the side panel and load events for the selected country
     const sidepanel = document.getElementById('sidepanel');
     const backdrop = document.getElementById('sidepanel-backdrop');
     const closeBtn = document.getElementById('close-panel');
@@ -16,7 +17,7 @@ export function openSidePanel(country) {
     sidepanel.classList.add('visible');
     backdrop.style.display = 'block';
     document.body.classList.add('no-scroll');
-    // Toujours charger les événements avec tous les filtres sélectionnés
+    // Always load events with the currently selected filters
     const selectedDates = window.selectedFilters?.date || [];
     const selectedSources = window.selectedFilters?.source || [];
     const selectedLabels = window.selectedFilters?.label || [];
@@ -29,6 +30,7 @@ export function openSidePanel(country) {
         selectedEventTypes.length > 0 ? selectedEventTypes : null
     );
     function closePanel() {
+        // Close panel and re-enable page scroll
         sidepanel.classList.remove('visible');
         backdrop.style.display = 'none';
         document.body.classList.remove('no-scroll');

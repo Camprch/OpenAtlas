@@ -9,14 +9,15 @@ from telethon.sessions import StringSession  # 👈 ajouté
 
 from app.config import get_settings
 
+# Load settings once for fetch configuration
 settings = get_settings()
 
 
 def _parse_sources_env() -> Dict[str, str | None]:
     """
-    Lecture sécurisée de SOURCES_TELEGRAM depuis le .env.
+    Safe parsing of SOURCES_TELEGRAM from .env.
 
-    Format attendu :
+    Expected format:
         SOURCES_TELEGRAM="channel1:label1,channel2:label2,channel3"
     """
     raw = (settings.sources_telegram or "").strip()
@@ -31,17 +32,17 @@ def _parse_sources_env() -> Dict[str, str | None]:
         if not part:
             continue
 
-        # Retire @ pour éviter les fuites Telegram
+        # Strip '@' prefixes to avoid leaking full Telegram handles
         if part.startswith("@"):
             part = part[1:].strip()
 
-        # Sépare canal / label
+        # Split channel / label if provided
         if ":" in part:
             chan, label = part.split(":", 1)
         else:
             chan, label = part, None
 
-        # Nettoyage du nom de canal
+        # Sanitize channel name to allowed characters
         import re
         chan = re.sub(r"[^A-Za-z0-9_]", "", chan)
         if not chan:
@@ -54,19 +55,20 @@ def _parse_sources_env() -> Dict[str, str | None]:
 
 async def fetch_raw_messages_24h() -> List[Dict]:
     """
-    Récupère les messages de la fenêtre de collecte paramétrable (FETCH_WINDOW_HOURS, ex: 24h, 72h, etc.) (max N par canal).
+    Fetch messages from the configurable window (FETCH_WINDOW_HOURS) with a per-channel cap.
     """
     sources_map = _parse_sources_env()
     if not sources_map:
         print("[fetch] Aucun canal dans SOURCES_TELEGRAM.")
         return []
 
-    # On prépare un mapping canal -> label
+    # Build channel -> label lookup for downstream tagging
     channel_to_label = {chan: label for chan, label in sources_map.items()}
 
     max_per_channel = settings.max_messages_per_channel
     cutoff = datetime.now(timezone.utc) - timedelta(hours=settings.fetch_window_hours)
 
+    # Resolve Telegram session string from env or settings
     session_str = os.environ.get("TG_SESSION") or settings.telegram_session
     if session_str and session_str.strip():
         client = TelegramClient(
@@ -79,6 +81,7 @@ async def fetch_raw_messages_24h() -> List[Dict]:
 
     results: List[Dict] = []
 
+    # Connect to Telegram and pull recent messages for each configured channel
     async with client:
         for chan, orient in sources_map.items():
             try:
@@ -103,13 +106,16 @@ async def fetch_raw_messages_24h() -> List[Dict]:
                 if dt < cutoff:
                     continue
 
+                # Skip empty messages
                 text = getattr(m, "message", "") or ""
                 if not text.strip():
                     continue
 
+                # Prefer channel title for source label, fallback to username
                 real_source = getattr(entity, "title", None) or getattr(entity, "username", chan)
                 label = channel_to_label.get(chan)
 
+                # Normalize message fields for the pipeline
                 results.append(
                     {
                         "source": real_source,

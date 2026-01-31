@@ -1,14 +1,16 @@
-// --- LOGS PIPELINE ---
+// --- PIPELINE LOG STREAMING ---
 let pipelineLogController = null;
 let pipelineLogReader = null;
 let pipelineLogActive = false;
 
 export function showPipelineLogs() {
+    // Show the log container in the UI
     const container = document.getElementById('pipeline-logs-container');
     if (container) container.style.display = 'block';
 }
 
 export function hidePipelineLogs() {
+    // Hide the log container and clear its contents
     const container = document.getElementById('pipeline-logs-container');
     if (container) container.style.display = 'none';
     const logs = document.getElementById('pipeline-logs');
@@ -16,6 +18,7 @@ export function hidePipelineLogs() {
 }
 
 export async function streamPipelineLogs() {
+    // Stream server-side logs via a streaming response
     showPipelineLogs();
     const logs = document.getElementById('pipeline-logs');
     if (!logs) return;
@@ -32,7 +35,7 @@ export async function streamPipelineLogs() {
             const { value, done } = await reader.read();
             if (done) break;
             buffer += decoder.decode(value, { stream: true });
-            // Découpe par lignes
+            // Split and append completed lines
             let lines = buffer.split('\n');
             buffer = lines.pop(); // la dernière ligne peut être incomplète
             for (const line of lines) {
@@ -50,6 +53,7 @@ export async function streamPipelineLogs() {
 }
 
 export function stopPipelineLogs() {
+    // Stop streaming and clean up readers/controllers
     pipelineLogActive = false;
     if (pipelineLogController) pipelineLogController.abort();
     pipelineLogController = null;
@@ -58,6 +62,7 @@ export function stopPipelineLogs() {
 }
 
 export async function resumePipelineIfRunning(pipelineBarBtn, pipelineBarFill, pipelineBarLabel, startPipelineCb, stopPipelineCb) {
+    // Restore pipeline UI state if a run is already in progress
     const pipelinePercent = document.getElementById('pipeline-percent');
     const resp = await fetch('/api/pipeline-status');
     const data = await resp.json();
@@ -74,6 +79,7 @@ export async function resumePipelineIfRunning(pipelineBarBtn, pipelineBarFill, p
         }
         pipelineBarBtn.onclick = stopPipelineCb;
         pipelineRunning = true;
+        // Poll for status updates while running
         pipelinePolling = setInterval(async () => {
             const statusResp = await fetch('/api/pipeline-status');
             if (statusResp.ok) {
@@ -99,6 +105,7 @@ export async function resumePipelineIfRunning(pipelineBarBtn, pipelineBarFill, p
                         pipelineBarBtn.style.cursor = 'pointer';
                         pipelineBarBtn.disabled = false;
                         if (pipelinePercent) pipelinePercent.textContent = '0%';
+                        // Force refresh to show new data after the pipeline finishes
                         window.location.reload();
                     }, 2500);
                 }
@@ -114,6 +121,7 @@ export let pipelineRunning = false;
 
 
 export async function startPipeline(pipelineBarBtn, pipelineBarFill, pipelineBarLabel, stopPipelineCb, startPipelineCb) {
+    // Start a new pipeline run and start polling for progress
     if (pipelineRunning) return;
     pipelineRunning = true;
     pipelineBarBtn.disabled = true;
@@ -127,10 +135,12 @@ export async function startPipeline(pipelineBarBtn, pipelineBarFill, pipelineBar
         pipelinePercent.textContent = '0%';
         pipelinePercent.style.display = 'inline';
     }
+    // Stream logs while the pipeline is running
     showPipelineLogs();
     streamPipelineLogs();
     await fetch('/api/run-pipeline', { method: 'POST' });
     pipelineBarBtn.onclick = stopPipelineCb;
+    // Poll for status updates
     pipelinePolling = setInterval(async () => {
         const statusResp = await fetch('/api/pipeline-status');
         if (statusResp.ok) {
@@ -157,7 +167,7 @@ export async function startPipeline(pipelineBarBtn, pipelineBarFill, pipelineBar
                     pipelineBarBtn.disabled = false;
                     if (pipelinePercent) pipelinePercent.textContent = '0%';
                     stopPipelineLogs();
-                    // Recharge la page pour afficher les nouvelles données
+                    // Refresh the page to show new data after completion
                     window.location.reload();
                 }, 2500);
             }
@@ -166,6 +176,7 @@ export async function startPipeline(pipelineBarBtn, pipelineBarFill, pipelineBar
 }
 
 export async function stopPipeline(pipelineBarBtn, pipelineBarLabel) {
+    // Cancel a running pipeline
     console.log('[Pipeline] stopPipeline appelé, pipelineRunning =', pipelineRunning);
     if (!pipelineRunning) return;
     pipelineBarBtn.onclick = null;

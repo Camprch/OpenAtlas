@@ -5,6 +5,7 @@ export let markersByCountry = {};
 const IS_MOBILE = window.matchMedia("(max-width: 768px)").matches;
 
 export function initMap() {
+    // Initialize the Leaflet map with sensible defaults for the dashboard
     map = L.map("map", {
         worldCopyJump: true,
         minZoom: 2,
@@ -22,11 +23,13 @@ export function initMap() {
 }
 
 export function clearMarkers() {
+    // Remove all markers currently rendered on the map
     Object.values(markersByCountry).forEach((m) => map.removeLayer(m));
     markersByCountry = {};
 }
 
 export function markerStyle(count) {
+    // Derive a marker radius and color based on event count
     const n = Math.max(1, count || 1);
     const minRadius = IS_MOBILE ? 8 : 4;
     const maxRadius = IS_MOBILE ? 13 : 7;

@@ -1,8 +1,9 @@
-// JavaScript extrait de env_editor.html
-// Gère l'édition dynamique des variables d'environnement et la génération de session Telegram
+// JavaScript for env_editor.html
+// Handles editing environment variables and generating Telegram sessions
 
-// --- Gestion dynamique des sources ---
+// --- Dynamic sources management ---
 function renderSources(sources) {
+    // Render the editable list of Telegram sources
     const list = document.getElementById('sources-list');
     list.innerHTML = '';
     sources.forEach((src, idx) => {
@@ -38,7 +39,7 @@ function renderSources(sources) {
 
 let sourcesData = [];
 
-// Mapping pour personnaliser les labels des rubriques dynamiques
+// Label mapping for dynamic form fields
 const LABELS = {
     TELEGRAM_SESSION: "Session Telegram 🤖",
     SOURCES_TELEGRAM: "Telegram Sources 📡",
@@ -54,7 +55,7 @@ const LABELS = {
     AUTO_DELETE_DAYS: "Auto-delete Messages (days) 🗑️",
 };
 
-// Aide contextuelle pour chaque rubrique (en anglais)
+// Contextual help text for each field
 const LABEL_HELP = {
     TELEGRAM_SESSION: "Paste here your Telegram session string.",
     OPENAI_API_KEY: "Enter your OpenAI API or LM Studio key.",
@@ -71,11 +72,12 @@ const LABEL_HELP = {
 };
 
 async function loadEnv() {
+    // Load .env values from the API and render inputs
     const resp = await fetch('/api/env');
     const data = await resp.json();
     const fields = document.getElementById('env-fields');
     fields.innerHTML = '';
-    // Extraction des sources depuis SOURCES_TELEGRAM (format CSV: source:label,...)
+    // Parse SOURCES_TELEGRAM (CSV: source:label,...)
     let sourcesRaw = data.SOURCES_TELEGRAM;
     if (sourcesRaw) {
         sourcesData = sourcesRaw.split(',').map(pair => {
@@ -87,14 +89,14 @@ async function loadEnv() {
     }
     renderSources(sourcesData);
     Object.entries(data).forEach(([key, value]) => {
-        // On ignore les champs Telegram déjà présents dans la colonne de droite
+        // Skip fields that are handled in the right-hand column
         if ([
             'TELEGRAM_SESSION',
             'TELEGRAM_API_ID',
             'TELEGRAM_API_HASH',
             'SOURCES_TELEGRAM'
         ].includes(key)) {
-            // On remplit quand même la valeur statique si besoin
+            // Still populate the static inputs when present
             if (key === 'TELEGRAM_SESSION') document.getElementById('TELEGRAM_SESSION').value = value || '';
             if (key === 'TELEGRAM_API_ID') document.getElementById('TELEGRAM_API_ID').value = value || '';
             if (key === 'TELEGRAM_API_HASH') document.getElementById('TELEGRAM_API_HASH').value = value || '';
@@ -102,7 +104,7 @@ async function loadEnv() {
         }
         const label = document.createElement('label');
         label.textContent = LABELS[key] || key;
-        // Ajout de l'aide contextuelle à côté du label
+        // Append contextual help next to the label
         if (LABEL_HELP[key]) {
             const help = document.createElement('span');
             help.textContent = '  ' + LABEL_HELP[key];
@@ -119,7 +121,7 @@ async function loadEnv() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-        // Bouton Effacer la base
+        // Wire up "clear database" button
         const clearBtn = document.getElementById('clear-db-btn');
         if (clearBtn) {
             clearBtn.addEventListener('click', async function() {
@@ -145,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
-    // Injecte l'aide contextuelle sur le label statique Session Telegram
+    // Inject help text for the static Telegram session label
     const telegramLabel = document.querySelector('#session-string-row label[for="TELEGRAM_SESSION"]');
     if (telegramLabel && LABEL_HELP.TELEGRAM_SESSION) {
         const help = document.createElement('span');
@@ -162,14 +164,16 @@ document.addEventListener('DOMContentLoaded', function() {
         help.style = 'font-size: 0.78em; color: #b7b7b7; opacity: 0.55; margin-left: 10px; vertical-align: middle; white-space: normal; display: inline-block; max-width: 320px;';
         sourcesLabel.appendChild(help);
     }
+    // Add a new empty source row
     document.getElementById('add-source-btn').addEventListener('click', function() {
         sourcesData.push({ label: '', value: '' });
         renderSources(sourcesData);
     });
+    // Telegram session wizard: request code then verify
     document.getElementById('wizard-start-btn').addEventListener('click', function() {
         const wizard = document.getElementById('wizard-step');
         wizard.innerHTML = '';
-        // Step 1: phone
+        // Step 1: phone input
         const phoneInput = document.createElement('input');
         phoneInput.type = 'text';
         phoneInput.placeholder = 'Numéro de téléphone (ex: +33612345678)';
@@ -193,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (resp.ok) {
                     const data = await resp.json();
                     sessionId = data.session_id;
-                    // Step 2: code
+                    // Step 2: code input
                     wizard.innerHTML = '';
                     const codeInput = document.createElement('input');
                     codeInput.type = 'text';
@@ -251,6 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
     });
+    // Submit the env form with SOURCES_TELEGRAM composed from the dynamic rows
     document.getElementById('env-form').addEventListener('submit', async function(e) {
         e.preventDefault();
         const form = e.target;
@@ -258,9 +263,9 @@ document.addEventListener('DOMContentLoaded', function() {
         Array.from(form.elements).forEach(el => {
             if (el.name && !el.name.startsWith('sources[')) data[el.name] = el.value;
         });
-        // Encode les sources en CSV pour SOURCES_TELEGRAM
+        // Encode sources to CSV for SOURCES_TELEGRAM
         data.SOURCES_TELEGRAM = sourcesData.map((src, idx) => {
-            // Récupère les valeurs actuelles des inputs (pour éviter le cache closure)
+            // Read the current input values to avoid stale closures
             const label = form.querySelector(`input[name="sources[${idx}][label]"]`)?.value || '';
             const value = form.querySelector(`input[name="sources[${idx}][value]"]`)?.value || '';
             return value ? `${value}:${label}` : '';
@@ -282,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
             success.style.display = 'none';
         }
     });
-    // Force un reload complet du dashboard pour garantir la reprise du JS pipeline
+    // Force a full dashboard reload to ensure fresh pipeline JS state
     document.getElementById('dashboard-link').addEventListener('click', function(e) {
         e.preventDefault();
         window.location.href = '/dashboard';

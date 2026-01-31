@@ -5,11 +5,12 @@ from app.database import get_session
 from sqlmodel import select
 import unicodedata
 
+# Router for search endpoints
 router = APIRouter()
 
 
 def normalize_text(text: str) -> str:
-    # Minuscule, retire accents, retire espaces superflus
+    # Lowercase, remove accents, and trim whitespace
     text = text.lower().strip()
     text = ''.join(
         c for c in unicodedata.normalize('NFD', text)
@@ -20,8 +21,10 @@ def normalize_text(text: str) -> str:
 
 @router.get("/search/events", response_model=List[Message])
 def search_events(q: str = Query(..., min_length=1)):
+    # Use DB filtering first, then normalize text for accent-insensitive matching
     norm_q = normalize_text(q)
     with get_session() as session:
+        # Broad SQL filters to reduce the candidate set
         results = session.exec(
             select(Message).where(
                 (Message.translated_text != None) & (
@@ -36,6 +39,7 @@ def search_events(q: str = Query(..., min_length=1)):
                 )
             ).limit(100)
         ).all()
+        # In-memory pass to enforce normalized substring matching
         filtered = [
             m for m in results
             if norm_q in normalize_text(m.translated_text)

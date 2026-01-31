@@ -5,23 +5,24 @@ from openai import OpenAI
 from app.config import get_settings
 
 
+# Load settings for translation
 settings = get_settings()
 TARGET_LANGUAGE = settings.target_language
 client = OpenAI(api_key=settings.openai_api_key)
 MODEL_NAME = settings.openai_model
-# Nombre de messages par appel OpenAI
+# Number of messages per OpenAI call
 BATCH_SIZE = settings.batch_size
 
 
 def _translate_subbatch(texts: List[str]) -> List[str]:
     """
-    Traduit un sous-batch de messages depuis l’anglais vers la langue cible (settings.target_language).
-    Texte => texte, même ordre.
+    Translate a sub-batch of messages from English to the target language.
+    Input texts map to output translations in the same order.
     """
     if not texts:
         return []
 
-    # Prompt dynamique selon la langue cible
+    # Pick a human-readable label for the target language
     lang = TARGET_LANGUAGE
     if lang.lower() == "fr":
         lang_label = "français naturel"
@@ -32,6 +33,7 @@ def _translate_subbatch(texts: List[str]) -> List[str]:
     else:
         lang_label = f"{lang}"
 
+    # Build a JSONL-only translation prompt
     header = (
         f"You are a professional translator.\n"
         f"I will give you a list of numbered messages in English.\n"
@@ -49,6 +51,7 @@ def _translate_subbatch(texts: List[str]) -> List[str]:
         body_lines.append(f"[{i}] {txt}")
     prompt = header + "\n".join(body_lines)
 
+    # Call the OpenAI Responses API for translation
     resp = client.responses.create(
         model=MODEL_NAME,
         input=prompt,
@@ -63,6 +66,7 @@ def _translate_subbatch(texts: List[str]) -> List[str]:
     lines = [l.strip() for l in raw.splitlines() if l.strip()]
     translations = [""] * len(texts)
 
+    # Parse JSONL lines and map translations back by index
     for line in lines:
         try:
             obj = json.loads(line)
@@ -78,7 +82,7 @@ def _translate_subbatch(texts: List[str]) -> List[str]:
         if 0 <= idx < len(texts):
             translations[idx] = str(obj["translation"])
 
-    # fallback si certains indices sont vides => on remet le texte d’origine
+    # Fallback: keep original text when a translation is missing
     for i, t in enumerate(translations):
         if not t:
             translations[i] = texts[i]
@@ -88,9 +92,9 @@ def _translate_subbatch(texts: List[str]) -> List[str]:
 
 def translate_messages(messages: List[dict]) -> List[dict]:
     """
-    Prend une liste de dicts avec au moins 'text',
-    ajoute 'translated_text' en batchs successifs.
-    Modifie la liste en place et la renvoie.
+    Takes a list of dicts with at least 'text',
+    adds 'translated_text' in successive batches.
+    Mutates the list in place and returns it.
     """
     if not messages:
         return messages
@@ -101,6 +105,9 @@ def translate_messages(messages: List[dict]) -> List[dict]:
         sub = messages[start:end]
         texts = [m.get("text", "") for m in sub]
 
+        # Log progress per batch to surface translation activity
+        print(f"[pipeline] [TRAD] batch {start + 1}-{end} / {total}")
+        # Translate each batch to reduce API calls
         translations = _translate_subbatch(texts)
 
         for msg, trans in zip(sub, translations):

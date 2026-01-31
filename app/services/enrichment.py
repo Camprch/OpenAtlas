@@ -6,16 +6,19 @@ from openai import OpenAI
 from app.config import get_settings
 
 
+# Load settings for OpenAI enrichment
 settings = get_settings()
 TARGET_LANGUAGE = settings.target_language
 client = OpenAI(api_key=settings.openai_api_key)
 MODEL_NAME = settings.openai_model
 BATCH_SIZE = settings.batch_size
 
+# Expected keys returned by the enrichment model
 EXPECTED_FIELDS = ["country", "region", "location", "title", "event_type", "source", "timestamp"]
 
 
 def _empty_enrichment() -> Dict[str, Optional[str]]:
+    # Default enrichment payload when parsing fails or a field is missing
     return {
         "country": None,
         "region": None,
@@ -29,18 +32,20 @@ def _empty_enrichment() -> Dict[str, Optional[str]]:
 def _enrich_subbatch(items: List[Dict[str, Any]]) -> List[Dict[str, Optional[str]]]:
     """
     items: [{ "id": int, "text": str }]
-    Retourne, dans le même ordre, une liste de dicts avec les champs EXPECTED_FIELDS.
-    L’enrichissement est toujours fait en anglais (prompt et extraction).
-    Ajoute event_type avec une liste fermée de 10 types d’événements.
+    Returns, in the same order, a list of dicts with EXPECTED_FIELDS.
+    Enrichment is always run in English (prompt and extraction).
+    Adds event_type chosen from a fixed list of 10 event categories.
     """
     if not items:
         return []
 
+    # Fixed list of allowed event types for classification
     event_types = [
         "Protest", "Conflict", "Political", "Natural disaster", "Crime",
         "Cyber Attack", "Public health", "Economic", "Security Alert", "Other"
     ]
 
+    # Build a JSONL-only extraction prompt
     header = (
         "You are an OSINT information extraction system.\n"
         "For each message below, produce ONE JSON LINE (JSONL format):\n"
@@ -62,6 +67,7 @@ def _enrich_subbatch(items: List[Dict[str, Any]]) -> List[Dict[str, Optional[str
     body = "\n".join(f"[{it['id']}] {it.get('text','')}" for it in items)
     prompt = header + body
 
+    # Call the OpenAI Responses API for extraction
     resp = client.responses.create(
         model=MODEL_NAME,
         input=prompt,
@@ -72,6 +78,7 @@ def _enrich_subbatch(items: List[Dict[str, Any]]) -> List[Dict[str, Optional[str
     except AttributeError:
         raw = str(resp)
 
+    # Parse JSONL lines and map them back to the input order
     lines = [l.strip() for l in raw.splitlines() if l.strip()]
 
     id_to_index = {int(it["id"]): idx for idx, it in enumerate(items)}
@@ -92,6 +99,7 @@ def _enrich_subbatch(items: List[Dict[str, Any]]) -> List[Dict[str, Optional[str
         if obj_id not in id_to_index or obj_id in seen_ids:
             continue
 
+        # Normalize fields to strings and keep only EXPECTED_FIELDS
         filtered: Dict[str, Optional[str]] = {}
         for k in EXPECTED_FIELDS:
             v = obj.get(k, "")
@@ -109,8 +117,8 @@ def _enrich_subbatch(items: List[Dict[str, Any]]) -> List[Dict[str, Optional[str
 
 def enrich_messages(messages: List[dict]) -> List[dict]:
     """
-    Prend une liste de dicts avec 'text' (toujours en anglais !),
-    enrichit par batchs successifs. L’enrichissement est toujours fait en anglais.
+    Takes a list of dicts with 'text' (always in English),
+    enriches them in batches. Enrichment is always run in English.
     """
     if not messages:
         return messages
@@ -120,6 +128,9 @@ def enrich_messages(messages: List[dict]) -> List[dict]:
         end = min(start + BATCH_SIZE, total)
         sub = messages[start:end]
 
+        # Log progress per batch to surface enrichment activity
+        print(f"[pipeline] [ENRICH] batch {start + 1}-{end} / {total}")
+        # Reindex each sub-batch to preserve ordering when mapping results
         items = [
             {"id": i, "text": (m.get("text") or "")}
             for i, m in enumerate(sub)
@@ -128,6 +139,7 @@ def enrich_messages(messages: List[dict]) -> List[dict]:
         enrichments = _enrich_subbatch(items)
 
 
+        # Merge enrichment fields back into the original messages
         for msg, enr in zip(sub, enrichments):
             if enr:
                 msg["country"] = enr.get("country") or None

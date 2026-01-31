@@ -1,12 +1,8 @@
-# Initialisation du router et modèles nécessaires
-
 from fastapi import APIRouter, Depends, Query, HTTPException
-from datetime import date, datetime, timedelta
-from typing import List, Optional, Dict, Tuple
-from sqlmodel import Session, select
+from datetime import date
+from typing import List, Optional
+from sqlmodel import Session
 from app.database import get_db
-from app.models.message import Message
-from app.api.filters import COUNTRY_ALIASES, COUNTRY_COORDS, normalize_country_names
 from app.api.models_country import CountryActivity, CountryStatus, ActiveCountriesResponse, CountryEventsResponse
 from app.services.country_events_service import (
     get_active_countries_service,
@@ -15,25 +11,21 @@ from app.services.country_events_service import (
     get_country_events_service,
 )
 
+# Router for country/event endpoints
 router = APIRouter()
 
-@router.get("/event_types", response_model=List[str])
-def get_event_types(session: Session = Depends(get_db)):
-    # Retourne la liste distincte des event_type non nuls
-    q = session.query(Message.event_type).distinct().filter(Message.event_type.isnot(None)).order_by(Message.event_type)
-    return [row[0] for row in q if row[0]]
-
-# --- ROUTES PAYS/EVENTS ---
+# Country activity and events endpoints
 
 @router.get("/countries/active", response_model=ActiveCountriesResponse)
 def get_active_countries(
-    days: int = Query(30, ge=1),
+    days: Optional[int] = Query(None, ge=1),
     date_filter: Optional[List[date]] = Query(None, alias="date"),
     sources: Optional[List[str]] = Query(None),
     labels: Optional[List[str]] = Query(None),
     event_types: Optional[List[str]] = Query(None),
     session: Session = Depends(get_db),
 ):
+    # Forward filters to the service layer
     return get_active_countries_service(days=days, date_filter=date_filter, sources=sources, labels=labels, event_types=event_types, session=session)
 
 
@@ -49,6 +41,7 @@ def get_country_latest_events(
     session: Session = Depends(get_db),
 ):
     try:
+        # Service raises ValueError when the country is invalid or missing
         return get_country_latest_events_service(country=country, sources=sources, labels=labels, event_types=event_types, session=session)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -60,6 +53,7 @@ def get_countries_activity(
     target_date: date = Query(..., alias="date"),
     session: Session = Depends(get_db),
 ):
+    # Fetch per-country activity for a given date
     return get_countries_activity_service(target_date=target_date, session=session)
 
 
@@ -77,6 +71,7 @@ def get_country_events(
     session: Session = Depends(get_db),
 ):
     try:
+        # Service raises ValueError when the country is invalid or missing
         return get_country_events_service(country=country, target_date=target_date, sources=sources, labels=labels, event_types=event_types, session=session)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

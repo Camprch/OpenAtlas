@@ -1,7 +1,7 @@
 // modules/search.js
 
 
-// Mapping pays (clé normalisée) pour correspondance côté frontend
+// Load country aliases/coordinates for search result navigation
 let COUNTRY_ALIASES = {};
 let COUNTRY_COORDS = {};
 fetch('/static/data/countries.json')
@@ -12,16 +12,18 @@ fetch('/static/data/countries.json')
     });
 
 export function setupSearch() {
+    // Attach search handlers to the header input
     const input = document.getElementById('search-input');
     if (!input) return;
 
     function normalize(str) {
+        // Remove diacritics and lowercase for comparisons
         return str.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
     }
-    // Fonction utilitaire pour surligner le texte recherché (insensible à la casse et aux accents)
+    // Highlight query matches (case/diacritic-insensitive)
     function highlightQuery(text, query) {
         if (!query) return text;
-        // Normalisation sans accents, insensible à la casse
+        // Normalize for accent-insensitive comparisons
         const norm = s => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
         const normText = norm(text);
         const normQuery = norm(query);
@@ -29,7 +31,7 @@ export function setupSearch() {
         let result = '';
         let i = 0;
         while (i < text.length) {
-            // Cherche la position de la prochaine occurrence normalisée
+            // Find next normalized match position
             let found = -1;
             for (let j = i; j <= text.length - query.length; j++) {
                 if (normText.substr(j, normQuery.length) === normQuery) {
@@ -58,7 +60,7 @@ export function setupSearch() {
             if (results.length === 0) {
                 alert('Aucun résultat.');
             } else {
-                // Affichage simple : liste des résultats dans une modale avec surbrillance
+                // Render results in a modal with highlighted matches
                 const html = results.map((m, i) =>
                     `<div class='search-result-item' data-country="${encodeURIComponent(m.country || '')}" data-country-norm="${encodeURIComponent(m.country_norm || '')}" data-region="${encodeURIComponent(m.region || '')}" data-location="${encodeURIComponent(m.location || '')}" data-msgid="${m.id}" style='margin-bottom:12px; cursor:pointer; border-radius:8px; padding:8px 6px; transition:background 0.15s;' tabindex="0">
                         <b>${highlightQuery((m.country || '') + ' ' + (m.region || '') + ' ' + (m.location || ''), q)}</b><br>
@@ -78,7 +80,7 @@ export function setupSearch() {
         if (e.key === 'Enter') doSearch();
     });
 
-    // Petite modale pour afficher les résultats
+    // Modal container for search results
     function showSearchModal(html) {
         let modal = document.getElementById('search-modal');
         if (!modal) {
@@ -104,20 +106,19 @@ export function setupSearch() {
             modal.querySelector('#close-search-modal').onclick = () => modal.remove();
         }
         modal.querySelector('#search-modal-content').innerHTML = html;
-        // Ajoute les listeners sur chaque résultat
+        // Attach click/keyboard handlers to each result item
         modal.querySelectorAll('.search-result-item').forEach(item => {
-            // Utilise le champ country brut (non normalisé) pour ouvrir le panneau latéral
-            // Utilise country_norm (clé attendue par l'API) si dispo, sinon fallback sur country
+            // Prefer country_norm; fall back to raw country with alias/coord matching
             const countryNorm = decodeURIComponent(item.dataset.country_norm || '');
             const countryRaw = decodeURIComponent(item.dataset.country || '');
             let country = countryNorm;
             if (!country) {
-                // Tentative de correspondance via les alias (en minuscule)
+                // Try alias lookup with lowercase keys
                 const key = countryRaw.trim().toLowerCase();
                 if (COUNTRY_ALIASES[key]) {
                     country = COUNTRY_ALIASES[key];
                 } else {
-                    // Tentative de correspondance directe dans les clés de coordonnées
+                    // Fallback: try matching coordinates keys by suffix
                     for (const k in COUNTRY_COORDS) {
                         if (k.toLowerCase().endsWith(countryRaw.toLowerCase())) {
                             country = k;
@@ -135,7 +136,7 @@ export function setupSearch() {
                 if (window.openSidePanel && country) {
                     console.log('[Recherche] Ouverture du panneau latéral pour le pays :', country);
                     window.openSidePanel(country);
-                    // Attend que l'événement soit présent dans le DOM avant de scroller/surligner
+                    // Wait for events to render before scrolling/highlighting
                     function openAllZones() {
                         document.querySelectorAll('.zone-header').forEach(header => {
                             const btn = header.querySelector('.toggle-btn');
@@ -171,7 +172,7 @@ export function setupSearch() {
         });
     }
 
-    // Style pour la surbrillance des zones trouvées (une seule fois)
+    // Inject styles for highlighting matches (one-time)
     if (!document.getElementById('search-match-style')) {
         const style = document.createElement('style');
         style.id = 'search-match-style';

@@ -6,6 +6,7 @@ export let countryCoords = {};
 export let countryAliases = {};
 
 export async function loadCountryData() {
+    // Load coordinates and aliases used to place markers on the map
     const resp = await fetch("/static/data/countries.json");
     const data = await resp.json();
     countryCoords = data.coordinates || {};
@@ -13,6 +14,7 @@ export async function loadCountryData() {
 }
 
 export async function loadActiveCountries(currentGlobalDate, sources = null, labels = null, event_types = null) {
+    // Fetch active countries with optional filters and render markers
     let url = "/api/countries/active";
     const params = [];
     if (Array.isArray(currentGlobalDate) && currentGlobalDate.length > 0) {
@@ -40,6 +42,7 @@ export async function loadActiveCountries(currentGlobalDate, sources = null, lab
     const apiData = await resp.json();
     const countries = apiData.countries || [];
     const ignored = apiData.ignored_countries || [];
+    // Reset existing markers before rendering the new set
     clearMarkers();
     const missing = [];
     const alert = document.getElementById("dashboard-alert");
@@ -47,6 +50,7 @@ export async function loadActiveCountries(currentGlobalDate, sources = null, lab
         let normName = c.country;
         const count = c.events_count;
         let key = normName;
+        // Resolve aliases to coordinates; track missing geocodes for alerting
         if (!(key in countryCoords)) {
             if (countryAliases[normName] && countryCoords[countryAliases[normName]]) {
                 key = countryAliases[normName];
@@ -60,6 +64,7 @@ export async function loadActiveCountries(currentGlobalDate, sources = null, lab
             return;
         }
         const style = markerStyle(count);
+        // Invisible circle for a larger click target on dense markers
         const clickableRadius = style.radius * 2.5;
         const interactiveCircle = L.circleMarker([lat, lon], {
             radius: clickableRadius,
@@ -71,12 +76,12 @@ export async function loadActiveCountries(currentGlobalDate, sources = null, lab
             pane: 'markerPane',
         });
         const marker = L.circleMarker([lat, lon], style);
-        // Récupère l'emoji drapeau à partir du nom du pays (clé)
+        // Extract flag emoji from the country key or its aliases
         let flag = '';
         if (key.match(/^\p{Emoji}/u)) {
             flag = key.split(' ')[0];
         } else {
-            // fallback: essaie de trouver dans les aliases
+            // Fallback: search aliases for an emoji-prefixed key
             for (const alias in countryAliases) {
                 if (countryAliases[alias] === key && alias.match(/^\p{Emoji}/u)) {
                     flag = alias.split(' ')[0];
@@ -84,13 +89,13 @@ export async function loadActiveCountries(currentGlobalDate, sources = null, lab
                 }
             }
         }
-        // Affiche un popup avec le drapeau (gros) et le nom du pays sans drapeau
+        // Show a popup with the flag and clean country name (desktop only)
         if (window.IS_MOBILE === false) {
-            // Nettoie le nom du pays pour enlever l'emoji drapeau au début
-            // Supprime tous les emojis et caractères non-lettres/digits/espaces au début
+            // Strip leading emojis/symbols for display
             const countryName = key.replace(/^[^\p{L}\p{N}]+/u, '').trim();
             marker.bindPopup(`<div style='text-align:center;min-width:70px;'><span style='font-size:2.2em;line-height:1;'>${flag}</span><br><b>${countryName}</b></div>`);
         }
+        // Hover and click interactions
         marker.on("mouseover", function (e) {
             marker.setStyle({ radius: style.radius * 1.15 });
             if (window.IS_MOBILE === false) {
@@ -108,6 +113,7 @@ export async function loadActiveCountries(currentGlobalDate, sources = null, lab
         markersByCountry[key] = marker;
     });
     if (alert) {
+        // Surface missing or unrecognized countries to the user
         let alertMsg = "";
         if (missing.length > 0) {
             alertMsg += `⚠️ Pays non géolocalisés : ${missing.join(", ")}`;
@@ -124,4 +130,3 @@ export async function loadActiveCountries(currentGlobalDate, sources = null, lab
         }
     }
 }
-

@@ -7,7 +7,7 @@ import asyncio
 from telethon import TelegramClient
 from telethon.sessions import StringSession
 
-# Assure que le dossier racine est dans le path Python
+# Ensure the project root is available on the Python path
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
@@ -18,17 +18,20 @@ settings = get_settings()
 
 
 async def main():
+    # Interactive flow to generate a Telegram session string
     print("\n[init_telegram_string] Initialisation de la session Telegram…")
 
+    # Use an in-memory session; the resulting string is printed for reuse
     client = TelegramClient(
         StringSession(),                 # session en mémoire
         settings.telegram_api_id,
         settings.telegram_api_hash,
     )
 
-    # Démarre la session → va te demander ton téléphone + code une seule fois
+    # Start the session: prompts for phone and code once
     await client.start()
 
+    # Export a reusable session string
     session_str = client.session.save()
 
     print("\n🎉 Ta TG_SESSION (à mettre dans GitHub Secrets) :\n")

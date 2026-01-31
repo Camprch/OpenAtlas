@@ -1,4 +1,4 @@
-// Ajoute la fonction fetchDates pour charger les dates depuis l'API
+// Fetch available dates from the API
 async function fetchDates() {
     try {
         const resp = await fetch("/api/dates");
@@ -18,7 +18,7 @@ async function fetchDates() {
 
 
 window.lastFilterOpener = "global";
-// Synchronisation globale des filtres sélectionnés
+// Global sync object for selected filters across UI components
 if (!window.selectedFilters) {
     window.selectedFilters = {
         date: [],
@@ -29,7 +29,7 @@ if (!window.selectedFilters) {
 }
 
 
-// Gestion du menu de filtres synchronisé (header & sidepanel) + affichage dynamique des cases à cocher
+// Filter values are loaded on demand and rendered in a shared menu
 const FILTER_VALUES = {
     date: [], // sera chargé dynamiquement
     source: [], // sera chargé dynamiquement
@@ -38,6 +38,7 @@ const FILTER_VALUES = {
 };
 
 async function fetchEventTypes() {
+    // Load event types from the API
     try {
         const resp = await fetch("/api/event_types");
         const data = await resp.json();
@@ -52,6 +53,7 @@ async function fetchEventTypes() {
 }
 
 async function fetchLabels() {
+    // Load label values from the API
     try {
         const resp = await fetch("/api/labels");
         const data = await resp.json();
@@ -66,6 +68,7 @@ async function fetchLabels() {
 }
 
 async function fetchSources() {
+    // Load human-readable sources from the API
     try {
         const resp = await fetch("/api/sources");
         const data = await resp.json();
@@ -84,9 +87,9 @@ import { currentCountry } from "./sidepanel.js";
 import { loadEvents } from "./events.js";
 
 
-// Nouvelle version : affiche les 4 catégories côte à côte, chaque colonne avec ses options
+// Render the filter menu with four categories side by side
 export async function renderAllFilterOptions() {
-    // Charge dynamiquement toutes les valeurs si besoin
+    // Load values only when needed
     const fetchers = [];
     if (FILTER_VALUES.date.length === 0) fetchers.push(fetchDates());
     if (FILTER_VALUES.source.length === 0) fetchers.push(fetchSources());
@@ -97,7 +100,7 @@ export async function renderAllFilterOptions() {
     const optionsDiv = document.getElementById('filter-menu-options');
     optionsDiv.innerHTML = '';
 
-    // Structure : 4 colonnes côte à côte
+    // Layout: four columns of filter options
     const columns = document.createElement('div');
     columns.id = 'filter-columns';
     const categories = [
@@ -132,6 +135,7 @@ export async function renderAllFilterOptions() {
 
                 checkbox.addEventListener('change', async () => {
                     if (!window.selectedFilters[cat.key]) window.selectedFilters[cat.key] = [];
+                    // Update selected filters for this category
                     if (checkbox.checked) {
                         if (!window.selectedFilters[cat.key].includes(val)) {
                             window.selectedFilters[cat.key].push(val);
@@ -139,20 +143,21 @@ export async function renderAllFilterOptions() {
                     } else {
                         window.selectedFilters[cat.key] = window.selectedFilters[cat.key].filter(v => v !== val);
                     }
-                    // Synchronise tous les checkboxes de même valeur/catégorie
+                    // Keep same-value checkboxes in sync across menus
                     document.querySelectorAll('.filter-options-list input[type=checkbox][value="' + val + '"]')
                         .forEach(cb => { if (cb !== checkbox) cb.checked = checkbox.checked; });
                     const selectedDates = window.selectedFilters.date;
                     const selectedSources = window.selectedFilters.source;
                     const selectedLabels = window.selectedFilters.label;
                     const selectedEventTypes = window.selectedFilters.event_type;
+                    // Refresh map markers based on current filters
                     await loadActiveCountries(
                         selectedDates.length > 0 ? selectedDates : null,
                         selectedSources.length > 0 ? selectedSources : null,
                         selectedLabels.length > 0 ? selectedLabels : null,
                         selectedEventTypes.length > 0 ? selectedEventTypes : null
                     );
-                    // Recharge le panneau latéral si ouvert et un pays sélectionné
+                    // Reload side panel if it is visible and a country is selected
                     const sidepanel = document.getElementById('sidepanel');
                     if (sidepanel && sidepanel.classList.contains('visible') && window.currentCountry) {
                         await loadEvents(
@@ -181,11 +186,12 @@ export function setupFilterMenuSync() {
     let lastOpener = null; // "global" ou "panel"
 
     function openMenu(opener) {
+        // Position the menu based on where it was opened from
         filterMenu.style.display = 'block';
         lastOpener = opener;
         window.lastFilterOpener = opener;
         if (opener === 'panel') {
-            // Affichage à gauche du sidepanel (hors du panneau)
+            // Align next to the side panel
             filterMenu.style.position = 'fixed';
             filterMenu.style.top = '80px';
             filterMenu.style.right = '420px'; // largeur du sidepanel
@@ -193,7 +199,7 @@ export function setupFilterMenuSync() {
             filterMenu.style.transform = 'none';
             document.body.appendChild(filterMenu);
         } else {
-            // Affichage classique sur la carte principale
+            // Default placement on the main map
             filterMenu.style.position = 'fixed';
             filterMenu.style.top = '60px';
             filterMenu.style.left = '80px';
@@ -201,7 +207,7 @@ export function setupFilterMenuSync() {
             filterMenu.style.transform = 'none';
             document.body.appendChild(filterMenu);
         }
-        // Affiche toutes les options de filtres en colonnes
+        // Render filter options in columns
         renderAllFilterOptions();
     }
     function closeMenu() {

@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 
-# Router principal
+# Main API router used by the app entrypoint
 router = APIRouter()
 
-# Import et inclusion des sous-routeurs
+# Import and include sub-routers (split by domain to keep endpoints organized)
 from app.api.countries import router as countries_router
 router.include_router(countries_router)
 from app.api.env import router as env_router
@@ -19,7 +19,7 @@ router.include_router(events_router)
 from app.api.session_wizard import router as session_wizard_router
 router.include_router(session_wizard_router)
 
-# Ajout du routeur de recherche
+# Admin and search routers are registered last to keep this list grouped by role
 
 from app.api.admin import router as admin_router
 router.include_router(admin_router)
