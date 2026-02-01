@@ -6,6 +6,7 @@ from pathlib import Path
 from datetime import datetime
 import sys
 
+# Root of the repo so local modules import correctly when running as a script.
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
@@ -17,6 +18,7 @@ from app.models.message import Message
 from sqlmodel import select
 
 
+# Build output locations.
 OUTPUT_DIR = Path("static_site")
 STATIC_DIR = OUTPUT_DIR / "static"
 DATA_DIR = STATIC_DIR / "data"
@@ -25,6 +27,7 @@ JS_DIR = STATIC_DIR / "js"
 
 
 def _date_key(value) -> str | None:
+    """Normalize timestamps to YYYY-MM-DD for filter keys."""
     if value is None:
         return None
     if isinstance(value, datetime):
@@ -36,8 +39,10 @@ def _date_key(value) -> str | None:
 
 
 def build_static_site() -> None:
+    """Export DB content + assets into a fully static, offline-friendly site."""
     init_db()
 
+    # Top-level aggregates used for filters and marker counts.
     events = []
     sources = set()
     labels = set()
@@ -45,6 +50,7 @@ def build_static_site() -> None:
     dates = set()
 
     with get_session() as session:
+        # Lightweight rows for counts + filters.
         stmt = select(
             Message.country_norm,
             Message.event_timestamp,
@@ -54,6 +60,7 @@ def build_static_site() -> None:
         )
         rows = session.exec(stmt).all()
 
+        # Rich rows for the sidepanel event list.
         detail_rows = session.exec(
             select(
                 Message.id,
@@ -74,6 +81,7 @@ def build_static_site() -> None:
             )
         ).all()
 
+    # Build filter sets + event list for the map markers.
     for country_norm, event_timestamp, source, label, event_type in rows:
         if not country_norm:
             continue
@@ -86,6 +94,7 @@ def build_static_site() -> None:
             labels.add(label)
         if event_type:
             event_types.add(event_type)
+        # Store only what the static UI needs for the map.
         events.append(
             {
                 "country": country_norm,
@@ -96,7 +105,7 @@ def build_static_site() -> None:
             }
         )
 
-    # Augment filters with detail rows (to match API behavior when main rows are sparse)
+    # Augment filters with detail rows (mirrors API behavior when main rows are sparse).
     for row in detail_rows:
         source = row[8]
         label = row[9]
@@ -113,6 +122,7 @@ def build_static_site() -> None:
             if date_key:
                 dates.add(date_key)
 
+    # Single JSON payload used by the static JS.
     payload = {
         "events": events,
         "filters": {
@@ -143,10 +153,11 @@ def build_static_site() -> None:
         ],
     }
 
+    # Write the data payload.
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     (DATA_DIR / "events.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    # Copy static assets for consistent UI
+    # Copy static assets for a consistent UI with the live app.
     CSS_DIR.mkdir(parents=True, exist_ok=True)
     JS_DIR.mkdir(parents=True, exist_ok=True)
     shutil.copytree(Path("static/css"), CSS_DIR, dirs_exist_ok=True)
@@ -154,9 +165,10 @@ def build_static_site() -> None:
 
     countries_src = Path("static/data/countries.json")
     countries_dst = DATA_DIR / "countries.json"
+    # Include the country coordinates/aliases lookup.
     countries_dst.write_text(countries_src.read_text(encoding="utf-8"), encoding="utf-8")
 
-    # Write static HTML/JS that mirrors the dashboard map + filters
+    # Write static HTML that mirrors the dashboard map + filters.
     (OUTPUT_DIR / "index.html").write_text(
         """<!DOCTYPE html>
 <html lang=\"fr\">

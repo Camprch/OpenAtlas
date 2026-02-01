@@ -1,5 +1,6 @@
 import { initMap, markerStyle, clearMarkers, map, markersByCountry } from './static_map.js';
 
+// Shared UI elements.
 const filterMenu = document.getElementById('filter-menu');
 const filterClose = document.getElementById('filter-menu-close');
 const filterBtn = document.getElementById('filter-btn-global');
@@ -12,6 +13,7 @@ const eventsContainer = document.getElementById('events');
 const staticSearchInputPanel = document.getElementById('static-search-input-panel');
 const staticSearchBtn = document.getElementById('static-search-btn');
 
+// Current filter state (multi-select across categories).
 const selected = { date: new Set(), source: new Set(), label: new Set(), event_type: new Set() };
 let currentCountryKey = null;
 let searchQuery = '';
@@ -19,6 +21,7 @@ let allDetails = [];
 const isMobile = window.matchMedia('(max-width: 768px)').matches;
 
 function normalize(str) {
+  // Fold accents/diacritics for a more forgiving search.
   return (str || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 }
 
@@ -28,6 +31,7 @@ function containsQuery(text, query) {
 }
 
 function highlightQuery(text, query) {
+  // Wrap matching ranges with a highlighted span without altering original casing.
   if (!query) return text || '';
   const raw = text || '';
   const normText = normalize(raw);
@@ -54,6 +58,7 @@ function highlightQuery(text, query) {
 }
 
 function applyFilters(events) {
+  // Apply global filters to the map markers list.
   return events.filter(e => {
     if (selected.date.size && (!e.date || !selected.date.has(e.date))) return false;
     if (selected.source.size && (!e.source || !selected.source.has(e.source))) return false;
@@ -64,6 +69,7 @@ function applyFilters(events) {
 }
 
 function applyFiltersToDetails(details) {
+  // Apply global filters to detailed rows used by the sidepanel/search.
   return details.filter(item => {
     if (selected.date.size && (!item.timestamp || !selected.date.has(item.timestamp))) return false;
     if (selected.source.size && (!item.source || !selected.source.has(item.source))) return false;
@@ -74,6 +80,7 @@ function applyFiltersToDetails(details) {
 }
 
 function buildCountryEvents(countryKey, details) {
+  // Group detail rows by (region, location) to match the panel layout.
   const filtered = applyFiltersToDetails(details);
   const buckets = new Map();
   filtered.forEach(item => {
@@ -85,6 +92,7 @@ function buildCountryEvents(countryKey, details) {
   const zones = [];
   buckets.forEach((items, key) => {
     const [region, location] = key.split('||');
+    // Newest first inside each bucket.
     items.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
     const messages = items.map(m => {
       const text = m.text || '';
@@ -125,6 +133,7 @@ function setSearchValue(value) {
 }
 
 function openSearchPanel() {
+  // Re-use the sidepanel as a global search surface.
   closeFilterMenu();
   panelCountryText.textContent = 'Recherche';
   currentCountryKey = null;
@@ -133,6 +142,7 @@ function openSearchPanel() {
 }
 
 function renderSearchResults(query, details) {
+  // Full-text search over detail rows with highlighted matches.
   const q = (query || '').trim();
   if (!q) {
     eventsContainer.textContent = 'Saisissez une recherche.';
@@ -185,6 +195,7 @@ function renderSearchResults(query, details) {
   eventsContainer.innerHTML = `<div style="margin-bottom:8px;color:#bbb;">${filtered.length} résultat(s)</div><ul class="event-list" style="display:block;">${itemsHtml}</ul>`;
   eventsContainer.querySelectorAll('.evt-title').forEach(titleEl => {
     if (!titleEl.dataset.listener) {
+      // Toggle per-item text display without re-rendering the list.
       titleEl.addEventListener('click', function(e) {
         e.stopPropagation();
         const text = this.nextElementSibling;
@@ -200,6 +211,7 @@ function renderSearchResults(query, details) {
 }
 
 function renderEvents(data) {
+  // Render the sidepanel grouped by zone.
   const eventsContainer = document.getElementById('events');
   if (!data || !data.zones || data.zones.length === 0) {
     eventsContainer.textContent = 'Aucun événement.';
@@ -226,6 +238,7 @@ function renderEvents(data) {
       if (listEl.style.display === 'none') {
         listEl.style.display = '';
         btn.textContent = '▼';
+        // Attach message toggles lazily to keep initial render cheap.
         listEl.querySelectorAll('.evt-title').forEach(titleEl => {
           if (!titleEl.dataset.listener) {
             titleEl.addEventListener('click', function(e) {
@@ -249,7 +262,18 @@ function renderEvents(data) {
 }
 
 function openSidePanel(countryKey, details) {
-  panelCountryText.textContent = countryKey.replace(/^[^\p{L}\p{N}]+/u, '').trim();
+  // Open sidepanel focused on a specific country (emoji + name if present).
+  const rawName = countryKey || '';
+  const flagMatch = rawName.match(/^(\p{Regional_Indicator}{2})/u);
+  const flag = flagMatch ? flagMatch[1] : '';
+  const name = rawName.replace(/^[^\p{L}\p{N}]+/u, '').trim();
+  panelCountryText.textContent = '';
+  if (flag) {
+    const flagSpan = document.createElement('span');
+    flagSpan.textContent = `${flag} `;
+    panelCountryText.appendChild(flagSpan);
+  }
+  panelCountryText.appendChild(document.createTextNode(name || rawName));
   currentCountryKey = countryKey;
   setSearchValue('');
   searchQuery = '';
@@ -267,6 +291,7 @@ sidepanelClose.addEventListener('click', closeSidePanel);
 sidepanelBackdrop.addEventListener('click', closeSidePanel);
 
 function renderMarkers(events, coords, aliases, detailsByCountry) {
+  // Rebuild map markers from the currently filtered list.
   clearMarkers();
   const counts = new Map();
   events.forEach(e => {
@@ -276,6 +301,7 @@ function renderMarkers(events, coords, aliases, detailsByCountry) {
   });
 
   counts.forEach((count, key) => {
+    // Resolve alias -> canonical country key if needed.
     let coordKey = key;
     if (!coords[coordKey] && aliases[key] && coords[aliases[key]]) {
       coordKey = aliases[key];
@@ -285,6 +311,7 @@ function renderMarkers(events, coords, aliases, detailsByCountry) {
     const style = markerStyle(count);
     const marker = L.circleMarker([lat, lon], style);
     let flag = '';
+    // Attempt to extract the flag emoji from the country label.
     if (/^\p{Emoji}/u.test(coordKey)) {
       flag = coordKey.split(' ')[0];
     } else {
@@ -307,6 +334,7 @@ function renderMarkers(events, coords, aliases, detailsByCountry) {
     marker.on('click', () => openSidePanel(coordKey, detailsByCountry.get(key) || []));
     marker.addTo(map);
     if (flag) {
+      // Separate emoji marker so the circle remains clickable underneath.
       const emojiMarker = L.marker([lat, lon], {
         icon: L.divIcon({
           className: 'country-emoji-marker',
@@ -326,6 +354,7 @@ function renderMarkers(events, coords, aliases, detailsByCountry) {
 }
 
 function renderFilters(filters) {
+  // Build the filter menu UI from the dataset's filter lists.
   const optionsDiv = document.getElementById('filter-menu-options');
   optionsDiv.innerHTML = '';
   const columns = document.createElement('div');
@@ -356,6 +385,7 @@ function renderFilters(filters) {
         checkbox.value = val;
         checkbox.checked = selected[cat.key].has(val);
         checkbox.addEventListener('change', () => {
+          // Update the Set, then refresh map + sidepanel.
           if (checkbox.checked) {
             selected[cat.key].add(val);
           } else {
@@ -375,6 +405,7 @@ function renderFilters(filters) {
 }
 
 function openFilterMenu(opener) {
+  // Position menu differently depending on which button opened it.
   filterMenu.style.display = 'block';
   if (opener === 'panel') {
     filterMenu.style.position = 'fixed';
@@ -416,6 +447,7 @@ if (filterBtnPanel) {
 filterClose.addEventListener('click', closeFilterMenu);
 
 async function init() {
+  // Load data and render initial state.
   initMap();
   const [countriesResp, eventsResp] = await Promise.all([
     fetch('./static/data/countries.json'),
@@ -443,6 +475,7 @@ async function init() {
     renderSearchResults(searchQuery, allDetails);
   };
   if (staticSearchInputPanel) {
+    // Mirror inputs between header search and sidepanel search.
     staticSearchInputPanel.addEventListener('focus', () => openAndRender(staticSearchInputPanel.value));
     staticSearchInputPanel.addEventListener('click', () => openAndRender(staticSearchInputPanel.value));
     staticSearchInputPanel.addEventListener('input', () => {
@@ -470,6 +503,7 @@ async function init() {
   }
 
   window.__refresh = () => {
+    // Refresh all UI parts that depend on filter state.
     const filtered = applyFilters(events);
     renderMarkers(filtered, coords, aliases, detailsByCountry);
     if (sidepanel.classList.contains('visible')) {

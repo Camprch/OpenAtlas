@@ -1,14 +1,17 @@
+// Leaflet map instance and live marker registry.
 export let map;
 export let markersByCountry = {};
 
 const IS_MOBILE = window.matchMedia('(max-width: 768px)').matches;
 
 export function initMap() {
+  // Basemap + view config tuned for global overview.
   map = L.map('map', { worldCopyJump: true, minZoom: 2, maxZoom: 8, tapTolerance: 30 }).setView([20, 0], 2);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO', noWrap: true }).addTo(map);
 }
 
 export function clearMarkers() {
+  // Remove any marker or layer created by renderMarkers.
   Object.values(markersByCountry).forEach(m => {
     if (Array.isArray(m)) {
       m.forEach(layer => map.removeLayer(layer));
@@ -23,6 +26,7 @@ export function clearMarkers() {
 }
 
 export function markerStyle(count) {
+  // Scale marker radius and color by event count.
   const n = Math.max(1, count || 1);
   const minRadius = IS_MOBILE ? 10 : 10;
   const maxRadius = IS_MOBILE ? 13 : 13;
