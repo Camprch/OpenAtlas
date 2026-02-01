@@ -15,7 +15,7 @@ const staticSearchBtn = document.getElementById('static-search-btn');
 const staticNonGeorefToggle = document.getElementById('static-non-georef-toggle');
 
 const NON_GEOREF_KEY = '__NO_COUNTRY__';
-const NON_GEOREF_LABEL = 'Ungeoref (country=None)';
+const NON_GEOREF_LABEL = 'Ungeoref';
 
 // Current filter state (multi-select across categories).
 const selected = { date: new Set(), source: new Set(), label: new Set(), event_type: new Set() };
