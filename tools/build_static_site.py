@@ -207,9 +207,9 @@ def build_static_site() -> None:
       <span class=\"logo-icon logo-badge\">🌍</span>
       <span class=\"dashboard-title\">MAP</span>
       <div id=\"filter-container-global\">
-        <button id=\"filter-btn-global\" class=\"pill-btn\">Filters <span class=\"pill-btn-icon\">🔬</span></button>
+        <button id=\"filter-btn-global\" class=\"pill-btn\"><span class=\"pill-btn-icon\">🔬</span></button>
       </div>
-      <button id=\"static-search-btn\" class=\"pill-btn header-search-btn\">Search <span class=\"pill-btn-icon\">🔎</span></button>
+      <button id=\"static-search-btn\" class=\"pill-btn header-search-btn\"><span class=\"pill-btn-icon\">🔎</span></button>
       <button id=\"static-non-georef-toggle\" class=\"pill-btn\" title=\"Afficher les messages sans pays\">🗺️❔</button>
     </div>
     <div class=\"dashboard-header-right\">
