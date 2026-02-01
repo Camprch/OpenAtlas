@@ -25,30 +25,6 @@ let searchQuery = '';
 let allDetails = [];
 const isMobile = window.matchMedia('(max-width: 768px)').matches;
 let sidepanelHandlersBound = false;
-let frozenScrollY = 0;
-let bodyWasFixed = false;
-
-function freezeBodyScroll() {
-  if (bodyWasFixed) return;
-  frozenScrollY = window.scrollY || window.pageYOffset || 0;
-  document.body.style.position = 'fixed';
-  document.body.style.top = `-${frozenScrollY}px`;
-  document.body.style.left = '0';
-  document.body.style.right = '0';
-  document.body.style.width = '100%';
-  bodyWasFixed = true;
-}
-
-function restoreBodyScroll() {
-  if (!bodyWasFixed) return;
-  document.body.style.position = '';
-  document.body.style.top = '';
-  document.body.style.left = '';
-  document.body.style.right = '';
-  document.body.style.width = '';
-  window.scrollTo(0, frozenScrollY);
-  bodyWasFixed = false;
-}
 
 function normalize(str) {
   // Fold accents/diacritics for a more forgiving search.
@@ -352,14 +328,12 @@ function openSidePanel(countryKey, details) {
   renderEvents(buildCountryEvents(countryKey, details));
   sidepanel.classList.add('visible');
   sidepanelBackdrop.classList.add('visible');
-  freezeBodyScroll();
   bindSidepanelCloseOnEmpty();
 }
 
 function closeSidePanel() {
   sidepanel.classList.remove('visible');
   sidepanelBackdrop.classList.remove('visible');
-  restoreBodyScroll();
 }
 
 sidepanelClose.addEventListener('click', closeSidePanel);
@@ -647,13 +621,3 @@ document.addEventListener('touchend', (e) => {
     e.preventDefault();
   }, { passive: false });
 });
-
-// Prevent page scroll on iOS except map/panels/filters
-document.addEventListener('touchmove', (e) => {
-  const target = e.target;
-  if (!(target instanceof Element)) return;
-  if (target.closest('#map')) return;
-  if (target.closest('#sidepanel-content')) return;
-  if (target.closest('#filter-menu')) return;
-  e.preventDefault();
-}, { passive: false });
