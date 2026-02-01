@@ -224,7 +224,7 @@ def build_static_site() -> None:
     </div>
     <div id=\"sidepanel-content\">
       <div id=\"sidepanel-search-row\">
-        <input id=\"static-search-input-panel\" type=\"search\" placeholder=\"Rechercher...\" />
+        <input id=\"static-search-input-panel\" type=\"search\" placeholder=\"Search...\" />
       </div>
       <div id=\"sidepanel-events-header\">
         <h3>Events 📰</h3>

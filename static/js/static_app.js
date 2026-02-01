@@ -135,7 +135,7 @@ function setSearchValue(value) {
 function openSearchPanel() {
   // Re-use the sidepanel as a global search surface.
   closeFilterMenu();
-  panelCountryText.textContent = 'Recherche';
+  panelCountryText.textContent = 'Search Results';
   currentCountryKey = null;
   sidepanel.classList.add('visible');
   sidepanelBackdrop.classList.add('visible');
@@ -145,7 +145,7 @@ function renderSearchResults(query, details) {
   // Full-text search over detail rows with highlighted matches.
   const q = (query || '').trim();
   if (!q) {
-    eventsContainer.textContent = 'Saisissez une recherche.';
+    eventsContainer.textContent = 'Enter a search query.';
     return;
   }
   const filtered = applyFiltersToDetails(details).filter(item => {
@@ -162,11 +162,11 @@ function renderSearchResults(query, details) {
     return containsQuery(haystack, q);
   });
   if (!filtered.length) {
-    eventsContainer.textContent = 'Aucun résultat.';
+    eventsContainer.textContent = 'No results found.';
     return;
   }
   const itemsHtml = filtered.map(item => {
-    const title = highlightQuery(item.title || '(Sans titre)', q);
+    const title = highlightQuery(item.title || '(No title)', q);
     const fullText = highlightQuery(item.text || '', q);
     const where = [item.country, item.region, item.location].filter(Boolean).join(' – ');
     const orientation = item.orientation ? ` • ${item.orientation}` : '';
