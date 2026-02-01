@@ -74,6 +74,14 @@
     }
     body {
         font-size: 14px;
+        padding-top: 70px;
+    }
+    .dashboard-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1100;
     }
     header {
         flex-direction: row;
@@ -142,7 +150,8 @@
         transform: translateX(0);
     }
     #map {
-        height: calc(100vh - 110px);
+        height: calc(100vh - 70px);
+        margin-top: 0;
     }
     .leaflet-bottom.leaflet-right {
         right: 10px;
