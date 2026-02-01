@@ -74,31 +74,38 @@ function toggleTextBlock(textEl) {
   }
 }
 
+function isInteractiveSidepanelTarget(target) {
+  if (!(target instanceof Element)) return false;
+  return Boolean(
+    target.closest(
+      ".event, .evt-title, .evt-text, .evt-meta, .evt-link, " +
+      "#filter-container-panel, #filter-btn-panel, #sidepanel-search-row, " +
+      "input, textarea, select, button, a"
+    )
+  );
+}
+
 function bindSidepanelCloseOnEmpty() {
   if (sidepanelHandlersBound) return;
   sidepanel.onclick = (e) => {
-    if (e.target === sidepanel) {
-      closeSidePanel();
-    }
+    if (isInteractiveSidepanelTarget(e.target)) return;
+    closeSidePanel();
   };
   sidepanel.ontouchstart = (e) => {
-    if (e.target === sidepanel) {
-      e.preventDefault();
-      closeSidePanel();
-    }
+    if (isInteractiveSidepanelTarget(e.target)) return;
+    e.preventDefault();
+    closeSidePanel();
   };
   const sidepanelContent = document.getElementById('sidepanel-content');
   if (sidepanelContent) {
     sidepanelContent.onclick = (e) => {
-      if (e.target === sidepanelContent) {
-        closeSidePanel();
-      }
+      if (isInteractiveSidepanelTarget(e.target)) return;
+      closeSidePanel();
     };
     sidepanelContent.ontouchstart = (e) => {
-      if (e.target === sidepanelContent) {
-        e.preventDefault();
-        closeSidePanel();
-      }
+      if (isInteractiveSidepanelTarget(e.target)) return;
+      e.preventDefault();
+      closeSidePanel();
     };
   }
   sidepanelHandlersBound = true;

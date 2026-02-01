@@ -187,7 +187,10 @@
     }
 
     /* Keep Leaflet controls below the fixed header */
+    .leaflet-top {
+        top: 70px !important;
+    }
     .leaflet-top .leaflet-control {
-        margin-top: 70px;
+        margin-top: 0 !important;
     }
 }
