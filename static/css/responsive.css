@@ -145,6 +145,7 @@
         max-width: 100%;
         box-sizing: border-box;
         transform: translateX(100%);
+        padding-top: 70px;
     }
     #sidepanel.visible {
         transform: translateX(0);
@@ -167,6 +168,7 @@
     #close-panel {
         color: #fff !important;
         -webkit-text-fill-color: #fff;
+        top: 78px;
     }
     #timeline-container-panel select {
         appearance: none;
