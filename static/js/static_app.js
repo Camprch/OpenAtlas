@@ -12,6 +12,10 @@ const panelCountryText = document.getElementById('panel-country-text');
 const eventsContainer = document.getElementById('events');
 const staticSearchInputPanel = document.getElementById('static-search-input-panel');
 const staticSearchBtn = document.getElementById('static-search-btn');
+const staticNonGeorefToggle = document.getElementById('static-non-georef-toggle');
+
+const NON_GEOREF_KEY = '__NO_COUNTRY__';
+const NON_GEOREF_LABEL = 'Sans pays (country=None)';
 
 // Current filter state (multi-select across categories).
 const selected = { date: new Set(), source: new Set(), label: new Set(), event_type: new Set() };
@@ -263,6 +267,16 @@ function renderEvents(data) {
 
 function openSidePanel(countryKey, details) {
   // Open sidepanel focused on a specific country (emoji + name if present).
+  if (countryKey === NON_GEOREF_KEY) {
+    panelCountryText.textContent = NON_GEOREF_LABEL;
+    currentCountryKey = countryKey;
+    setSearchValue('');
+    searchQuery = '';
+    renderEvents(buildCountryEvents(countryKey, details));
+    sidepanel.classList.add('visible');
+    sidepanelBackdrop.classList.add('visible');
+    return;
+  }
   const rawName = countryKey || '';
   const flagMatch = rawName.match(/^(\p{Regional_Indicator}{2})/u);
   const flag = flagMatch ? flagMatch[1] : '';
@@ -462,9 +476,9 @@ async function init() {
   allDetails = details;
   const detailsByCountry = new Map();
   details.forEach(d => {
-    if (!d.country) return;
-    if (!detailsByCountry.has(d.country)) detailsByCountry.set(d.country, []);
-    detailsByCountry.get(d.country).push(d);
+    const key = d.country || NON_GEOREF_KEY;
+    if (!detailsByCountry.has(key)) detailsByCountry.set(key, []);
+    detailsByCountry.get(key).push(d);
   });
 
   renderFilters(dataset.filters || {});
@@ -499,6 +513,11 @@ async function init() {
       } else {
         eventsContainer.textContent = 'Saisissez une recherche.';
       }
+    });
+  }
+  if (staticNonGeorefToggle) {
+    staticNonGeorefToggle.addEventListener('click', () => {
+      openSidePanel(NON_GEOREF_KEY, detailsByCountry.get(NON_GEOREF_KEY) || []);
     });
   }
 
