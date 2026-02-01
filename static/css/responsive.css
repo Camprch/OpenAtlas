@@ -153,10 +153,11 @@
         gap: 12px;
     }
     #panel-country-name {
-        padding-left: 44px;
+        padding-left: 52px;
     }
     #close-panel {
         color: #fff !important;
+        -webkit-text-fill-color: #fff;
     }
     #timeline-container-panel select {
         appearance: none;
@@ -164,5 +165,11 @@
         -moz-appearance: none;
         background-image: none !important;
         padding-right: 10px;
+    }
+
+    /* Prevent iOS input focus zoom */
+    #search-input,
+    #static-search-input-panel {
+        font-size: 16px;
     }
 }
