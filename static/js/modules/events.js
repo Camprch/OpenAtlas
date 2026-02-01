@@ -117,6 +117,7 @@ export function renderEvents(data) {
                         titleEl.addEventListener('click', function(e) {
                             e.stopPropagation();
                             const text = this.nextElementSibling;
+                            if (!text) return;
                             if (text.classList.contains("is-collapsed")) {
                                 text.classList.remove("is-collapsed");
                                 text.classList.add("is-open");

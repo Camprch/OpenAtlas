@@ -7,12 +7,33 @@ const NON_GEOREF_LABEL = "Ungeoref";
 export let currentCountry = null;
 window.currentCountry = null;
 
+let sidepanelHandlersBound = false;
+
+function bindSidepanelCloseOnEmpty(sidepanel, sidepanelContent, backdrop, closePanel) {
+    if (sidepanelHandlersBound) return;
+    backdrop.onclick = closePanel;
+    sidepanel.onclick = (e) => {
+        if (e.target === sidepanel) {
+            closePanel();
+        }
+    };
+    if (sidepanelContent) {
+        sidepanelContent.onclick = (e) => {
+            if (e.target === sidepanelContent) {
+                closePanel();
+            }
+        };
+    }
+    sidepanelHandlersBound = true;
+}
+
 export function openSidePanel(country) {
     // Open the side panel and load events for the selected country
     const sidepanel = document.getElementById('sidepanel');
     const backdrop = document.getElementById('sidepanel-backdrop');
     const closeBtn = document.getElementById('close-panel');
     const countryName = document.getElementById('panel-country-text');
+    const sidepanelContent = document.getElementById('sidepanel-content');
     if (!sidepanel || !backdrop || !closeBtn || !countryName) return;
     currentCountry = country;
     window.currentCountry = country;
@@ -39,5 +60,5 @@ export function openSidePanel(country) {
         document.body.classList.remove('no-scroll');
     }
     closeBtn.onclick = closePanel;
-    backdrop.onclick = closePanel;
+    bindSidepanelCloseOnEmpty(sidepanel, sidepanelContent, backdrop, closePanel);
 }

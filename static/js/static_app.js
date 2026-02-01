@@ -13,6 +13,7 @@ const eventsContainer = document.getElementById('events');
 const staticSearchInputPanel = document.getElementById('static-search-input-panel');
 const staticSearchBtn = document.getElementById('static-search-btn');
 const staticNonGeorefToggle = document.getElementById('static-non-georef-toggle');
+const mapEl = document.getElementById('map');
 
 const NON_GEOREF_KEY = '__NO_COUNTRY__';
 const NON_GEOREF_LABEL = 'Ungeoref';
@@ -23,6 +24,7 @@ let currentCountryKey = null;
 let searchQuery = '';
 let allDetails = [];
 const isMobile = window.matchMedia('(max-width: 768px)').matches;
+let sidepanelHandlersBound = false;
 
 function normalize(str) {
   // Fold accents/diacritics for a more forgiving search.
@@ -61,6 +63,34 @@ function highlightQuery(text, query) {
   return result;
 }
 
+function toggleTextBlock(textEl) {
+  if (!textEl) return;
+  if (textEl.classList.contains('is-collapsed')) {
+    textEl.classList.remove('is-collapsed');
+    textEl.classList.add('is-open');
+  } else {
+    textEl.classList.add('is-collapsed');
+    textEl.classList.remove('is-open');
+  }
+}
+
+function bindSidepanelCloseOnEmpty() {
+  if (sidepanelHandlersBound) return;
+  sidepanel.onclick = (e) => {
+    if (e.target === sidepanel) {
+      closeSidePanel();
+    }
+  };
+  const sidepanelContent = document.getElementById('sidepanel-content');
+  if (sidepanelContent) {
+    sidepanelContent.onclick = (e) => {
+      if (e.target === sidepanelContent) {
+        closeSidePanel();
+      }
+    };
+  }
+  sidepanelHandlersBound = true;
+}
 function applyFilters(events) {
   // Apply global filters to the map markers list.
   return events.filter(e => {
@@ -203,13 +233,7 @@ function renderSearchResults(query, details) {
       titleEl.addEventListener('click', function(e) {
         e.stopPropagation();
         const text = this.nextElementSibling;
-        if (text.classList.contains('is-collapsed')) {
-          text.classList.remove('is-collapsed');
-          text.classList.add('is-open');
-        } else {
-          text.classList.add('is-collapsed');
-          text.classList.remove('is-open');
-        }
+        toggleTextBlock(text);
       });
       titleEl.dataset.listener = '1';
     }
@@ -250,13 +274,7 @@ function renderEvents(data) {
             titleEl.addEventListener('click', function(e) {
               e.stopPropagation();
               const text = this.nextElementSibling;
-              if (text.classList.contains('is-collapsed')) {
-                text.classList.remove('is-collapsed');
-                text.classList.add('is-open');
-              } else {
-                text.classList.add('is-collapsed');
-                text.classList.remove('is-open');
-              }
+              toggleTextBlock(text);
             });
             titleEl.dataset.listener = '1';
           }
@@ -298,6 +316,7 @@ function openSidePanel(countryKey, details) {
   renderEvents(buildCountryEvents(countryKey, details));
   sidepanel.classList.add('visible');
   sidepanelBackdrop.classList.add('visible');
+  bindSidepanelCloseOnEmpty();
 }
 
 function closeSidePanel() {
@@ -479,7 +498,6 @@ if (filterBtnPanel) {
 filterClose.addEventListener('click', closeFilterMenu);
 
 // Close filter menu when clicking on the map
-const mapEl = document.getElementById('map');
 if (mapEl) {
   mapEl.addEventListener('mousedown', () => {
     if (filterMenu.style.display === 'block') {
@@ -569,7 +587,6 @@ init();
 // Block page zoom (Ctrl/Cmd+wheel) outside of the map
 document.addEventListener('wheel', (e) => {
   if (!e.ctrlKey && !e.metaKey) return;
-  const mapEl = document.getElementById('map');
   if (mapEl && mapEl.contains(e.target)) return;
   e.preventDefault();
 }, { passive: false });
@@ -577,7 +594,6 @@ document.addEventListener('wheel', (e) => {
 // Block double-tap zoom outside of the map (mobile)
 let lastTap = 0;
 document.addEventListener('touchend', (e) => {
-  const mapEl = document.getElementById('map');
   if (mapEl && mapEl.contains(e.target)) return;
   const now = Date.now();
   if (now - lastTap <= 350) {
@@ -589,8 +605,17 @@ document.addEventListener('touchend', (e) => {
 // iOS Safari pinch-zoom block outside the map
 ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
   document.addEventListener(evt, (e) => {
-    const mapEl = document.getElementById('map');
     if (mapEl && mapEl.contains(e.target)) return;
     e.preventDefault();
   }, { passive: false });
 });
+
+// Prevent page scroll on iOS except map/panels/filters
+document.addEventListener('touchmove', (e) => {
+  const target = e.target;
+  if (!(target instanceof Element)) return;
+  if (target.closest('#map')) return;
+  if (target.closest('#sidepanel-content')) return;
+  if (target.closest('#filter-menu')) return;
+  e.preventDefault();
+}, { passive: false });

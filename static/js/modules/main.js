@@ -172,6 +172,16 @@ window.addEventListener("load", () => {
         }, { passive: false });
     });
 
+    // Prevent page scroll on iOS except map/panels/filters
+    document.addEventListener('touchmove', (e) => {
+        const target = e.target;
+        if (!target || !(target instanceof Element)) return;
+        if (target.closest('#map')) return;
+        if (target.closest('#sidepanel-content')) return;
+        if (target.closest('#filter-menu')) return;
+        e.preventDefault();
+    }, { passive: false });
+
     // Wire up the "country == none" quick access button
     const nonGeorefToggle = document.getElementById('non-georef-toggle');
     if (nonGeorefToggle) {
