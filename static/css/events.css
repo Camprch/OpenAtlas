@@ -48,6 +48,18 @@
     display: none;
 }
 
+.evt-text.is-open {
+    display: block;
+}
+
+.evt-text.is-collapsed {
+    display: none;
+}
+
+.event-list.is-collapsed {
+    display: none;
+}
+
 .evt-meta {
     font-size: 11px;
     color: #777;

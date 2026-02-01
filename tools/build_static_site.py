@@ -183,7 +183,7 @@ def build_static_site() -> None:
   <link rel="stylesheet" href="static/css/filters.css" />
   <link rel="stylesheet" href="static/css/map.css" />
   <link rel="stylesheet" href="static/css/overrides.css" />
-  <link rel="stylesheet" href="static/css/inline_cleanup.css" />
+  <link rel="stylesheet" href="static/css/search.css" />
   <link rel="stylesheet" href="static/css/responsive.css" />
   <link
     rel=\"stylesheet\"

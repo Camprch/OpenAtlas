@@ -1,0 +1,65 @@
+/* Search modal + results */
+
+.search-result-item {
+    margin-bottom: 12px;
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 8px 6px;
+    transition: background 0.15s;
+}
+
+.search-result-type {
+    color: #22c55e;
+}
+
+.search-result-label {
+    color: #888;
+}
+
+.evt-location {
+    color: #aaa;
+}
+
+.search-results-count {
+    margin-bottom: 8px;
+    color: #bbb;
+}
+
+.event-list.search-results {
+    display: block;
+}
+
+.search-modal {
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #181c25;
+    color: #eee;
+    border: 1px solid #444;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px #0008;
+    z-index: 9999;
+    min-width: 320px;
+    max-width: 90vw;
+    padding: 18px 24px 18px 24px;
+    max-height: 70vh;
+    overflow: hidden;
+}
+
+.search-modal-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: #444;
+    color: #eee;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 12px;
+    cursor: pointer;
+}
+
+.search-modal-content {
+    overflow-y: auto;
+    max-height: 60vh;
+}
