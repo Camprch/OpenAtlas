@@ -27,19 +27,9 @@ function bindSidepanelCloseOnEmpty(sidepanel, sidepanelContent, backdrop, closeP
         if (isInteractiveSidepanelTarget(e.target)) return;
         closePanel();
     };
-    sidepanel.ontouchstart = (e) => {
-        if (isInteractiveSidepanelTarget(e.target)) return;
-        e.preventDefault();
-        closePanel();
-    };
     if (sidepanelContent) {
         sidepanelContent.onclick = (e) => {
             if (isInteractiveSidepanelTarget(e.target)) return;
-            closePanel();
-        };
-        sidepanelContent.ontouchstart = (e) => {
-            if (isInteractiveSidepanelTarget(e.target)) return;
-            e.preventDefault();
             closePanel();
         };
     }

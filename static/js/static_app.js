@@ -91,20 +91,10 @@ function bindSidepanelCloseOnEmpty() {
     if (isInteractiveSidepanelTarget(e.target)) return;
     closeSidePanel();
   };
-  sidepanel.ontouchstart = (e) => {
-    if (isInteractiveSidepanelTarget(e.target)) return;
-    e.preventDefault();
-    closeSidePanel();
-  };
   const sidepanelContent = document.getElementById('sidepanel-content');
   if (sidepanelContent) {
     sidepanelContent.onclick = (e) => {
       if (isInteractiveSidepanelTarget(e.target)) return;
-      closeSidePanel();
-    };
-    sidepanelContent.ontouchstart = (e) => {
-      if (isInteractiveSidepanelTarget(e.target)) return;
-      e.preventDefault();
       closeSidePanel();
     };
   }
