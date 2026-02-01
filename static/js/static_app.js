@@ -1,495 +1,486 @@
-// static/js/static_app.js
-// Lightweight static-mode app that reads prebuilt JSON without backend APIs.
+import { initMap, markerStyle, clearMarkers, map, markersByCountry } from './static_map.js';
 
-const IS_MOBILE = window.matchMedia("(max-width: 768px)").matches;
+const filterMenu = document.getElementById('filter-menu');
+const filterClose = document.getElementById('filter-menu-close');
+const filterBtn = document.getElementById('filter-btn-global');
+const filterBtnPanel = document.getElementById('filter-btn-panel');
+const sidepanel = document.getElementById('sidepanel');
+const sidepanelBackdrop = document.getElementById('sidepanel-backdrop');
+const sidepanelClose = document.getElementById('close-panel');
+const panelCountryText = document.getElementById('panel-country-text');
+const eventsContainer = document.getElementById('events');
+const staticSearchInputPanel = document.getElementById('static-search-input-panel');
+const staticSearchBtn = document.getElementById('static-search-btn');
 
-let map;
-let markersByCountry = {};
-let countryCoords = {};
-let countryAliases = {};
-let staticData = { events: [], filters: {}, details: [] };
+const selected = { date: new Set(), source: new Set(), label: new Set(), event_type: new Set() };
+let currentCountryKey = null;
+let searchQuery = '';
+let allDetails = [];
+const isMobile = window.matchMedia('(max-width: 768px)').matches;
 
-if (!window.selectedFilters) {
-    window.selectedFilters = {
-        date: [],
-        source: [],
-        label: [],
-        event_type: []
-    };
+function normalize(str) {
+  return (str || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 }
 
-function initMap() {
-    map = L.map("map", {
-        worldCopyJump: true,
-        minZoom: 2,
-        maxZoom: 8,
-        tapTolerance: 30
-    }).setView([20, 0], 2);
-
-    L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-        {
-            attribution: "&copy; CARTO",
-            noWrap: true
-        }
-    ).addTo(map);
+function containsQuery(text, query) {
+  if (!query) return false;
+  return normalize(text).includes(normalize(query));
 }
 
-function markerStyle(count) {
-    const n = Math.max(1, count || 1);
-    const minRadius = IS_MOBILE ? 8 : 4;
-    const maxRadius = IS_MOBILE ? 13 : 7;
-    const maxCount = 30;
-    const ratio = Math.min(n / maxCount, 1);
-    const radius = minRadius + (maxRadius - minRadius) * ratio;
-    let color;
-    if (n < 5) {
-        color = "#22c55e";
-    } else if (n < 15) {
-        color = "#eab308";
-    } else {
-        color = "#f97316";
+function highlightQuery(text, query) {
+  if (!query) return text || '';
+  const raw = text || '';
+  const normText = normalize(raw);
+  const normQuery = normalize(query);
+  if (!normQuery) return raw;
+  let result = '';
+  let i = 0;
+  while (i < raw.length) {
+    let found = -1;
+    for (let j = i; j <= raw.length - normQuery.length; j++) {
+      if (normText.substr(j, normQuery.length) === normQuery) {
+        found = j;
+        break;
+      }
     }
-    return {
-        radius,
-        color,
-        fillColor: color,
-        fillOpacity: 0.85,
-        weight: IS_MOBILE ? 2 : 1
-    };
-}
-
-function clearMarkers() {
-    Object.values(markersByCountry).forEach((m) => map.removeLayer(m));
-    markersByCountry = {};
-}
-
-function escapeHtml(value) {
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-}
-
-function dateKey(value) {
-    if (!value) return null;
-    if (typeof value === "string") {
-        return value.slice(0, 10);
+    if (found === -1) {
+      result += raw.slice(i);
+      break;
     }
-    if (value instanceof Date && !Number.isNaN(value.valueOf())) {
-        return value.toISOString().slice(0, 10);
-    }
-    return null;
+    result += raw.slice(i, found) + `<span class="search-hl" style="background:#ffe066;color:#222;border-radius:3px;padding:0 2px;">` + raw.slice(found, found + normQuery.length) + '</span>';
+    i = found + normQuery.length;
+  }
+  return result;
 }
 
-function matchesFilter(selected, value) {
-    if (!selected || selected.length === 0) return true;
-    if (!value) return false;
-    return selected.includes(value);
-}
-
-function eventMatchesFilters(evt) {
-    const selected = window.selectedFilters;
-    if (!matchesFilter(selected.source, evt.source || null)) return false;
-    if (!matchesFilter(selected.label, evt.label || null)) return false;
-    if (!matchesFilter(selected.event_type, evt.event_type || null)) return false;
-    if (selected.date && selected.date.length > 0) {
-        if (!evt.date) return false;
-        if (!selected.date.includes(evt.date)) return false;
-    }
+function applyFilters(events) {
+  return events.filter(e => {
+    if (selected.date.size && (!e.date || !selected.date.has(e.date))) return false;
+    if (selected.source.size && (!e.source || !selected.source.has(e.source))) return false;
+    if (selected.label.size && (!e.label || !selected.label.has(e.label))) return false;
+    if (selected.event_type.size && (!e.event_type || !selected.event_type.has(e.event_type))) return false;
     return true;
+  });
 }
 
-function detailMatchesFilters(detail) {
-    const selected = window.selectedFilters;
-    if (!matchesFilter(selected.source, detail.source || null)) return false;
-    if (!matchesFilter(selected.label, detail.label || null)) return false;
-    if (!matchesFilter(selected.event_type, detail.event_type || null)) return false;
-    if (selected.date && selected.date.length > 0) {
-        const dKey = dateKey(detail.timestamp || detail.created_at);
-        if (!dKey) return false;
-        if (!selected.date.includes(dKey)) return false;
-    }
+function applyFiltersToDetails(details) {
+  return details.filter(item => {
+    if (selected.date.size && (!item.timestamp || !selected.date.has(item.timestamp))) return false;
+    if (selected.source.size && (!item.source || !selected.source.has(item.source))) return false;
+    if (selected.label.size && (!item.label || !selected.label.has(item.label))) return false;
+    if (selected.event_type.size && (!item.event_type || !selected.event_type.has(item.event_type))) return false;
     return true;
+  });
 }
 
-function resolveCountryKey(name) {
-    if (!name) return null;
-    if (countryCoords[name]) return name;
-    const lower = name.toLowerCase();
-    if (countryAliases[lower] && countryCoords[countryAliases[lower]]) {
-        return countryAliases[lower];
-    }
-    return null;
+function buildCountryEvents(countryKey, details) {
+  const filtered = applyFiltersToDetails(details);
+  const buckets = new Map();
+  filtered.forEach(item => {
+    const key = `${item.region || ''}||${item.location || ''}`;
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(item);
+  });
+
+  const zones = [];
+  buckets.forEach((items, key) => {
+    const [region, location] = key.split('||');
+    items.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+    const messages = items.map(m => {
+      const text = m.text || '';
+      const preview = text.length > 280 ? text.slice(0, 277) + '...' : text;
+      const url = (m.channel && m.telegram_message_id) ? `https://t.me/${m.channel}/${m.telegram_message_id}` : null;
+      return {
+        id: m.id,
+        telegram_message_id: m.telegram_message_id,
+        channel: m.channel,
+        title: m.title,
+        source: m.source,
+        orientation: m.orientation,
+        event_timestamp: m.timestamp,
+        created_at: m.created_at,
+        url,
+        translated_text: text,
+        preview,
+      };
+    });
+    zones.push({
+      region: region || null,
+      location: location || null,
+      messages_count: messages.length,
+      messages,
+    });
+  });
+
+  zones.sort((a, b) => b.messages_count - a.messages_count);
+  return {
+    date: selected.date.size ? Array.from(selected.date)[0] : new Date().toISOString().slice(0, 10),
+    country: countryKey,
+    zones,
+  };
 }
 
-function renderMap() {
-    const alert = document.getElementById("dashboard-alert");
-    const missing = [];
-    clearMarkers();
-
-    const counts = new Map();
-    staticData.events.forEach((evt) => {
-        if (!eventMatchesFilters(evt)) return;
-        if (!evt.country) return;
-        const current = counts.get(evt.country) || 0;
-        counts.set(evt.country, current + 1);
-    });
-
-    counts.forEach((count, country) => {
-        const key = resolveCountryKey(country);
-        if (!key) {
-            missing.push(country);
-            return;
-        }
-        const coords = countryCoords[key];
-        if (!coords) return;
-        const [lat, lon] = coords;
-        const style = markerStyle(count);
-        const clickableRadius = style.radius * 2.5;
-        const interactiveCircle = L.circleMarker([lat, lon], {
-            radius: clickableRadius,
-            color: "transparent",
-            fillColor: "transparent",
-            fillOpacity: 0,
-            weight: 0,
-            interactive: true,
-            pane: "markerPane"
-        });
-        const marker = L.circleMarker([lat, lon], style);
-        let flag = "";
-        if (/^\p{Emoji}/u.test(key)) {
-            flag = key.split(" ")[0];
-        } else {
-            for (const alias in countryAliases) {
-                if (countryAliases[alias] === key && /^\p{Emoji}/u.test(alias)) {
-                    flag = alias.split(" ")[0];
-                    break;
-                }
-            }
-        }
-        if (IS_MOBILE === false) {
-            const countryName = key.replace(/^[^\p{L}\p{N}]+/u, "").trim();
-            marker.bindPopup(
-                `<div style="text-align:center;min-width:70px;"><span style="font-size:2.2em;line-height:1;">${flag}</span><br><b>${escapeHtml(countryName)}</b></div>`
-            );
-        }
-        marker.on("mouseover", function () {
-            marker.setStyle({ radius: style.radius * 1.15 });
-            if (IS_MOBILE === false) marker.openPopup && marker.openPopup();
-        });
-        marker.on("mouseout", function () {
-            marker.setStyle({ radius: style.radius });
-            if (IS_MOBILE === false) marker.closePopup && marker.closePopup();
-        });
-        marker.on("click", () => openSidePanel(key));
-        interactiveCircle.on("click", () => openSidePanel(key));
-        interactiveCircle.addTo(map);
-        marker.addTo(map);
-        markersByCountry[key] = marker;
-    });
-
-    if (alert) {
-        if (missing.length > 0) {
-            alert.textContent = `⚠️ Pays non géolocalisés : ${missing.join(", ")}`;
-            alert.style.display = "block";
-        } else {
-            alert.style.display = "none";
-        }
-    }
+function setSearchValue(value) {
+  if (staticSearchInputPanel) staticSearchInputPanel.value = value;
 }
 
-function renderEvents(details) {
-    const eventsContainer = document.getElementById("events");
-    if (!eventsContainer) return;
-    if (!details || details.length === 0) {
-        eventsContainer.textContent = "Aucun événement.";
-        return;
-    }
+function openSearchPanel() {
+  closeFilterMenu();
+  panelCountryText.textContent = 'Recherche';
+  currentCountryKey = null;
+  sidepanel.classList.add('visible');
+  sidepanelBackdrop.classList.add('visible');
+}
 
-    const zones = new Map();
-    details.forEach((detail) => {
-        const region = detail.region || "";
-        const location = detail.location || "";
-        const key = `${region}||${location}`;
-        if (!zones.has(key)) {
-            zones.set(key, { region, location, messages: [] });
-        }
-        zones.get(key).messages.push(detail);
-    });
-
-    const html = Array.from(zones.values())
-        .map((zone, idx) => {
-            const header =
-                [zone.region, zone.location].filter(Boolean).join(" – ") ||
-                "Zone inconnue";
-            const msgs = zone.messages
-                .sort((a, b) => {
-                    const da = new Date(a.timestamp || a.created_at || 0).valueOf();
-                    const db = new Date(b.timestamp || b.created_at || 0).valueOf();
-                    return db - da;
-                })
-                .map((m, mIdx) => {
-                    const title = m.title || "(Sans titre)";
-                    const fullText = m.text || "";
-                    const orientation = m.orientation ? ` • ${m.orientation}` : "";
-                    const dateValue = m.timestamp || m.created_at;
-                    const timeStr = dateValue
-                        ? new Date(dateValue).toLocaleString()
-                        : "";
-                    return `
-            <li class="event" data-msg-id="${escapeHtml(m.id)}">
-                <div class="evt-title" data-zone="${idx}" data-msg="${mIdx}" style="cursor:pointer;">${escapeHtml(title)}</div>
-                <div class="evt-text" style="display:none;">
-                    ${escapeHtml(fullText)}
-                    <div class="evt-meta">
-                        <span class="evt-source">${escapeHtml(m.source || "")}${escapeHtml(orientation)}</span>
-                        <span class="evt-time">${escapeHtml(timeStr)}</span>
-                    </div>
+function renderSearchResults(query, details) {
+  const q = (query || '').trim();
+  if (!q) {
+    eventsContainer.textContent = 'Saisissez une recherche.';
+    return;
+  }
+  const filtered = applyFiltersToDetails(details).filter(item => {
+    const haystack = [
+      item.title,
+      item.text,
+      item.country,
+      item.region,
+      item.location,
+      item.source,
+      item.label,
+      item.event_type,
+    ].filter(Boolean).join(' ');
+    return containsQuery(haystack, q);
+  });
+  if (!filtered.length) {
+    eventsContainer.textContent = 'Aucun résultat.';
+    return;
+  }
+  const itemsHtml = filtered.map(item => {
+    const title = highlightQuery(item.title || '(Sans titre)', q);
+    const fullText = highlightQuery(item.text || '', q);
+    const where = [item.country, item.region, item.location].filter(Boolean).join(' – ');
+    const orientation = item.orientation ? ` • ${item.orientation}` : '';
+    const rawTime = item.timestamp || item.created_at;
+    const timeStr = rawTime ? new Date(rawTime).toLocaleString() : '';
+    const source = item.source || '';
+    const postLink = (item.channel && item.telegram_message_id)
+      ? `<a href="https://t.me/${item.channel}/${item.telegram_message_id}" target="_blank">post n° ${item.telegram_message_id}</a>`
+      : '';
+    const metaParts = [];
+    if (source) metaParts.push(`<span class="evt-source">${source}${orientation}</span>`);
+    if (timeStr) metaParts.push(`<span class="evt-time">${timeStr}</span>`);
+    if (where) metaParts.push(`<span class="evt-location" style="color:#aaa;">${highlightQuery(where, q)}</span>`);
+    if (postLink) metaParts.push(`<span class="evt-link">${postLink}</span>`);
+    const meta = metaParts.length ? `<div class="evt-meta">${metaParts.join('')}</div>` : '';
+    return `
+            <li class="event" data-msg-id="${item.id}">
+                <div class="evt-title" style="cursor:pointer;">${title}</div>
+                <div class="evt-text" style="display:block;">
+                    ${fullText}
+                    ${meta}
                 </div>
             </li>
         `;
-                })
-                .join("");
-            return `
-            <section class="zone-block">
-                <h4 class="zone-header" data-idx="${idx}">
-                    <span class="toggle-btn">▶</span> ${escapeHtml(header)}
-                    <span class="evt-count">(${zone.messages.length})</span>
-                </h4>
-                <ul class="event-list" id="zone-list-${idx}" style="display:none;">
-                    ${msgs}
-                </ul>
-            </section>
-        `;
-        })
-        .join("");
-
-    eventsContainer.innerHTML = html;
-    Array.from(zones.values()).forEach((zone, idx) => {
-        const headerEl = document.querySelector(
-            `.zone-header[data-idx='${idx}']`
-        );
-        const listEl = document.getElementById(`zone-list-${idx}`);
-        if (!headerEl || !listEl) return;
-        const btn = headerEl.querySelector(".toggle-btn");
-        headerEl.addEventListener("click", () => {
-            if (listEl.style.display === "none") {
-                listEl.style.display = "";
-                if (btn) btn.textContent = "▼";
-                listEl.querySelectorAll(".evt-title").forEach((titleEl) => {
-                    if (!titleEl.dataset.listener) {
-                        titleEl.addEventListener("click", function (e) {
-                            e.stopPropagation();
-                            const text = this.nextElementSibling;
-                            if (text.style.display === "none" || !text.style.display) {
-                                text.style.display = "block";
-                            } else {
-                                text.style.display = "none";
-                            }
-                        });
-                        titleEl.dataset.listener = "1";
-                    }
-                });
-            } else {
-                listEl.style.display = "none";
-                if (btn) btn.textContent = "▶";
-            }
-        });
-    });
-}
-
-function openSidePanel(country) {
-    const sidepanel = document.getElementById("sidepanel");
-    const backdrop = document.getElementById("sidepanel-backdrop");
-    const closeBtn = document.getElementById("close-panel");
-    const countryName = document.getElementById("panel-country-text");
-    if (!sidepanel || !backdrop || !closeBtn || !countryName) return;
-    window.currentCountry = country;
-    countryName.textContent = country;
-    sidepanel.classList.add("visible");
-    backdrop.style.display = "block";
-    document.body.classList.add("no-scroll");
-    renderSidePanel(country);
-    function closePanel() {
-        sidepanel.classList.remove("visible");
-        backdrop.style.display = "none";
-        document.body.classList.remove("no-scroll");
-    }
-    closeBtn.onclick = closePanel;
-    backdrop.onclick = closePanel;
-}
-
-function renderSidePanel(country) {
-    const details = staticData.details.filter((detail) => {
-        if (detail.country !== country) return false;
-        return detailMatchesFilters(detail);
-    });
-    renderEvents(details);
-}
-
-function renderAllFilterOptions() {
-    const optionsDiv = document.getElementById("filter-menu-options");
-    if (!optionsDiv) return;
-    optionsDiv.innerHTML = "";
-
-    const columns = document.createElement("div");
-    columns.id = "filter-columns";
-    const categories = [
-        { key: "date", label: "Date 🗓️" },
-        { key: "source", label: "Source 📡" },
-        { key: "label", label: "Label 🏷️" },
-        { key: "event_type", label: "Type 📝" }
-    ];
-    categories.forEach((cat) => {
-        const col = document.createElement("div");
-        col.className = "filter-col";
-        const title = document.createElement("div");
-        title.className = "filter-col-title";
-        title.textContent = cat.label;
-        col.appendChild(title);
-        const list = document.createElement("div");
-        list.className = "filter-options-list";
-        const values = staticData.filters[cat.key] || [];
-        if (values.length === 0) {
-            list.textContent = "Aucune option.";
+  }).join('');
+  eventsContainer.innerHTML = `<div style="margin-bottom:8px;color:#bbb;">${filtered.length} résultat(s)</div><ul class="event-list" style="display:block;">${itemsHtml}</ul>`;
+  eventsContainer.querySelectorAll('.evt-title').forEach(titleEl => {
+    if (!titleEl.dataset.listener) {
+      titleEl.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const text = this.nextElementSibling;
+        if (text.style.display === 'none' || !text.style.display) {
+          text.style.display = 'block';
         } else {
-            values.forEach((val) => {
-                const label = document.createElement("label");
-                const checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.value = val;
-                checkbox.checked = window.selectedFilters[cat.key].includes(val);
-                label.appendChild(checkbox);
-                label.appendChild(document.createTextNode(val));
-                list.appendChild(label);
-                checkbox.addEventListener("change", () => {
-                    const selected = window.selectedFilters[cat.key] || [];
-                    if (checkbox.checked) {
-                        if (!selected.includes(val)) selected.push(val);
-                    } else {
-                        window.selectedFilters[cat.key] = selected.filter((v) => v !== val);
-                    }
-                    renderMap();
-                    if (window.currentCountry) {
-                        renderSidePanel(window.currentCountry);
-                    }
-                });
+          text.style.display = 'none';
+        }
+      });
+      titleEl.dataset.listener = '1';
+    }
+  });
+}
+
+function renderEvents(data) {
+  const eventsContainer = document.getElementById('events');
+  if (!data || !data.zones || data.zones.length === 0) {
+    eventsContainer.textContent = 'Aucun événement.';
+    return;
+  }
+  const html = data.zones.map((zone, idx) => {
+    const header = [zone.region, zone.location].filter(Boolean).join(' – ') || 'Zone inconnue';
+    const msgs = zone.messages.map((m, mIdx) => {
+      const title = m.title || '(Sans titre)';
+      const fullText = m.translated_text || '';
+      const orientation = m.orientation ? ` • ${m.orientation}` : '';
+      const postLink = m.url ? `<a href="${m.url}" target="_blank">post n° ${m.telegram_message_id}</a>` : '';
+      const timeStr = new Date(m.event_timestamp || m.created_at).toLocaleString();
+      return `\n            <li class="event" data-msg-id="${m.id}">\n                <div class="evt-title" data-zone="${idx}" data-msg="${mIdx}" style="cursor:pointer;">${title}</div>\n                <div class="evt-text" style="display:none;">\n                    ${fullText}\n                    <div class="evt-meta">\n                        <span class="evt-source">${m.source}${orientation}</span>\n                        <span class="evt-time">${timeStr}</span>\n                        <span class="evt-link">${postLink}</span>\n                    </div>\n                </div>\n            </li>\n        `;
+    }).join('');
+    return `\n            <section class="zone-block">\n                <h4 class="zone-header" data-idx="${idx}">\n                    <span class="toggle-btn">▶</span> ${header}\n                    <span class="evt-count">(${zone.messages_count})</span>\n                </h4>\n                <ul class="event-list" id="zone-list-${idx}" style="display:none;">\n                    ${msgs}\n                </ul>\n            </section>\n        `;
+  }).join('');
+  eventsContainer.innerHTML = html;
+  data.zones.forEach((zone, idx) => {
+    const headerEl = document.querySelector(`.zone-header[data-idx='${idx}']`);
+    const listEl = document.getElementById(`zone-list-${idx}`);
+    const btn = headerEl.querySelector('.toggle-btn');
+    headerEl.addEventListener('click', () => {
+      if (listEl.style.display === 'none') {
+        listEl.style.display = '';
+        btn.textContent = '▼';
+        listEl.querySelectorAll('.evt-title').forEach(titleEl => {
+          if (!titleEl.dataset.listener) {
+            titleEl.addEventListener('click', function(e) {
+              e.stopPropagation();
+              const text = this.nextElementSibling;
+              if (text.style.display === 'none' || !text.style.display) {
+                text.style.display = 'block';
+              } else {
+                text.style.display = 'none';
+              }
             });
-        }
-        col.appendChild(list);
-        columns.appendChild(col);
-    });
-    optionsDiv.appendChild(columns);
-}
-
-function setupFilterMenuSync() {
-    const filterBtnGlobal = document.getElementById("filter-btn-global");
-    const filterBtnPanel = document.getElementById("filter-btn-panel");
-    const filterMenu = document.getElementById("filter-menu");
-    const filterMenuClose = document.getElementById("filter-menu-close");
-    let lastOpener = null;
-
-    function openMenu(opener) {
-        if (!filterMenu) return;
-        filterMenu.style.display = "flex";
-        lastOpener = opener;
-        if (opener === "panel") {
-            filterMenu.style.position = "fixed";
-            filterMenu.style.top = "80px";
-            filterMenu.style.right = "420px";
-            filterMenu.style.left = "";
-            filterMenu.style.transform = "none";
-            document.body.appendChild(filterMenu);
-        } else {
-            filterMenu.style.position = "fixed";
-            filterMenu.style.top = "60px";
-            filterMenu.style.left = "80px";
-            filterMenu.style.right = "";
-            filterMenu.style.transform = "none";
-            document.body.appendChild(filterMenu);
-        }
-        renderAllFilterOptions();
-    }
-
-    function closeMenu() {
-        if (!filterMenu) return;
-        filterMenu.style.display = "none";
-        lastOpener = null;
-    }
-
-    if (filterBtnGlobal) {
-        filterBtnGlobal.addEventListener("click", () => {
-            if (filterMenu.style.display === "flex" && lastOpener === "global") {
-                closeMenu();
-            } else {
-                openMenu("global");
-            }
+            titleEl.dataset.listener = '1';
+          }
         });
+      } else {
+        listEl.style.display = 'none';
+        btn.textContent = '▶';
+      }
+    });
+  });
+}
+
+function openSidePanel(countryKey, details) {
+  panelCountryText.textContent = countryKey.replace(/^[^\p{L}\p{N}]+/u, '').trim();
+  currentCountryKey = countryKey;
+  setSearchValue('');
+  searchQuery = '';
+  renderEvents(buildCountryEvents(countryKey, details));
+  sidepanel.classList.add('visible');
+  sidepanelBackdrop.classList.add('visible');
+}
+
+function closeSidePanel() {
+  sidepanel.classList.remove('visible');
+  sidepanelBackdrop.classList.remove('visible');
+}
+
+sidepanelClose.addEventListener('click', closeSidePanel);
+sidepanelBackdrop.addEventListener('click', closeSidePanel);
+
+function renderMarkers(events, coords, aliases, detailsByCountry) {
+  clearMarkers();
+  const counts = new Map();
+  events.forEach(e => {
+    if (!e.country) return;
+    const key = e.country;
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+
+  counts.forEach((count, key) => {
+    let coordKey = key;
+    if (!coords[coordKey] && aliases[key] && coords[aliases[key]]) {
+      coordKey = aliases[key];
     }
-    if (filterBtnPanel) {
-        filterBtnPanel.addEventListener("click", () => {
-            if (filterMenu.style.display === "flex" && lastOpener === "panel") {
-                closeMenu();
-            } else {
-                openMenu("panel");
-            }
+    if (!coords[coordKey]) return;
+    const [lat, lon] = coords[coordKey];
+    const style = markerStyle(count);
+    const marker = L.circleMarker([lat, lon], style);
+    let flag = '';
+    if (/^\p{Emoji}/u.test(coordKey)) {
+      flag = coordKey.split(' ')[0];
+    } else {
+      for (const alias in aliases) {
+        if (aliases[alias] === coordKey && /^\p{Emoji}/u.test(alias)) {
+          flag = alias.split(' ')[0];
+          break;
+        }
+      }
+    }
+    // Popup with flag + country name (desktop only)
+    if (!isMobile) {
+      const countryName = coordKey.replace(/^[^\p{L}\p{N}]+/u, '').trim();
+      marker.bindPopup(`<div style='text-align:center;min-width:70px;'><span style='font-size:2.2em;line-height:1;'>${flag}</span><br><b>${countryName}</b></div>`);
+      marker.on('mouseover', () => marker.openPopup && marker.openPopup());
+      marker.on('mouseout', () => marker.closePopup && marker.closePopup());
+    }
+    marker.on('mouseover', () => marker.setStyle({ radius: style.radius * 1.15 }));
+    marker.on('mouseout', () => marker.setStyle({ radius: style.radius }));
+    marker.on('click', () => openSidePanel(coordKey, detailsByCountry.get(key) || []));
+    marker.addTo(map);
+    if (flag) {
+      const emojiMarker = L.marker([lat, lon], {
+        icon: L.divIcon({
+          className: 'country-emoji-marker',
+          html: `<span>${flag}</span>`,
+          iconSize: [0, 0],
+          iconAnchor: [0, 0],
+        }),
+        interactive: false,
+      });
+      emojiMarker.setZIndexOffset(1000);
+      emojiMarker.addTo(map);
+      markersByCountry[coordKey] = { marker, emoji: emojiMarker };
+    } else {
+      markersByCountry[coordKey] = marker;
+    }
+  });
+}
+
+function renderFilters(filters) {
+  const optionsDiv = document.getElementById('filter-menu-options');
+  optionsDiv.innerHTML = '';
+  const columns = document.createElement('div');
+  columns.id = 'filter-columns';
+  const categories = [
+    { key: 'date', label: 'Date \uD83D\uDCC5' },
+    { key: 'source', label: 'Source \uD83D\uDCF1' },
+    { key: 'label', label: 'Label \uD83C\uDFF7\uFE0F' },
+    { key: 'event_type', label: 'Type \uD83D\uDCDD' },
+  ];
+  categories.forEach(cat => {
+    const col = document.createElement('div');
+    col.className = 'filter-col';
+    const title = document.createElement('div');
+    title.className = 'filter-col-title';
+    title.textContent = cat.label;
+    col.appendChild(title);
+    const list = document.createElement('div');
+    list.className = 'filter-options-list';
+    const values = filters[cat.key] || [];
+    if (!values.length) {
+      list.textContent = 'Aucune option.';
+    } else {
+      values.forEach(val => {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = val;
+        checkbox.checked = selected[cat.key].has(val);
+        checkbox.addEventListener('change', () => {
+          if (checkbox.checked) {
+            selected[cat.key].add(val);
+          } else {
+            selected[cat.key].delete(val);
+          }
+          window.__refresh();
         });
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(val));
+        list.appendChild(label);
+      });
     }
-    if (filterMenuClose) {
-        filterMenuClose.addEventListener("click", closeMenu);
-    }
-    document.addEventListener("mousedown", (e) => {
-        if (
-            filterMenu &&
-            filterMenu.style.display === "flex" &&
-            !filterMenu.contains(e.target) &&
-            e.target !== filterBtnGlobal &&
-            e.target !== filterBtnPanel
-        ) {
-            closeMenu();
-        }
-    });
+    col.appendChild(list);
+    columns.appendChild(col);
+  });
+  optionsDiv.appendChild(columns);
 }
 
-function setupStaticSearch() {
-    const searchBtn = document.getElementById("static-search-btn");
-    if (!searchBtn) return;
-    searchBtn.addEventListener("click", () => {
-        const query = window.prompt("Rechercher un pays");
-        if (!query) return;
-        const lower = query.trim().toLowerCase();
-        if (!lower) return;
-        const match = staticData.events.find((evt) =>
-            (evt.country || "").toLowerCase().includes(lower)
-        );
-        if (match) {
-            openSidePanel(match.country);
-        }
-    });
+function openFilterMenu(opener) {
+  filterMenu.style.display = 'block';
+  if (opener === 'panel') {
+    filterMenu.style.position = 'fixed';
+    filterMenu.style.top = '80px';
+    filterMenu.style.right = '420px';
+    filterMenu.style.left = '';
+    filterMenu.style.transform = 'none';
+  } else {
+    filterMenu.style.position = 'fixed';
+    filterMenu.style.top = '60px';
+    filterMenu.style.left = '80px';
+    filterMenu.style.right = '';
+    filterMenu.style.transform = 'none';
+  }
 }
 
-async function loadStaticData() {
-    const [eventsResp, countriesResp] = await Promise.all([
-        fetch("/static/data/events.json"),
-        fetch("/static/data/countries.json")
-    ]);
-    staticData = await eventsResp.json();
-    const countries = await countriesResp.json();
-    countryCoords = countries.coordinates || {};
-    countryAliases = countries.aliases || {};
+function closeFilterMenu() {
+  filterMenu.style.display = 'none';
 }
+
+filterBtn.addEventListener('click', () => {
+  if (filterMenu.style.display === 'block') {
+    closeFilterMenu();
+  } else {
+    openFilterMenu('global');
+  }
+});
+
+if (filterBtnPanel) {
+  filterBtnPanel.addEventListener('click', () => {
+    if (filterMenu.style.display === 'block') {
+      closeFilterMenu();
+    } else {
+      openFilterMenu('panel');
+    }
+  });
+}
+
+filterClose.addEventListener('click', closeFilterMenu);
 
 async function init() {
-    initMap();
-    await loadStaticData();
-    renderMap();
-    setupFilterMenuSync();
-    setupStaticSearch();
+  initMap();
+  const [countriesResp, eventsResp] = await Promise.all([
+    fetch('./static/data/countries.json'),
+    fetch('./static/data/events.json'),
+  ]);
+  const countries = await countriesResp.json();
+  const dataset = await eventsResp.json();
+  const coords = countries.coordinates || {};
+  const aliases = countries.aliases || {};
+  const events = dataset.events || [];
+  const details = dataset.details || [];
+  allDetails = details;
+  const detailsByCountry = new Map();
+  details.forEach(d => {
+    if (!d.country) return;
+    if (!detailsByCountry.has(d.country)) detailsByCountry.set(d.country, []);
+    detailsByCountry.get(d.country).push(d);
+  });
+
+  renderFilters(dataset.filters || {});
+
+  const openAndRender = (value) => {
+    searchQuery = value || '';
+    openSearchPanel();
+    renderSearchResults(searchQuery, allDetails);
+  };
+  if (staticSearchInputPanel) {
+    staticSearchInputPanel.addEventListener('focus', () => openAndRender(staticSearchInputPanel.value));
+    staticSearchInputPanel.addEventListener('click', () => openAndRender(staticSearchInputPanel.value));
+    staticSearchInputPanel.addEventListener('input', () => {
+      setSearchValue(staticSearchInputPanel.value);
+      openAndRender(staticSearchInputPanel.value);
+    });
+    staticSearchInputPanel.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        setSearchValue('');
+        searchQuery = '';
+        closeSidePanel();
+      }
+    });
+  }
+  if (staticSearchBtn) {
+    staticSearchBtn.addEventListener('click', () => {
+      openSearchPanel();
+      if (staticSearchInputPanel) {
+        staticSearchInputPanel.focus();
+        openAndRender(staticSearchInputPanel.value);
+      } else {
+        eventsContainer.textContent = 'Saisissez une recherche.';
+      }
+    });
+  }
+
+  window.__refresh = () => {
+    const filtered = applyFilters(events);
+    renderMarkers(filtered, coords, aliases, detailsByCountry);
+    if (sidepanel.classList.contains('visible')) {
+      if (searchQuery) {
+        renderSearchResults(searchQuery, allDetails);
+      } else if (currentCountryKey) {
+        renderEvents(buildCountryEvents(currentCountryKey, detailsByCountry.get(currentCountryKey) || []));
+      }
+    }
+  };
+  window.__refresh();
 }
 
-window.addEventListener("load", () => {
-    init();
-});
+init();

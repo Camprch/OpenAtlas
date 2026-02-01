@@ -24,16 +24,25 @@ export function initMap() {
 
 export function clearMarkers() {
     // Remove all markers currently rendered on the map
-    Object.values(markersByCountry).forEach((m) => map.removeLayer(m));
+    Object.values(markersByCountry).forEach((m) => {
+        if (Array.isArray(m)) {
+            m.forEach((layer) => map.removeLayer(layer));
+        } else if (m && m.marker) {
+            map.removeLayer(m.marker);
+            if (m.emoji) map.removeLayer(m.emoji);
+        } else {
+            map.removeLayer(m);
+        }
+    });
     markersByCountry = {};
 }
 
 export function markerStyle(count) {
     // Derive a marker radius and color based on event count
     const n = Math.max(1, count || 1);
-    const minRadius = IS_MOBILE ? 8 : 4;
-    const maxRadius = IS_MOBILE ? 13 : 7;
-    const maxCount = 30;
+    const minRadius = IS_MOBILE ? 8 : 8;
+    const maxRadius = IS_MOBILE ? 13 : 13;
+    const maxCount = 25;
     const ratio = Math.min(n / maxCount, 1);
     const radius = minRadius + (maxRadius - minRadius) * ratio;
     let color;

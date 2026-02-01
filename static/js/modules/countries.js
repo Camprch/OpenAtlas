@@ -110,7 +110,22 @@ export async function loadActiveCountries(currentGlobalDate, sources = null, lab
         });
         marker.on("click", () => openSidePanel(key));
         marker.addTo(map);
-        markersByCountry[key] = marker;
+        if (flag) {
+            const emojiMarker = L.marker([lat, lon], {
+                icon: L.divIcon({
+                    className: "country-emoji-marker",
+                    html: `<span>${flag}</span>`,
+                    iconSize: [0, 0],
+                    iconAnchor: [0, 0],
+                }),
+                interactive: false,
+            });
+            emojiMarker.setZIndexOffset(1000);
+            emojiMarker.addTo(map);
+            markersByCountry[key] = { marker, emoji: emojiMarker };
+        } else {
+            markersByCountry[key] = marker;
+        }
     });
     if (alert) {
         // Surface missing or unrecognized countries to the user

@@ -32,3 +32,19 @@
 .leaflet-bottom.leaflet-right {
     right: 20px;
 }
+
+.country-emoji-marker {
+    background: transparent;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    pointer-events: none;
+}
+
+.country-emoji-marker span {
+    display: inline-block;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    line-height: 1;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+}
