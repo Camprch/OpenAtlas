@@ -35,6 +35,12 @@
     border: 2px solid #23272e;
 }
 
+/* Static site: visually larger without changing header height */
+.static-site .logo-badge {
+    transform: scale(1.1);
+    transform-origin: center;
+}
+
 .dashboard-title {
     font-size: 1.35rem;
     font-weight: 700;
@@ -83,6 +89,8 @@
     padding: 6px 12px;
     border-radius: 999px;
     gap: 6px;
+    transform: scale(1.06);
+    transform-origin: center;
 }
 
 .static-site #filter-btn-global .pill-btn-icon,
