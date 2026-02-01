@@ -24,7 +24,7 @@ export function clearMarkers() {
 
 export function markerStyle(count) {
   const n = Math.max(1, count || 1);
-  const minRadius = IS_MOBILE ? 8 : 8;
+  const minRadius = IS_MOBILE ? 10 : 10;
   const maxRadius = IS_MOBILE ? 13 : 13;
   const maxCount = 25;
   const ratio = Math.min(n / maxCount, 1);

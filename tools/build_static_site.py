@@ -164,15 +164,15 @@ def build_static_site() -> None:
   <meta charset=\"UTF-8\" />
   <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />
   <title>OpenAtlas Static</title>
-  <link rel="stylesheet" href="/static/css/dashboard.css" />
-  <link rel="stylesheet" href="/static/css/sidepanel.css" />
-  <link rel="stylesheet" href="/static/css/base.css" />
-  <link rel="stylesheet" href="/static/css/dashboard_ui.css" />
-  <link rel="stylesheet" href="/static/css/events.css" />
-  <link rel="stylesheet" href="/static/css/filters.css" />
-  <link rel="stylesheet" href="/static/css/map.css" />
-  <link rel="stylesheet" href="/static/css/overrides.css" />
-  <link rel="stylesheet" href="/static/css/responsive.css" />
+  <link rel="stylesheet" href="static/css/dashboard.css" />
+  <link rel="stylesheet" href="static/css/sidepanel.css" />
+  <link rel="stylesheet" href="static/css/base.css" />
+  <link rel="stylesheet" href="static/css/dashboard_ui.css" />
+  <link rel="stylesheet" href="static/css/events.css" />
+  <link rel="stylesheet" href="static/css/filters.css" />
+  <link rel="stylesheet" href="static/css/map.css" />
+  <link rel="stylesheet" href="static/css/overrides.css" />
+  <link rel="stylesheet" href="static/css/responsive.css" />
   <link
     rel=\"stylesheet\"
     href=\"https://unpkg.com/leaflet@1.9.4/dist/leaflet.css\"
@@ -225,7 +225,7 @@ def build_static_site() -> None:
   </div>
   <div id=\"sidepanel-backdrop\"></div>
 
-  <script type="module" src="/static/js/static_app.js"></script>
+  <script type="module" src="static/js/static_app.js"></script>
 </body>
 </html>
 """,
