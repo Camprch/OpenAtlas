@@ -81,10 +81,22 @@ function bindSidepanelCloseOnEmpty() {
       closeSidePanel();
     }
   };
+  sidepanel.ontouchstart = (e) => {
+    if (e.target === sidepanel) {
+      e.preventDefault();
+      closeSidePanel();
+    }
+  };
   const sidepanelContent = document.getElementById('sidepanel-content');
   if (sidepanelContent) {
     sidepanelContent.onclick = (e) => {
       if (e.target === sidepanelContent) {
+        closeSidePanel();
+      }
+    };
+    sidepanelContent.ontouchstart = (e) => {
+      if (e.target === sidepanelContent) {
+        e.preventDefault();
         closeSidePanel();
       }
     };
@@ -322,6 +334,8 @@ function openSidePanel(countryKey, details) {
 function closeSidePanel() {
   sidepanel.classList.remove('visible');
   sidepanelBackdrop.classList.remove('visible');
+  // Reset any accidental page scroll (iOS)
+  requestAnimationFrame(() => window.scrollTo(0, 0));
 }
 
 sidepanelClose.addEventListener('click', closeSidePanel);

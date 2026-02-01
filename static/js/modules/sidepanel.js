@@ -17,9 +17,21 @@ function bindSidepanelCloseOnEmpty(sidepanel, sidepanelContent, backdrop, closeP
             closePanel();
         }
     };
+    sidepanel.ontouchstart = (e) => {
+        if (e.target === sidepanel) {
+            e.preventDefault();
+            closePanel();
+        }
+    };
     if (sidepanelContent) {
         sidepanelContent.onclick = (e) => {
             if (e.target === sidepanelContent) {
+                closePanel();
+            }
+        };
+        sidepanelContent.ontouchstart = (e) => {
+            if (e.target === sidepanelContent) {
+                e.preventDefault();
                 closePanel();
             }
         };
@@ -58,6 +70,8 @@ export function openSidePanel(country) {
         sidepanel.classList.remove('visible');
         backdrop.style.display = 'none';
         document.body.classList.remove('no-scroll');
+        // Reset any accidental page scroll (iOS)
+        requestAnimationFrame(() => window.scrollTo(0, 0));
     }
     closeBtn.onclick = closePanel;
     bindSidepanelCloseOnEmpty(sidepanel, sidepanelContent, backdrop, closePanel);
