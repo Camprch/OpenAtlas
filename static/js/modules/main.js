@@ -163,6 +163,15 @@ window.addEventListener("load", () => {
         lastTap = now;
     }, { passive: false });
 
+    // iOS Safari pinch-zoom block outside the map
+    ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
+        document.addEventListener(evt, (e) => {
+            const mapEl = document.getElementById('map');
+            if (mapEl && mapEl.contains(e.target)) return;
+            e.preventDefault();
+        }, { passive: false });
+    });
+
     // Wire up the "country == none" quick access button
     const nonGeorefToggle = document.getElementById('non-georef-toggle');
     if (nonGeorefToggle) {

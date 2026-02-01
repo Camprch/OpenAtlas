@@ -585,3 +585,12 @@ document.addEventListener('touchend', (e) => {
   }
   lastTap = now;
 }, { passive: false });
+
+// iOS Safari pinch-zoom block outside the map
+['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
+  document.addEventListener(evt, (e) => {
+    const mapEl = document.getElementById('map');
+    if (mapEl && mapEl.contains(e.target)) return;
+    e.preventDefault();
+  }, { passive: false });
+});
