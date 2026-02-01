@@ -235,10 +235,26 @@ export function setupFilterMenuSync() {
     if (filterMenuClose) {
         filterMenuClose.addEventListener('click', closeMenu);
     }
+    function isMenuOpen() {
+        const inline = filterMenu.style.display;
+        if (inline) return inline !== 'none';
+        return window.getComputedStyle(filterMenu).display !== 'none';
+    }
+
     // Fermer le menu si clic en dehors
     document.addEventListener('mousedown', (e) => {
-        if (filterMenu.style.display === 'block' && !filterMenu.contains(e.target) && e.target !== filterBtnGlobal && e.target !== filterBtnPanel) {
+        if (isMenuOpen() && !filterMenu.contains(e.target) && e.target !== filterBtnGlobal && e.target !== filterBtnPanel) {
             closeMenu();
         }
     });
+
+    // Close filter menu when clicking on the map
+    const mapEl = document.getElementById('map');
+    if (mapEl) {
+        mapEl.addEventListener('mousedown', () => {
+            if (isMenuOpen()) {
+                closeMenu();
+            }
+        });
+    }
 }

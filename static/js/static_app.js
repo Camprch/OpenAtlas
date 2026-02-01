@@ -15,7 +15,7 @@ const staticSearchBtn = document.getElementById('static-search-btn');
 const staticNonGeorefToggle = document.getElementById('static-non-georef-toggle');
 
 const NON_GEOREF_KEY = '__NO_COUNTRY__';
-const NON_GEOREF_LABEL = 'Sans pays (country=None)';
+const NON_GEOREF_LABEL = 'Ungeoref (country=None)';
 
 // Current filter state (multi-select across categories).
 const selected = { date: new Set(), source: new Set(), label: new Set(), event_type: new Set() };
@@ -203,10 +203,12 @@ function renderSearchResults(query, details) {
       titleEl.addEventListener('click', function(e) {
         e.stopPropagation();
         const text = this.nextElementSibling;
-        if (text.style.display === 'none' || !text.style.display) {
-          text.style.display = 'block';
+        if (text.classList.contains('is-collapsed')) {
+          text.classList.remove('is-collapsed');
+          text.classList.add('is-open');
         } else {
-          text.style.display = 'none';
+          text.classList.add('is-collapsed');
+          text.classList.remove('is-open');
         }
       });
       titleEl.dataset.listener = '1';
@@ -239,8 +241,8 @@ function renderEvents(data) {
     const listEl = document.getElementById(`zone-list-${idx}`);
     const btn = headerEl.querySelector('.toggle-btn');
     headerEl.addEventListener('click', () => {
-      if (listEl.style.display === 'none') {
-        listEl.style.display = '';
+      if (listEl.classList.contains('is-collapsed')) {
+        listEl.classList.remove('is-collapsed');
         btn.textContent = '▼';
         // Attach message toggles lazily to keep initial render cheap.
         listEl.querySelectorAll('.evt-title').forEach(titleEl => {
@@ -248,17 +250,19 @@ function renderEvents(data) {
             titleEl.addEventListener('click', function(e) {
               e.stopPropagation();
               const text = this.nextElementSibling;
-              if (text.style.display === 'none' || !text.style.display) {
-                text.style.display = 'block';
+              if (text.classList.contains('is-collapsed')) {
+                text.classList.remove('is-collapsed');
+                text.classList.add('is-open');
               } else {
-                text.style.display = 'none';
+                text.classList.add('is-collapsed');
+                text.classList.remove('is-open');
               }
             });
             titleEl.dataset.listener = '1';
           }
         });
       } else {
-        listEl.style.display = 'none';
+        listEl.classList.add('is-collapsed');
         btn.textContent = '▶';
       }
     });
@@ -323,6 +327,16 @@ function renderMarkers(events, coords, aliases, detailsByCountry) {
     if (!coords[coordKey]) return;
     const [lat, lon] = coords[coordKey];
     const style = markerStyle(count);
+    const hitRadius = style.radius + (isMobile ? 10 : 6);
+    const hitCircle = L.circleMarker([lat, lon], {
+      radius: hitRadius,
+      color: "transparent",
+      fillColor: "transparent",
+      fillOpacity: 0,
+      weight: 0,
+      interactive: true,
+      pane: "markerPane",
+    });
     const marker = L.circleMarker([lat, lon], style);
     let flag = '';
     // Attempt to extract the flag emoji from the country label.
@@ -346,6 +360,10 @@ function renderMarkers(events, coords, aliases, detailsByCountry) {
     marker.on('mouseover', () => marker.setStyle({ radius: style.radius * 1.15 }));
     marker.on('mouseout', () => marker.setStyle({ radius: style.radius }));
     marker.on('click', () => openSidePanel(coordKey, detailsByCountry.get(key) || []));
+    hitCircle.on('click', () => openSidePanel(coordKey, detailsByCountry.get(key) || []));
+    hitCircle.on('mouseover', () => marker.setStyle({ radius: style.radius * 1.15 }));
+    hitCircle.on('mouseout', () => marker.setStyle({ radius: style.radius }));
+    hitCircle.addTo(map);
     marker.addTo(map);
     if (flag) {
       // Separate emoji marker so the circle remains clickable underneath.
@@ -360,9 +378,9 @@ function renderMarkers(events, coords, aliases, detailsByCountry) {
       });
       emojiMarker.setZIndexOffset(1000);
       emojiMarker.addTo(map);
-      markersByCountry[coordKey] = { marker, emoji: emojiMarker };
+      markersByCountry[coordKey] = { marker, emoji: emojiMarker, hit: hitCircle };
     } else {
-      markersByCountry[coordKey] = marker;
+      markersByCountry[coordKey] = { marker, hit: hitCircle };
     }
   });
 }
@@ -459,6 +477,16 @@ if (filterBtnPanel) {
 }
 
 filterClose.addEventListener('click', closeFilterMenu);
+
+// Close filter menu when clicking on the map
+const mapEl = document.getElementById('map');
+if (mapEl) {
+  mapEl.addEventListener('mousedown', () => {
+    if (filterMenu.style.display === 'block') {
+      closeFilterMenu();
+    }
+  });
+}
 
 async function init() {
   // Load data and render initial state.

@@ -5,6 +5,7 @@
     align-items: center;
     gap: 8px;
     justify-content: space-between;
+    background: #11161c;
 }
 
 .dashboard-header-left {
@@ -71,6 +72,23 @@
 
 .header-search-btn {
     display: flex;
+}
+
+/* Harmonize static header controls */
+.static-site #filter-btn-global,
+.static-site #static-search-btn,
+.static-site #static-non-georef-toggle {
+    height: 36px;
+    min-width: 36px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    gap: 6px;
+}
+
+.static-site #filter-btn-global .pill-btn-icon,
+.static-site #static-search-btn .pill-btn-icon,
+.static-site #static-non-georef-toggle .pill-btn-icon {
+    font-size: 1.1em;
 }
 
 .pill-btn:hover {
@@ -156,14 +174,13 @@
     border: 1px solid #444;
     color: #eee;
     border-radius: 999px;
-    font-size: 18px;
     outline: none;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     height: 32px;
-    width: 32px;
+    min-width: 32px;
     margin-left: 2px;
 }
 
@@ -209,7 +226,6 @@
     color: #eee;
     border-radius: 999px;
     font-size: 12px;
-    font-weight: 600;
     letter-spacing: 0.3px;
     outline: none;
     cursor: pointer;

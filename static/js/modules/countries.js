@@ -64,16 +64,15 @@ export async function loadActiveCountries(currentGlobalDate, sources = null, lab
             return;
         }
         const style = markerStyle(count);
-        // Invisible circle for a larger click target on dense markers
-        const clickableRadius = style.radius * 2.5;
-        const interactiveCircle = L.circleMarker([lat, lon], {
-            radius: clickableRadius,
-            color: 'transparent',
-            fillColor: 'transparent',
+        const hitRadius = style.radius + (window.IS_MOBILE ? 10 : 6);
+        const hitCircle = L.circleMarker([lat, lon], {
+            radius: hitRadius,
+            color: "transparent",
+            fillColor: "transparent",
             fillOpacity: 0,
             weight: 0,
             interactive: true,
-            pane: 'markerPane',
+            pane: "markerPane",
         });
         const marker = L.circleMarker([lat, lon], style);
         // Extract flag emoji from the country key or its aliases
@@ -109,6 +108,20 @@ export async function loadActiveCountries(currentGlobalDate, sources = null, lab
             }
         });
         marker.on("click", () => openSidePanel(key));
+        hitCircle.on("click", () => openSidePanel(key));
+        hitCircle.on("mouseover", function () {
+            marker.setStyle({ radius: style.radius * 1.15 });
+            if (window.IS_MOBILE === false) {
+                marker.openPopup && marker.openPopup();
+            }
+        });
+        hitCircle.on("mouseout", function () {
+            marker.setStyle({ radius: style.radius });
+            if (window.IS_MOBILE === false) {
+                marker.closePopup && marker.closePopup();
+            }
+        });
+        hitCircle.addTo(map);
         marker.addTo(map);
         if (flag) {
             const emojiMarker = L.marker([lat, lon], {
@@ -122,9 +135,9 @@ export async function loadActiveCountries(currentGlobalDate, sources = null, lab
             });
             emojiMarker.setZIndexOffset(1000);
             emojiMarker.addTo(map);
-            markersByCountry[key] = { marker, emoji: emojiMarker };
+            markersByCountry[key] = { marker, emoji: emojiMarker, hit: hitCircle };
         } else {
-            markersByCountry[key] = marker;
+            markersByCountry[key] = { marker, hit: hitCircle };
         }
     });
     if (alert) {

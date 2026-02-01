@@ -18,6 +18,7 @@ export function clearMarkers() {
     } else if (m && m.marker) {
       map.removeLayer(m.marker);
       if (m.emoji) map.removeLayer(m.emoji);
+      if (m.hit) map.removeLayer(m.hit);
     } else {
       map.removeLayer(m);
     }

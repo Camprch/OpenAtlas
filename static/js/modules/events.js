@@ -117,7 +117,13 @@ export function renderEvents(data) {
                         titleEl.addEventListener('click', function(e) {
                             e.stopPropagation();
                             const text = this.nextElementSibling;
-                            text.classList.toggle("is-collapsed");
+                            if (text.classList.contains("is-collapsed")) {
+                                text.classList.remove("is-collapsed");
+                                text.classList.add("is-open");
+                            } else {
+                                text.classList.add("is-collapsed");
+                                text.classList.remove("is-open");
+                            }
                         });
                         titleEl.dataset.listener = "1";
                     }

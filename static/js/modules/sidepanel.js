@@ -2,7 +2,7 @@
 import { loadEvents } from "./events.js";
 
 export const NON_GEOREF_KEY = "__NO_COUNTRY__";
-const NON_GEOREF_LABEL = "Sans pays (country=None)";
+const NON_GEOREF_LABEL = "Ungeoref (country=None)";
 
 export let currentCountry = null;
 window.currentCountry = null;

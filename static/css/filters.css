@@ -18,7 +18,7 @@
     height: 50vh;
     max-height: 50vh;
     overflow: hidden;
-    padding: 18px 20px;
+    padding: 48px 20px 18px;
     box-sizing: border-box;
     display: none;
     flex-direction: column;
@@ -29,11 +29,13 @@
 }
 
 #filter-menu-options {
-    margin-top: 18px;
+    margin-top: 6px;
     display: flex;
     flex-direction: column;
     flex: 1;
     min-height: 0;
+    padding-left: 36px;
+    box-sizing: border-box;
 }
 
 #filter-columns {
@@ -43,7 +45,7 @@
     gap: 8px;
     width: 100%;
     box-sizing: border-box;
-    margin-left: 6px;
+    margin-left: 0;
     align-content: stretch;
     flex: 1;
     height: 100%;
@@ -105,7 +107,7 @@
 #filter-menu-close {
     position: absolute;
     top: 8px;
-    right: 10px;
+    left: 10px;
     background: none;
     color: #ccc;
     border: none;
