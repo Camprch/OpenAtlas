@@ -12,26 +12,41 @@
     box-shadow: 0 4px 24px #0008;
     z-index: 9999;
     min-width: 260px;
+    min-height: 350px;
     width: 360px;
     max-width: 95vw;
-    max-height: 70vh;
-    overflow-y: auto;
+    height: 50vh;
+    max-height: 50vh;
+    overflow: hidden;
     padding: 18px 20px;
     box-sizing: border-box;
     display: none;
+    flex-direction: column;
+}
+
+.static-site #filter-menu {
+    overflow-y: auto;
 }
 
 #filter-menu-options {
     margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
 }
 
 #filter-columns {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
     gap: 8px;
     width: 100%;
     box-sizing: border-box;
+    margin-left: 6px;
+    align-content: stretch;
+    flex: 1;
+    height: 100%;
 }
 
 .filter-col {
@@ -42,6 +57,7 @@
     flex-direction: column;
     align-items: flex-start;
     box-sizing: border-box;
+    min-height: 0;
 }
 
 .filter-col-title {
@@ -56,9 +72,11 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    max-height: 160px;
+    max-height: none;
     overflow-y: auto;
     width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 .filter-options-list label {

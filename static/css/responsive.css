@@ -30,7 +30,9 @@
         flex: 1 1 90px;
     }
     .filter-options-list {
-        max-height: 90px;
+        max-height: none;
+        flex: 1 1 auto;
+        min-height: 0;
     }
 }
 

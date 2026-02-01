@@ -187,7 +187,7 @@ export function setupFilterMenuSync() {
 
     function openMenu(opener) {
         // Position the menu based on where it was opened from
-        filterMenu.style.display = 'block';
+        filterMenu.style.display = 'flex';
         lastOpener = opener;
         window.lastFilterOpener = opener;
         if (opener === 'panel') {
