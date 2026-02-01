@@ -4,6 +4,7 @@
     width: 100%;
     height: calc(100vh - 70px);
     touch-action: pinch-zoom;
+    overscroll-behavior: contain;
 }
 
 .leaflet-container {

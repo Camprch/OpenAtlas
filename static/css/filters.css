@@ -18,6 +18,8 @@
     height: 50vh;
     max-height: 50vh;
     overflow: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     padding: 48px 20px 18px;
     box-sizing: border-box;
     display: none;
@@ -26,6 +28,8 @@
 
 .static-site #filter-menu {
     overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 #filter-menu-options {

@@ -26,6 +26,8 @@
     padding-right: 6px;
     padding-bottom: 80px;
     flex: 1;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 #close-panel {

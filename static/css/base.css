@@ -6,6 +6,7 @@ body {
     color: #ddd;
     font-family: Arial, sans-serif;
     touch-action: pan-x pan-y;
+    overflow: hidden;
 }
 
 header {
