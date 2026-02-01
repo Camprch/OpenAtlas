@@ -105,16 +105,15 @@
 #filter-menu-close {
     position: absolute;
     top: 8px;
-    right: 12px;
-    background: #444;
-    color: #eee;
+    right: 10px;
+    background: none;
+    color: #ccc;
     border: none;
-    border-radius: 6px;
-    padding: 6px 16px;
+    font-size: 22px;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition: transform 0.1s ease, color 0.15s ease;
 }
 #filter-menu-close:hover {
-    background: #555;
     color: #fff;
+    transform: scale(1.1);
 }

@@ -47,3 +47,50 @@ a[style*="border-radius:999px"]:hover {
 	border-top: 1px solid #333 !important;
 	border-left: 1px solid #333 !important;
 }
+
+/* Static search + panel helpers */
+.search-hl {
+	background: #ffe066;
+	color: #222;
+	border-radius: 3px;
+	padding: 0 2px;
+}
+
+.evt-location {
+	color: #aaa;
+}
+
+.evt-title {
+	cursor: pointer;
+}
+
+.evt-text.is-open {
+	display: block;
+}
+
+.evt-text.is-collapsed {
+	display: none;
+}
+
+.event-list.is-collapsed {
+	display: none;
+}
+
+.event-list.search-results {
+	display: block;
+}
+
+.search-results-count {
+	margin-bottom: 8px;
+	color: #bbb;
+}
+
+.map-popup {
+	text-align: center;
+	min-width: 70px;
+}
+
+.map-popup-flag {
+	font-size: 2.2em;
+	line-height: 1;
+}

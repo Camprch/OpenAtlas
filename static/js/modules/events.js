@@ -73,8 +73,8 @@ export function renderEvents(data) {
                     const timeStr = new Date(m.event_timestamp || m.created_at).toLocaleString();
                     return `
             <li class="event" data-msg-id="${m.id}">
-                <div class="evt-title" data-zone="${idx}" data-msg="${mIdx}" style="cursor:pointer;">${title}</div>
-                <div class="evt-text" style="display:none;">
+                <div class="evt-title" data-zone="${idx}" data-msg="${mIdx}">${title}</div>
+                <div class="evt-text is-collapsed">
                     ${fullText}
                     <div class="evt-meta">
                         <span class="evt-source">${m.source}${orientation}</span>
@@ -92,7 +92,7 @@ export function renderEvents(data) {
                     <span class="toggle-btn">▶</span> ${header}
                     <span class="evt-count">(${zone.messages_count})</span>
                 </h4>
-                <ul class="event-list" id="zone-list-${idx}" style="display:none;">
+                <ul class="event-list is-collapsed" id="zone-list-${idx}">
                     ${msgs}
                 </ul>
             </section>
@@ -108,8 +108,8 @@ export function renderEvents(data) {
         const listEl = document.getElementById(`zone-list-${idx}`);
         const btn = headerEl.querySelector(".toggle-btn");
         headerEl.addEventListener("click", () => {
-            if (listEl.style.display === "none") {
-                listEl.style.display = "";
+            if (listEl.classList.contains("is-collapsed")) {
+                listEl.classList.remove("is-collapsed");
                 btn.textContent = "▼";
                 // Attach message toggle listeners when the zone opens
                 listEl.querySelectorAll('.evt-title').forEach(titleEl => {
@@ -117,17 +117,13 @@ export function renderEvents(data) {
                         titleEl.addEventListener('click', function(e) {
                             e.stopPropagation();
                             const text = this.nextElementSibling;
-                            if (text.style.display === "none" || !text.style.display) {
-                                text.style.display = "block";
-                            } else {
-                                text.style.display = "none";
-                            }
+                            text.classList.toggle("is-collapsed");
                         });
                         titleEl.dataset.listener = "1";
                     }
                 });
             } else {
-                listEl.style.display = "none";
+                listEl.classList.add("is-collapsed");
                 btn.textContent = "▶";
             }
         });

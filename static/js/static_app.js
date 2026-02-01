@@ -55,7 +55,7 @@ function highlightQuery(text, query) {
       result += raw.slice(i);
       break;
     }
-    result += raw.slice(i, found) + `<span class="search-hl" style="background:#ffe066;color:#222;border-radius:3px;padding:0 2px;">` + raw.slice(found, found + normQuery.length) + '</span>';
+    result += raw.slice(i, found) + `<span class="search-hl">` + raw.slice(found, found + normQuery.length) + '</span>';
     i = found + normQuery.length;
   }
   return result;
@@ -183,20 +183,20 @@ function renderSearchResults(query, details) {
     const metaParts = [];
     if (source) metaParts.push(`<span class="evt-source">${source}${orientation}</span>`);
     if (timeStr) metaParts.push(`<span class="evt-time">${timeStr}</span>`);
-    if (where) metaParts.push(`<span class="evt-location" style="color:#aaa;">${highlightQuery(where, q)}</span>`);
+    if (where) metaParts.push(`<span class="evt-location">${highlightQuery(where, q)}</span>`);
     if (postLink) metaParts.push(`<span class="evt-link">${postLink}</span>`);
     const meta = metaParts.length ? `<div class="evt-meta">${metaParts.join('')}</div>` : '';
     return `
             <li class="event" data-msg-id="${item.id}">
-                <div class="evt-title" style="cursor:pointer;">${title}</div>
-                <div class="evt-text" style="display:block;">
+                <div class="evt-title">${title}</div>
+                <div class="evt-text is-open">
                     ${fullText}
                     ${meta}
                 </div>
             </li>
         `;
   }).join('');
-  eventsContainer.innerHTML = `<div style="margin-bottom:8px;color:#bbb;">${filtered.length} résultat(s)</div><ul class="event-list" style="display:block;">${itemsHtml}</ul>`;
+  eventsContainer.innerHTML = `<div class="search-results-count">${filtered.length} résultat(s)</div><ul class="event-list search-results">${itemsHtml}</ul>`;
   eventsContainer.querySelectorAll('.evt-title').forEach(titleEl => {
     if (!titleEl.dataset.listener) {
       // Toggle per-item text display without re-rendering the list.
@@ -229,9 +229,9 @@ function renderEvents(data) {
       const orientation = m.orientation ? ` • ${m.orientation}` : '';
       const postLink = m.url ? `<a href="${m.url}" target="_blank">post n° ${m.telegram_message_id}</a>` : '';
       const timeStr = new Date(m.event_timestamp || m.created_at).toLocaleString();
-      return `\n            <li class="event" data-msg-id="${m.id}">\n                <div class="evt-title" data-zone="${idx}" data-msg="${mIdx}" style="cursor:pointer;">${title}</div>\n                <div class="evt-text" style="display:none;">\n                    ${fullText}\n                    <div class="evt-meta">\n                        <span class="evt-source">${m.source}${orientation}</span>\n                        <span class="evt-time">${timeStr}</span>\n                        <span class="evt-link">${postLink}</span>\n                    </div>\n                </div>\n            </li>\n        `;
+      return `\n            <li class="event" data-msg-id="${m.id}">\n                <div class="evt-title" data-zone="${idx}" data-msg="${mIdx}">${title}</div>\n                <div class="evt-text is-collapsed">\n                    ${fullText}\n                    <div class="evt-meta">\n                        <span class="evt-source">${m.source}${orientation}</span>\n                        <span class="evt-time">${timeStr}</span>\n                        <span class="evt-link">${postLink}</span>\n                    </div>\n                </div>\n            </li>\n        `;
     }).join('');
-    return `\n            <section class="zone-block">\n                <h4 class="zone-header" data-idx="${idx}">\n                    <span class="toggle-btn">▶</span> ${header}\n                    <span class="evt-count">(${zone.messages_count})</span>\n                </h4>\n                <ul class="event-list" id="zone-list-${idx}" style="display:none;">\n                    ${msgs}\n                </ul>\n            </section>\n        `;
+    return `\n            <section class="zone-block">\n                <h4 class="zone-header" data-idx="${idx}">\n                    <span class="toggle-btn">▶</span> ${header}\n                    <span class="evt-count">(${zone.messages_count})</span>\n                </h4>\n                <ul class="event-list is-collapsed" id="zone-list-${idx}">\n                    ${msgs}\n                </ul>\n            </section>\n        `;
   }).join('');
   eventsContainer.innerHTML = html;
   data.zones.forEach((zone, idx) => {
@@ -339,7 +339,7 @@ function renderMarkers(events, coords, aliases, detailsByCountry) {
     // Popup with flag + country name (desktop only)
     if (!isMobile) {
       const countryName = coordKey.replace(/^[^\p{L}\p{N}]+/u, '').trim();
-      marker.bindPopup(`<div style='text-align:center;min-width:70px;'><span style='font-size:2.2em;line-height:1;'>${flag}</span><br><b>${countryName}</b></div>`);
+      marker.bindPopup(`<div class="map-popup"><span class="map-popup-flag">${flag}</span><br><b>${countryName}</b></div>`);
       marker.on('mouseover', () => marker.openPopup && marker.openPopup());
       marker.on('mouseout', () => marker.closePopup && marker.closePopup());
     }

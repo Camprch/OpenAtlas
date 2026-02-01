@@ -93,7 +93,7 @@ export async function loadActiveCountries(currentGlobalDate, sources = null, lab
         if (window.IS_MOBILE === false) {
             // Strip leading emojis/symbols for display
             const countryName = key.replace(/^[^\p{L}\p{N}]+/u, '').trim();
-            marker.bindPopup(`<div style='text-align:center;min-width:70px;'><span style='font-size:2.2em;line-height:1;'>${flag}</span><br><b>${countryName}</b></div>`);
+            marker.bindPopup(`<div class="map-popup"><span class="map-popup-flag">${flag}</span><br><b>${countryName}</b></div>`);
         }
         // Hover and click interactions
         marker.on("mouseover", function (e) {

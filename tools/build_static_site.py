@@ -183,6 +183,7 @@ def build_static_site() -> None:
   <link rel="stylesheet" href="static/css/filters.css" />
   <link rel="stylesheet" href="static/css/map.css" />
   <link rel="stylesheet" href="static/css/overrides.css" />
+  <link rel="stylesheet" href="static/css/inline_cleanup.css" />
   <link rel="stylesheet" href="static/css/responsive.css" />
   <link
     rel=\"stylesheet\"
@@ -210,7 +211,7 @@ def build_static_site() -> None:
         <button id=\"filter-btn-global\" class=\"pill-btn\"><span class=\"pill-btn-icon\">🔬</span></button>
       </div>
       <button id=\"static-search-btn\" class=\"pill-btn header-search-btn\"><span class=\"pill-btn-icon\">🔎</span></button>
-      <button id=\"static-non-georef-toggle\" class=\"pill-btn\" title=\"Afficher les messages sans pays\">🗺️❔</button>
+      <button id=\"static-non-georef-toggle\" class=\"pill-btn\" title=\"Afficher les messages sans pays\">🗺️</button>
     </div>
     <div class=\"dashboard-header-right\">
     </div>

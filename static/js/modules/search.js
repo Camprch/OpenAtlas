@@ -63,9 +63,9 @@ export function setupSearch() {
             } else {
                 // Render results in a modal with highlighted matches
                 const html = results.map((m, i) =>
-                    `<div class='search-result-item' data-country="${encodeURIComponent(m.country || '')}" data-country-norm="${encodeURIComponent(m.country_norm || '')}" data-region="${encodeURIComponent(m.region || '')}" data-location="${encodeURIComponent(m.location || '')}" data-msgid="${m.id}" style='margin-bottom:12px; cursor:pointer; border-radius:8px; padding:8px 6px; transition:background 0.15s;' tabindex="0">
+                    `<div class='search-result-item' data-country="${encodeURIComponent(m.country || '')}" data-country-norm="${encodeURIComponent(m.country_norm || '')}" data-region="${encodeURIComponent(m.region || '')}" data-location="${encodeURIComponent(m.location || '')}" data-msgid="${m.id}" tabindex="0">
                         <b>${highlightQuery((m.country || '') + ' ' + (m.region || '') + ' ' + (m.location || ''), q)}</b><br>
-                        <span style='color:#22c55e;'>${highlightQuery(m.event_type || '', q)}</span> <span style='color:#888;'>${highlightQuery(m.label || '', q)}</span><br>
+                        <span class='search-result-type'>${highlightQuery(m.event_type || '', q)}</span> <span class='search-result-label'>${highlightQuery(m.label || '', q)}</span><br>
                         ${highlightQuery(m.translated_text || '', q)}
                     </div>`
                 ).join('');
@@ -87,22 +87,8 @@ export function setupSearch() {
         if (!modal) {
             modal = document.createElement('div');
             modal.id = 'search-modal';
-            modal.style.position = 'fixed';
-            modal.style.top = '60px';
-            modal.style.left = '50%';
-            modal.style.transform = 'translateX(-50%)';
-            modal.style.background = '#181c25';
-            modal.style.color = '#eee';
-            modal.style.border = '1px solid #444';
-            modal.style.borderRadius = '12px';
-            modal.style.boxShadow = '0 4px 24px #0008';
-            modal.style.zIndex = '9999';
-            modal.style.minWidth = '320px';
-            modal.style.maxWidth = '90vw';
-            modal.style.padding = '18px 24px 18px 24px';
-            modal.style.maxHeight = '70vh';
-            modal.style.overflow = 'hidden';
-            modal.innerHTML = `<button id='close-search-modal' style='position:absolute; top:8px; right:12px; background:#444; color:#eee; border:none; border-radius:6px; padding:4px 12px; cursor:pointer;'>×</button><div id='search-modal-content' style='overflow-y:auto; max-height:60vh;'></div>`;
+            modal.className = 'search-modal';
+            modal.innerHTML = `<button id='close-search-modal' class='search-modal-close'>×</button><div id='search-modal-content' class='search-modal-content'></div>`;
             document.body.appendChild(modal);
             modal.querySelector('#close-search-modal').onclick = () => modal.remove();
         }
