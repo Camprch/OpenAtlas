@@ -143,6 +143,26 @@ window.addEventListener("load", () => {
         });
     }
 
+    // Block page zoom (Ctrl/Cmd+wheel) outside of the map
+    document.addEventListener('wheel', (e) => {
+        if (!e.ctrlKey && !e.metaKey) return;
+        const mapEl = document.getElementById('map');
+        if (mapEl && mapEl.contains(e.target)) return;
+        e.preventDefault();
+    }, { passive: false });
+
+    // Block double-tap zoom outside of the map (mobile)
+    let lastTap = 0;
+    document.addEventListener('touchend', (e) => {
+        const mapEl = document.getElementById('map');
+        if (mapEl && mapEl.contains(e.target)) return;
+        const now = Date.now();
+        if (now - lastTap <= 350) {
+            e.preventDefault();
+        }
+        lastTap = now;
+    }, { passive: false });
+
     // Wire up the "country == none" quick access button
     const nonGeorefToggle = document.getElementById('non-georef-toggle');
     if (nonGeorefToggle) {

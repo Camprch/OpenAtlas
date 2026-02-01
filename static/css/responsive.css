@@ -153,10 +153,10 @@
         gap: 12px;
     }
     #panel-country-name {
-        padding-left: 32px;
+        padding-left: 44px;
     }
     #close-panel {
-        color: #fff;
+        color: #fff !important;
     }
     #timeline-container-panel select {
         appearance: none;
