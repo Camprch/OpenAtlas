@@ -1,3 +1,5 @@
+import { NON_GEOREF_KEY } from "./sidepanel.js";
+
 // Load and render events for a selected country
 export async function loadEvents(country, currentPanelDate = null, sources = null, labels = null, event_types = null) {
     const eventsContainer = document.getElementById("events");
@@ -11,11 +13,20 @@ export async function loadEvents(country, currentPanelDate = null, sources = nul
     // Build endpoint and query parameters based on filters
     let url = "";
     const params = [];
-    if (!currentPanelDate || currentPanelDate === "ALL") {
-        url = `/api/countries/${encodeURIComponent(country)}/all-events`;
+    if (country === NON_GEOREF_KEY) {
+        if (!currentPanelDate || currentPanelDate === "ALL") {
+            url = `/api/non-georef/all-events`;
+        } else {
+            url = `/api/non-georef/events`;
+            params.push(`date=${encodeURIComponent(currentPanelDate)}`);
+        }
     } else {
-        url = `/api/countries/${encodeURIComponent(country)}/events`;
-        params.push(`date=${encodeURIComponent(currentPanelDate)}`);
+        if (!currentPanelDate || currentPanelDate === "ALL") {
+            url = `/api/countries/${encodeURIComponent(country)}/all-events`;
+        } else {
+            url = `/api/countries/${encodeURIComponent(country)}/events`;
+            params.push(`date=${encodeURIComponent(currentPanelDate)}`);
+        }
     }
     if (Array.isArray(sources) && sources.length > 0) {
         params.push(...sources.map(s => `sources=${encodeURIComponent(s)}`));

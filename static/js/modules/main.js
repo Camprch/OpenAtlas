@@ -5,7 +5,7 @@ import { loadCountryData, loadActiveCountries } from "./countries.js";
 import { loadTimeline, timelineDates, currentGlobalDate, currentPanelDate } from "./timeline.js";
 import { pipelinePolling, pipelineRunning, startPipeline, stopPipeline } from "./pipeline.js";
 import { renderEvents } from "./events.js";
-import { openSidePanel, currentCountry } from "./sidepanel.js";
+import { openSidePanel, currentCountry, NON_GEOREF_KEY } from "./sidepanel.js";
 import { setupFilterMenuSync } from "./filter.js";
 
 window.IS_MOBILE = window.matchMedia("(max-width: 768px)").matches;
@@ -142,5 +142,12 @@ window.addEventListener("load", () => {
             logsStreamReader = null;
         });
     }
-});
 
+    // Wire up the "country == none" quick access button
+    const nonGeorefToggle = document.getElementById('non-georef-toggle');
+    if (nonGeorefToggle) {
+        nonGeorefToggle.addEventListener('click', function() {
+            openSidePanel(NON_GEOREF_KEY);
+        });
+    }
+});

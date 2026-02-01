@@ -175,6 +175,33 @@
     filter: brightness(1.08);
 }
 
+#non-georef-toggle {
+    padding: 6px 10px;
+    background: #1a1f24;
+    border: 1px solid #444;
+    color: #eee;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    outline: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    min-width: 32px;
+    margin-left: 2px;
+}
+
+#non-georef-toggle:hover {
+    background: #222832;
+    border-color: #666;
+    transform: translateY(-1px) scale(1.04);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    filter: brightness(1.08);
+}
+
 #pipeline-logs-panel {
     display: none;
     position: absolute;

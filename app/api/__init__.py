@@ -16,6 +16,9 @@ router.include_router(filters_router)
 from app.api.events import router as events_router
 router.include_router(events_router)
 
+from app.api.non_georef import router as non_georef_router
+router.include_router(non_georef_router)
+
 from app.api.session_wizard import router as session_wizard_router
 router.include_router(session_wizard_router)
 

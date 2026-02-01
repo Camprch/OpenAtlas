@@ -1,6 +1,9 @@
 // modules/sidepanel.js
 import { loadEvents } from "./events.js";
 
+export const NON_GEOREF_KEY = "__NO_COUNTRY__";
+const NON_GEOREF_LABEL = "Sans pays (country=None)";
+
 export let currentCountry = null;
 window.currentCountry = null;
 
@@ -13,7 +16,7 @@ export function openSidePanel(country) {
     if (!sidepanel || !backdrop || !closeBtn || !countryName) return;
     currentCountry = country;
     window.currentCountry = country;
-    countryName.textContent = country;
+    countryName.textContent = country === NON_GEOREF_KEY ? NON_GEOREF_LABEL : country;
     sidepanel.classList.add('visible');
     backdrop.style.display = 'block';
     document.body.classList.add('no-scroll');

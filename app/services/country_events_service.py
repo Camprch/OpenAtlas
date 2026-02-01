@@ -277,6 +277,81 @@ def get_countries_activity_service(
     return result
 
 
+def get_non_georef_events_service(
+    target_date: Optional[date],
+    sources: Optional[List[str]] = None,
+    labels: Optional[List[str]] = None,
+    event_types: Optional[List[str]] = None,
+    session: Session = None,
+) -> CountryEventsResponse:
+    # Return events with no country assigned (country is None or empty).
+    if target_date is not None:
+        start_dt = datetime.combine(target_date, datetime.min.time())
+        end_dt = datetime.combine(target_date, datetime.max.time())
+        stmt = select(Message).where(
+            ((Message.country.is_(None)) | (Message.country == "")),
+            Message.event_timestamp >= start_dt,
+            Message.event_timestamp <= end_dt,
+        )
+    else:
+        stmt = select(Message).where((Message.country.is_(None)) | (Message.country == ""))
+    if sources:
+        stmt = stmt.where(Message.source.in_(sources))
+    if labels:
+        stmt = stmt.where(Message.label.in_(labels))
+    if event_types:
+        stmt = stmt.where(Message.event_type.in_(event_types))
+    msgs = session.exec(stmt).all()
+    buckets: Dict[Tuple[Optional[str], Optional[str]], List[Message]] = {}
+    for m in msgs:
+        key = (m.region, m.location)
+        buckets.setdefault(key, []).append(m)
+    zones_payload: List[ZoneEvents] = []
+    for (region, location), items in buckets.items():
+        event_messages: List[EventMessage] = []
+        for m in items:
+            url = None
+            if m.channel and m.telegram_message_id:
+                url = f"https://t.me/{m.channel}/{m.telegram_message_id}"
+            full_text = (m.translated_text or m.raw_text or "").strip()
+            preview = full_text[:277] + "..." if len(full_text) > 280 else full_text
+            event_messages.append(
+                EventMessage(
+                    id=m.id,
+                    telegram_message_id=m.telegram_message_id,
+                    channel=m.channel,
+                    title=m.title,
+                    source=m.source,
+                    orientation=m.orientation,
+                    event_timestamp=m.event_timestamp,
+                    created_at=m.created_at,
+                    url=url,
+                    translated_text=full_text,
+                    preview=preview,
+                )
+            )
+        zones_payload.append(
+            ZoneEvents(
+                region=region,
+                location=location,
+                messages_count=len(items),
+                messages=event_messages,
+            )
+        )
+    zones_payload.sort(key=lambda z: z.messages_count, reverse=True)
+    if target_date is not None:
+        date_value = target_date
+    elif msgs:
+        date_value = max(m.created_at for m in msgs).date()
+    else:
+        date_value = datetime.utcnow().date()
+    return CountryEventsResponse(
+        date=date_value,
+        country="Sans pays",
+        zones=zones_payload,
+    )
+
+
 def get_country_events_service(
     country: str,
     target_date: Optional[date],

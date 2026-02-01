@@ -133,11 +133,11 @@ def infer_country(text: str, lang: Optional[str]) -> tuple[Optional[str], float]
 
     if matches:
         matches.sort(key=lambda x: x[0])
+        canonical = matches[0][1]
         if len(matches) == 1:
-            canonical = matches[0][1]
             return _strip_emoji_prefix(canonical), 0.95
-        # Multiple matches: ambiguous, let AI decide
-        return None, 0.3
+        # Multiple matches: pick the first mention deterministically
+        return _strip_emoji_prefix(canonical), 0.95
 
     # Fallback to pycountry names
     for name in _pycountry_names():

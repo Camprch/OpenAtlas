@@ -1,4 +1,5 @@
 // modules/search.js
+import { NON_GEOREF_KEY } from "./sidepanel.js";
 
 
 // Load country aliases/coordinates for search result navigation
@@ -127,12 +128,12 @@ export function setupSearch() {
                     }
                 }
             }
+            if (!country) {
+                country = NON_GEOREF_KEY;
+            }
             console.log('[Recherche] country_norm:', countryNorm, '| country:', countryRaw, '| utilisé pour openSidePanel:', country);
             item.onclick = () => {
                 const msgId = item.dataset.msgid;
-                if (!country) {
-                    console.warn('Champ country vide pour l\'événement', msgId, item);
-                }
                 if (window.openSidePanel && country) {
                     console.log('[Recherche] Ouverture du panneau latéral pour le pays :', country);
                     window.openSidePanel(country);
