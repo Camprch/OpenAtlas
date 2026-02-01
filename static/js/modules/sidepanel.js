@@ -9,28 +9,27 @@ window.currentCountry = null;
 
 let sidepanelHandlersBound = false;
 
-function isInteractiveSidepanelTarget(target) {
+function isBlankSidepanelTarget(target) {
     if (!(target instanceof Element)) return false;
-    return Boolean(
-        target.closest(
-            ".event, .evt-title, .evt-text, .evt-meta, .evt-link, " +
-            "#filter-container-panel, #filter-btn-panel, #sidepanel-search-row, " +
-            "input, textarea, select, button, a"
-        )
-    );
+    if (target.id === 'sidepanel' || target.id === 'sidepanel-content' || target.id === 'events') {
+        return true;
+    }
+    return false;
 }
 
 function bindSidepanelCloseOnEmpty(sidepanel, sidepanelContent, backdrop, closePanel) {
     if (sidepanelHandlersBound) return;
     backdrop.onclick = closePanel;
     sidepanel.onclick = (e) => {
-        if (isInteractiveSidepanelTarget(e.target)) return;
-        closePanel();
+        if (isBlankSidepanelTarget(e.target)) {
+            closePanel();
+        }
     };
     if (sidepanelContent) {
         sidepanelContent.onclick = (e) => {
-            if (isInteractiveSidepanelTarget(e.target)) return;
-            closePanel();
+            if (isBlankSidepanelTarget(e.target)) {
+                closePanel();
+            }
         };
     }
     sidepanelHandlersBound = true;
