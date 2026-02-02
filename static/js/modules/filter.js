@@ -120,7 +120,8 @@ export async function renderAllFilterOptions() {
                     chip.type = 'button';
                     chip.className = 'filter-active-chip';
                     chip.textContent = item.value;
-                    chip.addEventListener('click', async () => {
+                    chip.addEventListener('click', async (e) => {
+                        if (e && e.stopPropagation) e.stopPropagation();
                         window.selectedFilters[item.key] = (window.selectedFilters[item.key] || []).filter(v => v !== item.value);
                         await renderAllFilterOptions();
                         const selectedDates = window.selectedFilters.date;
@@ -214,34 +215,34 @@ export async function renderAllFilterOptions() {
 
 export function setupFilterMenuSync() {
     const filterBtnGlobal = document.getElementById('filter-btn-global');
-    const filterBtnPanel = document.getElementById('filter-btn-panel');
     const filterMenu = document.getElementById('filter-menu');
     const filterMenuClose = document.getElementById('filter-menu-close');
     const filterMenuOptions = document.getElementById('filter-menu-options');
-    let lastOpener = null; // "global" ou "panel"
+    let lastOpener = null;
 
-    function openMenu(opener) {
-        // Position the menu based on where it was opened from
+    function openMenu() {
+        // Use a single placement for all openers
         filterMenu.style.display = 'flex';
-        lastOpener = opener;
-        window.lastFilterOpener = opener;
-        if (opener === 'panel') {
-            // Align next to the side panel
+        lastOpener = 'global';
+        window.lastFilterOpener = 'global';
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        if (isMobile) {
             filterMenu.style.position = 'fixed';
-            filterMenu.style.top = '80px';
-            filterMenu.style.right = '420px'; // largeur du sidepanel
-            filterMenu.style.left = '';
+            filterMenu.style.top = '70px';
+            filterMenu.style.left = '10px';
+            filterMenu.style.right = '10px';
             filterMenu.style.transform = 'none';
             document.body.appendChild(filterMenu);
-        } else {
-            // Default placement on the main map
-            filterMenu.style.position = 'fixed';
-            filterMenu.style.top = '60px';
-            filterMenu.style.left = '80px';
-            filterMenu.style.right = '';
-            filterMenu.style.transform = 'none';
-            document.body.appendChild(filterMenu);
+            renderAllFilterOptions();
+            return;
         }
+        // Default placement on the main map
+        filterMenu.style.position = 'fixed';
+        filterMenu.style.top = '60px';
+        filterMenu.style.left = '80px';
+        filterMenu.style.right = '';
+        filterMenu.style.transform = 'none';
+        document.body.appendChild(filterMenu);
         // Render filter options in columns
         renderAllFilterOptions();
     }
@@ -252,6 +253,9 @@ export function setupFilterMenuSync() {
     function handleFilterMenuClick(e) {
         const target = e.target;
         const columns = document.getElementById('filter-columns');
+        if (target instanceof Element && target.closest('.filter-active-chip')) {
+            return;
+        }
         if (
             target === filterMenu ||
             target === filterMenuOptions ||
@@ -266,16 +270,7 @@ export function setupFilterMenuSync() {
             if (isMenuOpen() && lastOpener === 'global') {
                 closeMenu();
             } else {
-                openMenu('global');
-            }
-        });
-    }
-    if (filterBtnPanel) {
-        filterBtnPanel.addEventListener('click', () => {
-            if (isMenuOpen() && lastOpener === 'panel') {
-                closeMenu();
-            } else {
-                openMenu('panel');
+                openMenu();
             }
         });
     }
@@ -293,7 +288,7 @@ export function setupFilterMenuSync() {
 
     // Fermer le menu si clic en dehors
     document.addEventListener('mousedown', (e) => {
-        if (isMenuOpen() && !filterMenu.contains(e.target) && e.target !== filterBtnGlobal && e.target !== filterBtnPanel) {
+        if (isMenuOpen() && !filterMenu.contains(e.target) && e.target !== filterBtnGlobal) {
             closeMenu();
         }
     });

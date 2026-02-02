@@ -144,6 +144,8 @@ window.addEventListener("load", () => {
     }
 
     const mapEl = document.getElementById('map');
+    const sidepanel = document.getElementById('sidepanel');
+    const filterMenu = document.getElementById('filter-menu');
     function isAllowedScrollTarget(target) {
         if (!mapEl || !target) return false;
         if (!(target instanceof Element)) return false;
@@ -155,42 +157,49 @@ window.addEventListener("load", () => {
         );
     }
 
-    // Block page zoom (Ctrl/Cmd+wheel) unless on the map
-    document.addEventListener('wheel', (e) => {
-        if (!e.ctrlKey && !e.metaKey) return;
-        if (isAllowedScrollTarget(e.target)) return;
-        e.preventDefault();
-    }, { passive: false });
+    function isPanelOpen() {
+        const sidepanel = document.getElementById('sidepanel');
+        const filterMenu = document.getElementById('filter-menu');
+        const filterOpen = filterMenu && window.getComputedStyle(filterMenu).display !== 'none';
+        const sideOpen = sidepanel && sidepanel.classList.contains('visible');
+        return Boolean(filterOpen || sideOpen);
+    }
 
-    // Block double-tap zoom unless on the map (mobile)
-    let lastTap = 0;
-    document.addEventListener('touchend', (e) => {
-        if (isAllowedScrollTarget(e.target)) return;
-        const now = Date.now();
-        if (now - lastTap <= 350) {
-            e.preventDefault();
-        }
-        lastTap = now;
-    }, { passive: false });
+    function isZoomAllowed(target) {
+        if (isPanelOpen()) return false;
+        if (!(target instanceof Element)) return false;
+        return mapEl && mapEl.contains(target);
+    }
 
-    // iOS Safari pinch-zoom + scroll block unless on the map
-    ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
-        document.addEventListener(evt, (e) => {
-            if (isAllowedScrollTarget(e.target)) return;
-            e.preventDefault();
+    function blockPinchOnElement(el) {
+        if (!el) return;
+        ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
+            el.addEventListener(evt, (e) => e.preventDefault(), { passive: false });
+        });
+        el.addEventListener('touchstart', (e) => {
+            if (e.touches && e.touches.length > 1) e.preventDefault();
         }, { passive: false });
-    });
+        el.addEventListener('touchmove', (e) => {
+            if (e.touches && e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
+    }
 
-    document.addEventListener('touchmove', (e) => {
-        if (isAllowedScrollTarget(e.target)) return;
-        e.preventDefault();
-    }, { passive: false });
+    // Zoom/scroll blocking removed.
+
+    blockPinchOnElement(sidepanel);
+    blockPinchOnElement(filterMenu);
 
 
     // Wire up the "country == none" quick access button
     const nonGeorefToggle = document.getElementById('non-georef-toggle');
     if (nonGeorefToggle) {
         nonGeorefToggle.addEventListener('click', function() {
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            const sidepanel = document.getElementById('sidepanel');
+            if (isMobile && sidepanel && sidepanel.classList.contains('visible')) {
+                closeSidePanel();
+                return;
+            }
             openSidePanel(NON_GEOREF_KEY);
         });
     }

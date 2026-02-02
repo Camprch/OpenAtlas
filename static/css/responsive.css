@@ -126,3 +126,30 @@
         margin-top: 0 !important;
     }
 }
+
+
+@media (max-height: 500px) and (orientation: landscape) {
+    #filter-menu {
+        top: var(--header-height);
+        bottom: 8px;
+        left: 8px;
+        right: 8px;
+        width: auto;
+        max-width: none;
+        height: auto;
+        max-height: none;
+        padding-bottom: 10px;
+    }
+    #filter-columns {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-rows: minmax(0, 1fr);
+        gap: 8px;
+    }
+    .filter-col-title {
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+    .filter-options-list {
+        gap: 8px;
+    }
+}

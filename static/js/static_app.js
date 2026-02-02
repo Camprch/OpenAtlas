@@ -6,7 +6,6 @@ const filterClose = document.getElementById('filter-menu-close');
 const filterMenuOptions = document.getElementById('filter-menu-options');
 let filterColumns = null;
 const filterBtn = document.getElementById('filter-btn-global');
-const filterBtnPanel = document.getElementById('filter-btn-panel');
 const sidepanel = document.getElementById('sidepanel');
 const sidepanelBackdrop = document.getElementById('sidepanel-backdrop');
 const sidepanelClose = document.getElementById('close-panel');
@@ -25,6 +24,7 @@ const selected = { date: new Set(), source: new Set(), label: new Set() };
 let currentCountryKey = null;
 let searchQuery = '';
 let allDetails = [];
+let cachedFilters = null;
 const isMobile = window.matchMedia('(max-width: 768px)').matches;
 let sidepanelHandlersBound = false;
 
@@ -451,7 +451,8 @@ function renderFilters(filters) {
           chip.type = 'button';
           chip.className = 'filter-active-chip';
           chip.textContent = item.value;
-          chip.addEventListener('click', () => {
+          chip.addEventListener('click', (e) => {
+            if (e && e.stopPropagation) e.stopPropagation();
             selected[item.key].delete(item.value);
             window.__refresh();
             renderFilters(filters);
@@ -494,22 +495,25 @@ function renderFilters(filters) {
   optionsDiv.appendChild(columns);
 }
 
-function openFilterMenu(opener) {
-  // Position menu differently depending on which button opened it.
+function openFilterMenu() {
+  // Use a single placement for all openers.
   filterMenu.style.display = 'flex';
-  if (opener === 'panel') {
-    filterMenu.style.position = 'fixed';
-    filterMenu.style.top = '80px';
-    filterMenu.style.right = '420px';
-    filterMenu.style.left = '';
-    filterMenu.style.transform = 'none';
-  } else {
-    filterMenu.style.position = 'fixed';
-    filterMenu.style.top = '60px';
-    filterMenu.style.left = '80px';
-    filterMenu.style.right = '';
-    filterMenu.style.transform = 'none';
+  if (cachedFilters) {
+    renderFilters(cachedFilters);
   }
+  if (isMobile) {
+    filterMenu.style.position = 'fixed';
+    filterMenu.style.top = '70px';
+    filterMenu.style.left = '10px';
+    filterMenu.style.right = '10px';
+    filterMenu.style.transform = 'none';
+    return;
+  }
+  filterMenu.style.position = 'fixed';
+  filterMenu.style.top = '60px';
+  filterMenu.style.left = '80px';
+  filterMenu.style.right = '';
+  filterMenu.style.transform = 'none';
 }
 
 function closeFilterMenu() {
@@ -518,6 +522,9 @@ function closeFilterMenu() {
 
 function handleFilterMenuClick(e) {
   const target = e.target;
+  if (target instanceof Element && target.closest('.filter-active-chip')) {
+    return;
+  }
   if (
     target === filterMenu ||
     target === filterMenuOptions ||
@@ -532,19 +539,10 @@ filterBtn.addEventListener('click', () => {
   if (filterMenu.style.display !== 'none' && filterMenu.style.display !== '') {
     closeFilterMenu();
   } else {
-    openFilterMenu('global');
+    openFilterMenu();
   }
 });
 
-if (filterBtnPanel) {
-  filterBtnPanel.addEventListener('click', () => {
-    if (filterMenu.style.display !== 'none' && filterMenu.style.display !== '') {
-      closeFilterMenu();
-    } else {
-      openFilterMenu('panel');
-    }
-  });
-}
 
 filterClose.addEventListener('click', closeFilterMenu);
 filterMenu.addEventListener('click', handleFilterMenuClick);
@@ -568,6 +566,8 @@ if (mapEl) {
 async function init() {
   // Load data and render initial state.
   initMap();
+  blockPinchOnElement(sidepanel);
+  blockPinchOnElement(filterMenu);
   const [countriesResp, eventsResp] = await Promise.all([
     fetch('./static/data/countries.json'),
     fetch('./static/data/events.json'),
@@ -587,6 +587,7 @@ async function init() {
   });
 
   renderFilters(dataset.filters || {});
+  cachedFilters = dataset.filters || {};
 
   const openAndRender = (value) => {
     searchQuery = value || '';
@@ -611,6 +612,10 @@ async function init() {
   }
   if (staticSearchBtn) {
     staticSearchBtn.addEventListener('click', () => {
+      if (isMobile && sidepanel.classList.contains('visible')) {
+        closeSidePanel();
+        return;
+      }
       openSearchPanel();
       if (staticSearchInputPanel) {
         staticSearchInputPanel.focus();
@@ -622,6 +627,10 @@ async function init() {
   }
   if (staticNonGeorefToggle) {
     staticNonGeorefToggle.addEventListener('click', () => {
+      if (isMobile && sidepanel.classList.contains('visible')) {
+        closeSidePanel();
+        return;
+      }
       openSidePanel(NON_GEOREF_KEY, detailsByCountry.get(NON_GEOREF_KEY) || []);
     });
   }
@@ -665,40 +674,33 @@ function getScrollTargetFromEvent(e) {
   return e ? e.target : null;
 }
 
+function isSidepanelOpen() {
+  return sidepanel && sidepanel.classList.contains('visible');
+}
+
 function isFilterMenuOpen() {
   if (!filterMenu) return false;
   return filterMenu.style.display !== 'none' && filterMenu.style.display !== '';
 }
 
-// Block page zoom (Ctrl/Cmd+wheel) unless on the map
-document.addEventListener('wheel', (e) => {
-  if (!e.ctrlKey && !e.metaKey) return;
-  if (isAllowedScrollTarget(e.target)) return;
-  e.preventDefault();
-}, { passive: false });
-
-// Block double-tap zoom unless on the map (mobile)
-let lastTap = 0;
-document.addEventListener('touchend', (e) => {
-  const target = getScrollTargetFromEvent(e);
-  if (isAllowedScrollTarget(target) || isFilterMenuOpen()) return;
-  const now = Date.now();
-  if (now - lastTap <= 350) {
-    e.preventDefault();
-  }
-  lastTap = now;
-}, { passive: false });
-
-// iOS Safari pinch-zoom + scroll block unless on the map
-['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
-  document.addEventListener(evt, (e) => {
-    if (isAllowedScrollTarget(e.target)) return;
-    e.preventDefault();
+function blockPinchOnElement(el) {
+  if (!el) return;
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
+    el.addEventListener(evt, (e) => e.preventDefault(), { passive: false });
+  });
+  el.addEventListener('touchstart', (e) => {
+    if (e.touches && e.touches.length > 1) e.preventDefault();
   }, { passive: false });
-});
+  el.addEventListener('touchmove', (e) => {
+    if (e.touches && e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+}
 
-document.addEventListener('touchmove', (e) => {
-  const target = getScrollTargetFromEvent(e);
-  if (isAllowedScrollTarget(target) || isFilterMenuOpen()) return;
-  e.preventDefault();
-}, { passive: false });
+function isZoomAllowed(target) {
+  if (isSidepanelOpen() || isFilterMenuOpen()) return false;
+  const el = (target instanceof Element) ? target : target?.parentElement;
+  if (!el) return false;
+  return mapEl && mapEl.contains(el);
+}
+
+// Zoom/scroll blocking removed.

@@ -5,7 +5,6 @@ body {
     background: #000000;
     color: #ddd;
     font-family: Arial, sans-serif;
-    touch-action: pan-x pan-y;
 }
 
 :root {

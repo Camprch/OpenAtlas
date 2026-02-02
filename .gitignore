@@ -53,3 +53,4 @@ static_site
 
 # Outils dev
 cmd.txt
+tools/dev_static_tunnel.sh

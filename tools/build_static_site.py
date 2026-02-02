@@ -238,9 +238,6 @@ def build_static_site() -> None:
       </div>
       <div id=\"sidepanel-events-header\">
         <h3>Events 📰</h3>
-        <div id=\"filter-container-panel\">
-          <button id=\"filter-btn-panel\" class=\"pill-btn\">Filter <span class=\"pill-btn-icon\">🔬</span></button>
-        </div>
       </div>
       <div id=\"events\"></div>
     </div>
