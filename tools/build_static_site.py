@@ -6,6 +6,10 @@ from pathlib import Path
 from datetime import datetime
 import sys
 
+# Load .env values before importing settings/db
+from dotenv import load_dotenv
+load_dotenv()
+
 # Root of the repo so local modules import correctly when running as a script.
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
@@ -199,7 +203,10 @@ def build_static_site() -> None:
 </head>
 <body class="static-site">
   <div id=\"filter-menu\">
-    <button id=\"filter-menu-close\">×</button>
+    <div id=\"filter-menu-header\">
+      <span id=\"filter-menu-title\">Filters</span>
+      <button id=\"filter-menu-close\">×</button>
+    </div>
     <div id=\"filter-menu-options\"></div>
   </div>
 
@@ -221,9 +228,9 @@ def build_static_site() -> None:
   <div id=\"map\"></div>
 
   <div id=\"sidepanel\">
-    <button id=\"close-panel\">✖</button>
     <div id=\"sidepanel-header-row\">
       <h2 id=\"panel-country-name\"><span id=\"panel-country-text\"></span></h2>
+      <button id=\"close-panel\">×</button>
     </div>
     <div id=\"sidepanel-content\">
       <div id=\"sidepanel-search-row\">
@@ -232,7 +239,7 @@ def build_static_site() -> None:
       <div id=\"sidepanel-events-header\">
         <h3>Events 📰</h3>
         <div id=\"filter-container-panel\">
-          <button id=\"filter-btn-panel\" class=\"pill-btn\">Filter <span class=\"pill-btn-icon\">🔎</span></button>
+          <button id=\"filter-btn-panel\" class=\"pill-btn\">Filter <span class=\"pill-btn-icon\">🔬</span></button>
         </div>
       </div>
       <div id=\"events\"></div>

@@ -8,6 +8,9 @@
     background: linear-gradient(90deg, #0f141a 0%, #121a22 55%, #0f141a 100%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+    height: var(--header-height);
+    padding: 0 20px;
+    box-sizing: border-box;
 }
 
 .dashboard-header-left {
@@ -94,6 +97,7 @@
     transform: scale(1.06);
     transform-origin: center;
 }
+
 
 .static-site #filter-btn-global .pill-btn-icon,
 .static-site #static-search-btn .pill-btn-icon,

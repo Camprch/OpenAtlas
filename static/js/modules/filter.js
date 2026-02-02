@@ -90,6 +90,7 @@ export async function renderAllFilterOptions() {
     const columns = document.createElement('div');
     columns.id = 'filter-columns';
     const categories = [
+        { key: 'active', label: 'Activ ✨' },
         { key: 'date', label: 'Date 🗓️' },
         { key: 'source', label: 'Source 📡' },
         { key: 'label', label: 'Label 🏷️' },
@@ -103,19 +104,66 @@ export async function renderAllFilterOptions() {
         col.appendChild(title);
         const list = document.createElement('div');
         list.className = 'filter-options-list';
+        if (cat.key === 'active') {
+            const activePairs = [];
+            for (const k of ['date', 'source', 'label']) {
+                const vals = window.selectedFilters[k] || [];
+                for (const v of vals) {
+                    activePairs.push({ key: k, value: v });
+                }
+            }
+            if (activePairs.length === 0) {
+                list.textContent = 'Aucun filtre actif.';
+            } else {
+                for (const item of activePairs) {
+                    const chip = document.createElement('button');
+                    chip.type = 'button';
+                    chip.className = 'filter-active-chip';
+                    chip.textContent = item.value;
+                    chip.addEventListener('click', async () => {
+                        window.selectedFilters[item.key] = (window.selectedFilters[item.key] || []).filter(v => v !== item.value);
+                        await renderAllFilterOptions();
+                        const selectedDates = window.selectedFilters.date;
+                        const selectedSources = window.selectedFilters.source;
+                        const selectedLabels = window.selectedFilters.label;
+                        await loadActiveCountries(
+                            selectedDates.length > 0 ? selectedDates : null,
+                            selectedSources.length > 0 ? selectedSources : null,
+                            selectedLabels.length > 0 ? selectedLabels : null,
+                            null
+                        );
+                        const sidepanel = document.getElementById('sidepanel');
+                        if (sidepanel && sidepanel.classList.contains('visible') && window.currentCountry) {
+                            await loadEvents(
+                                window.currentCountry,
+                                selectedDates.length > 0 ? selectedDates[0] : null,
+                                selectedSources.length > 0 ? selectedSources : null,
+                                selectedLabels.length > 0 ? selectedLabels : null,
+                                null
+                            );
+                        }
+                    });
+                    list.appendChild(chip);
+                }
+            }
+            col.appendChild(list);
+            columns.appendChild(col);
+            continue;
+        }
         const values = FILTER_VALUES[cat.key] || [];
         if (!window.selectedFilters[cat.key]) window.selectedFilters[cat.key] = [];
         if (values.length === 0) {
             list.textContent = 'Aucune option.';
         } else {
             for (const val of values) {
+                const displayVal = val;
                 const label = document.createElement('label');
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.value = val;
                 checkbox.checked = window.selectedFilters[cat.key].includes(val);
                 label.appendChild(checkbox);
-                label.appendChild(document.createTextNode(val));
+                label.appendChild(document.createTextNode(displayVal));
                 list.appendChild(label);
 
                 checkbox.addEventListener('change', async () => {
@@ -128,6 +176,7 @@ export async function renderAllFilterOptions() {
                     } else {
                         window.selectedFilters[cat.key] = window.selectedFilters[cat.key].filter(v => v !== val);
                     }
+                    await renderAllFilterOptions();
                     // Keep same-value checkboxes in sync across menus
                     document.querySelectorAll('.filter-options-list input[type=checkbox][value="' + val + '"]')
                         .forEach(cb => { if (cb !== checkbox) cb.checked = checkbox.checked; });

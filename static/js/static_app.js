@@ -418,6 +418,7 @@ function renderFilters(filters) {
   const columns = document.createElement('div');
   columns.id = 'filter-columns';
   const categories = [
+    { key: 'active', label: 'Activ \u2728' },
     { key: 'date', label: 'Date \uD83D\uDCC5' },
     { key: 'source', label: 'Source \uD83D\uDCF1' },
     { key: 'label', label: 'Label \uD83C\uDFF7\uFE0F' },
@@ -431,6 +432,34 @@ function renderFilters(filters) {
     col.appendChild(title);
     const list = document.createElement('div');
     list.className = 'filter-options-list';
+    if (cat.key === 'active') {
+      const activePairs = [];
+      for (const k of ['date', 'source', 'label']) {
+        const vals = Array.from(selected[k] || []);
+        for (const v of vals) {
+          activePairs.push({ key: k, value: v });
+        }
+      }
+      if (activePairs.length === 0) {
+        list.textContent = 'Aucun filtre actif.';
+      } else {
+        activePairs.forEach(item => {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'filter-active-chip';
+          chip.textContent = item.value;
+          chip.addEventListener('click', () => {
+            selected[item.key].delete(item.value);
+            window.__refresh();
+            renderFilters(filters);
+          });
+          list.appendChild(chip);
+        });
+      }
+      col.appendChild(list);
+      columns.appendChild(col);
+      return;
+    }
     const values = filters[cat.key] || [];
     if (!values.length) {
       list.textContent = 'Aucune option.';
@@ -449,6 +478,7 @@ function renderFilters(filters) {
             selected[cat.key].delete(val);
           }
           window.__refresh();
+          renderFilters(filters);
         });
         label.appendChild(checkbox);
         label.appendChild(document.createTextNode(val));
@@ -463,7 +493,7 @@ function renderFilters(filters) {
 
 function openFilterMenu(opener) {
   // Position menu differently depending on which button opened it.
-  filterMenu.style.display = 'block';
+  filterMenu.style.display = 'flex';
   if (opener === 'panel') {
     filterMenu.style.position = 'fixed';
     filterMenu.style.top = '80px';
@@ -592,13 +622,29 @@ init();
 
 function isAllowedScrollTarget(target) {
   if (!mapEl || !target) return false;
-  if (!(target instanceof Element)) return false;
+  const el = (target instanceof Element) ? target : target.parentElement;
+  if (!el) return false;
   return (
-    mapEl.contains(target) ||
-    target.closest('#sidepanel-content') ||
-    target.closest('#filter-menu') ||
-    target.closest('#filter-menu-options')
+    mapEl.contains(el) ||
+    el.closest('#sidepanel-content') ||
+    el.closest('#filter-menu') ||
+    el.closest('#filter-menu-options') ||
+    el.closest('.filter-options-list')
   );
+}
+
+function getScrollTargetFromEvent(e) {
+  if (e && e.touches && e.touches.length) {
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (el) return el;
+  }
+  return e ? e.target : null;
+}
+
+function isFilterMenuOpen() {
+  if (!filterMenu) return false;
+  return filterMenu.style.display !== 'none' && filterMenu.style.display !== '';
 }
 
 // Block page zoom (Ctrl/Cmd+wheel) unless on the map
@@ -611,7 +657,8 @@ document.addEventListener('wheel', (e) => {
 // Block double-tap zoom unless on the map (mobile)
 let lastTap = 0;
 document.addEventListener('touchend', (e) => {
-  if (isAllowedScrollTarget(e.target)) return;
+  const target = getScrollTargetFromEvent(e);
+  if (isAllowedScrollTarget(target) || isFilterMenuOpen()) return;
   const now = Date.now();
   if (now - lastTap <= 350) {
     e.preventDefault();
@@ -628,6 +675,7 @@ document.addEventListener('touchend', (e) => {
 });
 
 document.addEventListener('touchmove', (e) => {
-  if (isAllowedScrollTarget(e.target)) return;
+  const target = getScrollTargetFromEvent(e);
+  if (isAllowedScrollTarget(target) || isFilterMenuOpen()) return;
   e.preventDefault();
 }, { passive: false });

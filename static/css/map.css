@@ -2,9 +2,15 @@
 
 #map {
     width: 100%;
-    height: calc(100vh - 70px);
+    height: calc(100vh - var(--header-height));
     touch-action: pinch-zoom;
     overscroll-behavior: contain;
+}
+
+@supports (height: 100dvh) {
+    #map {
+        height: calc(100dvh - var(--header-height));
+    }
 }
 
 
@@ -34,6 +40,16 @@
 
 .leaflet-bottom.leaflet-right {
     right: 20px;
+}
+
+/* Center zoom control vertically on the left edge */
+.leaflet-left .leaflet-control-zoom {
+    margin-top: 0;
+}
+
+.leaflet-top.leaflet-left {
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .country-emoji-marker {

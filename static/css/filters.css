@@ -1,33 +1,26 @@
 /* Styles du menu de filtres */
 
 #filter-menu {
-    position: fixed;
-    top: 60px;
-    left: 80px;
-    transform: none;
-    background: #23272e;
+    background: #1b222b;
     color: #eee;
-    border: 1px solid #444;
-    border-radius: 12px;
-    box-shadow: 0 4px 24px #0008;
+    border: 1px solid #2a3440;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     z-index: 9999;
-    min-width: 260px;
-    min-height: 350px;
-    width: 360px;
-    max-width: 95vw;
-    height: 50vh;
-    max-height: 50vh;
     overflow: hidden;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    padding: 48px 20px 18px;
-    box-sizing: border-box;
+    
     display: none;
     flex-direction: column;
+    max-width: 320px;
+    height: min(70vh, 560px);
+    max-height: min(70vh, 560px);
+    padding: 8px 12px 18px;
 }
 
 .static-site #filter-menu {
-    overflow-y: auto;
+    overflow: hidden;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
 }
@@ -37,8 +30,9 @@
     display: flex;
     flex-direction: column;
     flex: 1;
+    height: 100%;
     min-height: 0;
-    padding-left: 36px;
+    overflow: visible;
     box-sizing: border-box;
 }
 
@@ -46,13 +40,14 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 8px;
+    gap: 12px;
     width: 100%;
     box-sizing: border-box;
     margin-left: 0;
     align-content: stretch;
     flex: 1;
     height: 100%;
+    min-height: 0;
 }
 
 .filter-col {
@@ -64,22 +59,28 @@
     align-items: flex-start;
     box-sizing: border-box;
     min-height: 0;
+    overflow: visible;
+    height: 100%;
 }
 
 .filter-col-title {
     font-weight: bold;
-    color: #e1e1e1;
-    margin-bottom: 8px;
-    font-size: 15px;
-    letter-spacing: 0.5px;
+    color: #9fb4c8;
+    margin-bottom: 6px;
+    font-size: 16px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    text-align: center;
+    width: 100%;
 }
 
 .filter-options-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    max-height: none;
+    gap: 10px;
+    max-height: 100%;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     width: 100%;
     flex: 1 1 auto;
     min-height: 0;
@@ -88,38 +89,65 @@
 .filter-options-list label {
     display: flex;
     align-items: center;
-    background: #23272f;
-    border-radius: 5px;
-    padding: 4px 10px;
-    font-size: 13px;
+    background: #202a36;
+    border: 1px solid #2c3a4a;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 14px;
     color: #eee;
     cursor: pointer;
     margin: 0;
-    min-width: 80px;
-    transition: background 0.15s, color 0.15s;
-}
-.filter-options-list label:hover {
-    background: #2d3542;
-    color: #22c55e;
+    min-width: 72px;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    position: relative;
 }
 
 .filter-options-list input[type="checkbox"] {
-    margin-right: 7px;
-    accent-color: #22c55e;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+}
+
+.filter-options-list label:has(input:checked) {
+    background: #1f3a2b;
+    border-color: #2f5a40;
+    color: #eafff0;
+}
+
+.filter-active-chip {
+    appearance: none;
+    border: 1px solid #2c3a4a;
+    background: #1f3a2b;
+    color: #eafff0;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+#filter-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    flex: 0 0 auto;
+}
+
+#filter-menu-title {
+    font-size: 18px;
+    font-weight: bold;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #9fb4c8;
+    text-align: center;
+    width: 100%;
 }
 
 #filter-menu-close {
-    position: absolute;
-    top: 8px;
-    left: 10px;
-    background: none;
-    color: #ccc;
-    border: none;
-    font-size: 22px;
-    cursor: pointer;
-    transition: transform 0.1s ease, color 0.15s ease;
-}
-#filter-menu-close:hover {
-    color: #fff;
-    transform: scale(1.1);
+    position: static;
+    margin-left: 8px;
 }

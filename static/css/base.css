@@ -8,6 +8,26 @@ body {
     touch-action: pan-x pan-y;
 }
 
+:root {
+    --header-height: 70px;
+}
+
+#filter-menu-close,
+#close-panel {
+    background: none;
+    color: #ccc;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    transition: transform 0.1s ease, color 0.15s ease;
+}
+
+#filter-menu-close:hover,
+#close-panel:hover {
+    color: inherit;
+    transform: none;
+}
+
 header {
     padding: 10px 20px;
     background: #11161c;

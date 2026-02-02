@@ -31,21 +31,10 @@
 }
 
 #close-panel {
-    background: none;
-    color: #ccc;
-    border: none;
-    font-size: 22px;
-    position: absolute;
-    top: 8px;
-    left: 10px;
-    cursor: pointer;
-    transition: transform 0.1s ease, color 0.15s ease;
+    position: static;
+    margin-left: 8px;
 }
 
-#close-panel:hover {
-    color: #fff;
-    transform: scale(1.1);
-}
 
 #sidepanel-backdrop {
     position: fixed;
@@ -67,6 +56,7 @@
 #sidepanel-header-row {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 12px;
     margin-bottom: 8px;
     flex-wrap: nowrap;
@@ -84,8 +74,7 @@
     font-size: 20px;
     font-weight: 600;
     padding-right: 10px;
-    padding-left: 28px;
-    flex-shrink: 0;
+    flex: 1;
 }
 
 .panel-flag {
