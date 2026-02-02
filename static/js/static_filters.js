@@ -1,4 +1,12 @@
 export function renderFilters(filters, selected, onChange) {
+  const triggerChange = () => {
+    if (typeof onChange === 'function') {
+      onChange();
+    }
+    if (typeof window !== 'undefined' && typeof window.__refresh === 'function') {
+      window.__refresh();
+    }
+  };
   const optionsDiv = document.getElementById('filter-menu-options');
   optionsDiv.innerHTML = '';
   const columns = document.createElement('div');
@@ -37,7 +45,7 @@ export function renderFilters(filters, selected, onChange) {
           chip.addEventListener('click', (e) => {
             if (e && e.stopPropagation) e.stopPropagation();
             selected[item.key].delete(item.value);
-            onChange();
+            triggerChange();
             renderFilters(filters, selected, onChange);
           });
           list.appendChild(chip);
@@ -63,7 +71,7 @@ export function renderFilters(filters, selected, onChange) {
           } else {
             selected[cat.key].delete(val);
           }
-          onChange();
+          triggerChange();
           renderFilters(filters, selected, onChange);
         });
         label.appendChild(checkbox);

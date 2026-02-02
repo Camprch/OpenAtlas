@@ -23,7 +23,9 @@ export function clearMarkers() {
       map.removeLayer(m);
     }
   });
-  markersByCountry = {};
+  Object.keys(markersByCountry).forEach(key => {
+    delete markersByCountry[key];
+  });
 }
 
 export function markerStyle(count) {
