@@ -23,8 +23,7 @@ if (!window.selectedFilters) {
     window.selectedFilters = {
         date: [],
         source: [],
-        label: [],
-        event_type: []
+        label: []
     };
 }
 
@@ -34,23 +33,10 @@ const FILTER_VALUES = {
     date: [], // sera chargé dynamiquement
     source: [], // sera chargé dynamiquement
     label: [], // sera chargé dynamiquement
-    event_type: [] // sera chargé dynamiquement
+    event_type: [] // removed
 };
 
-async function fetchEventTypes() {
-    // Load event types from the API
-    try {
-        const resp = await fetch("/api/event_types");
-        const data = await resp.json();
-        if (Array.isArray(data)) {
-            FILTER_VALUES.event_type = data;
-        } else {
-            FILTER_VALUES.event_type = [];
-        }
-    } catch (e) {
-        FILTER_VALUES.event_type = [];
-    }
-}
+// event_type filter removed (no-op)
 
 async function fetchLabels() {
     // Load label values from the API
@@ -94,7 +80,7 @@ export async function renderAllFilterOptions() {
     if (FILTER_VALUES.date.length === 0) fetchers.push(fetchDates());
     if (FILTER_VALUES.source.length === 0) fetchers.push(fetchSources());
     if (FILTER_VALUES.label.length === 0) fetchers.push(fetchLabels());
-    if (FILTER_VALUES.event_type.length === 0) fetchers.push(fetchEventTypes());
+    // event_type filter removed
     await Promise.all(fetchers);
 
     const optionsDiv = document.getElementById('filter-menu-options');
@@ -107,7 +93,6 @@ export async function renderAllFilterOptions() {
         { key: 'date', label: 'Date 🗓️' },
         { key: 'source', label: 'Source 📡' },
         { key: 'label', label: 'Label 🏷️' },
-        { key: 'event_type', label: 'Type 📝' }
     ];
     for (const cat of categories) {
         const col = document.createElement('div');
@@ -149,13 +134,13 @@ export async function renderAllFilterOptions() {
                     const selectedDates = window.selectedFilters.date;
                     const selectedSources = window.selectedFilters.source;
                     const selectedLabels = window.selectedFilters.label;
-                    const selectedEventTypes = window.selectedFilters.event_type;
+        // event_type filter removed
                     // Refresh map markers based on current filters
                     await loadActiveCountries(
                         selectedDates.length > 0 ? selectedDates : null,
                         selectedSources.length > 0 ? selectedSources : null,
                         selectedLabels.length > 0 ? selectedLabels : null,
-                        selectedEventTypes.length > 0 ? selectedEventTypes : null
+                        null
                     );
                     // Reload side panel if it is visible and a country is selected
                     const sidepanel = document.getElementById('sidepanel');
@@ -165,7 +150,7 @@ export async function renderAllFilterOptions() {
                             selectedDates.length > 0 ? selectedDates[0] : null,
                             selectedSources.length > 0 ? selectedSources : null,
                             selectedLabels.length > 0 ? selectedLabels : null,
-                            selectedEventTypes.length > 0 ? selectedEventTypes : null
+                            null
                         );
                     }
                 });

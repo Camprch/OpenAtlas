@@ -53,13 +53,12 @@ export function openSidePanel(country) {
     const selectedDates = window.selectedFilters?.date || [];
     const selectedSources = window.selectedFilters?.source || [];
     const selectedLabels = window.selectedFilters?.label || [];
-    const selectedEventTypes = window.selectedFilters?.event_type || [];
     loadEvents(
         country,
         selectedDates.length > 0 ? selectedDates[0] : null,
         selectedSources.length > 0 ? selectedSources : null,
         selectedLabels.length > 0 ? selectedLabels : null,
-        selectedEventTypes.length > 0 ? selectedEventTypes : null
+        null
     );
     function closePanel() {
         // Close panel and re-enable page scroll

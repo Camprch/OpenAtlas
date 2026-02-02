@@ -16,20 +16,7 @@ except Exception:  # pragma: no cover - optional dependency at runtime
     pycountry = None
 
 
-AI_FIELDS: List[str] = ["country", "region", "location", "title", "event_type"]
-
-EVENT_TYPES: List[str] = [
-    "Protest",
-    "Conflict",
-    "Political",
-    "Natural disaster",
-    "Crime",
-    "Cyber Attack",
-    "Public health",
-    "Economic",
-    "Security Alert",
-    "Other",
-]
+AI_FIELDS: List[str] = ["country", "region", "location", "title"]
 
 
 def normalize_text(text: str) -> str:
@@ -148,97 +135,6 @@ def infer_country(text: str, lang: Optional[str]) -> tuple[Optional[str], float]
     return None, 0.0
 
 
-_EVENT_KEYWORDS: Dict[str, List[tuple[str, int]]] = {
-    "Protest": [
-        (r"\bprotest(ers|s|ing)?\b", 3),
-        (r"\bstrike(s|ing)?\b", 2),
-        (r"\bdemonstrat(ion|ions|e|es|ed)\b", 2),
-    ],
-    "Conflict": [
-        (r"\battack(s|ed|ing)?\b", 2),
-        (r"\bairstrike(s)?\b", 3),
-        (r"\bclash(es|ed)?\b", 2),
-        (r"\bwar\b", 3),
-        (r"\barmed\b", 2),
-    ],
-    "Political": [
-        (r"\belection(s)?\b", 3),
-        (r"\bparliament\b", 2),
-        (r"\bcoup\b", 3),
-        (r"\bgovernment\b", 2),
-    ],
-    "Natural disaster": [
-        (r"\bearthquake(s)?\b", 3),
-        (r"\bflood(s|ing)?\b", 2),
-        (r"\bwildfire(s)?\b", 2),
-        (r"\bhurricane(s)?\b", 2),
-    ],
-    "Crime": [
-        (r"\bshooting(s)?\b", 2),
-        (r"\bkidnapp(ing|ed|ers)?\b", 2),
-        (r"\brobber(y|ies)\b", 2),
-        (r"\bmurder(s|ed)?\b", 2),
-    ],
-    "Cyber Attack": [
-        (r"\bhack(ers|ed|ing)?\b", 2),
-        (r"\bransomware\b", 3),
-        (r"\bcyber\b", 2),
-        (r"\bmalware\b", 2),
-    ],
-    "Public health": [
-        (r"\boutbreak(s)?\b", 3),
-        (r"\bepidemic(s)?\b", 3),
-        (r"\bpandemic\b", 3),
-        (r"\bcovid\b", 2),
-    ],
-    "Economic": [
-        (r"\binflation\b", 2),
-        (r"\brecession\b", 3),
-        (r"\bstrike\b", 1),
-        (r"\bsanction(s)?\b", 1),
-    ],
-    "Security Alert": [
-        (r"\balert\b", 2),
-        (r"\bwarning\b", 2),
-        (r"\bevacuate(d|ion)?\b", 2),
-        (r"\bthreat(s)?\b", 2),
-    ],
-}
-
-
-def infer_event_type(text: str, lang: Optional[str]) -> tuple[Optional[str], float]:
-    """
-    Classify event type using keyword heuristics.
-    Returns (event_type, confidence).
-    """
-    if not text:
-        return None, 0.0
-    lower = text.lower()
-    scores: Dict[str, int] = {k: 0 for k in _EVENT_KEYWORDS}
-    for event_type, patterns in _EVENT_KEYWORDS.items():
-        for pattern, weight in patterns:
-            if re.search(pattern, lower):
-                scores[event_type] += weight
-
-    best_type = None
-    best_score = 0
-    tie = False
-    for event_type, score in scores.items():
-        if score > best_score:
-            best_score = score
-            best_type = event_type
-            tie = False
-        elif score == best_score and score > 0:
-            tie = True
-
-    if not best_type or best_score <= 0 or tie:
-        return None, 0.0
-
-    if best_score >= 3:
-        return best_type, 0.9
-    return best_type, 0.7
-
-
 _COORD_REGEX = re.compile(
     r"(?P<lat>-?\d{1,2}\.\d+)\s*[,/ ]\s*(?P<lon>-?\d{1,3}\.\d+)",
     re.IGNORECASE,
@@ -288,7 +184,6 @@ def enrich_record(record: Dict[str, str]) -> tuple[Dict[str, Optional[str]], Dic
     text_norm = normalize_text(original_text)
 
     country, country_conf = infer_country(text_norm, lang)
-    event_type, event_conf = infer_event_type(text_norm, lang)
     location, location_conf = infer_location(text_norm, lang)
 
     fields: Dict[str, Optional[str]] = {
@@ -296,14 +191,12 @@ def enrich_record(record: Dict[str, str]) -> tuple[Dict[str, Optional[str]], Dic
         "region": None,
         "location": location,
         "title": None,
-        "event_type": event_type,
     }
     confidences: Dict[str, float] = {
         "country": country_conf,
         "region": 0.0,
         "location": location_conf,
         "title": 0.0,
-        "event_type": event_conf,
         "language": lang_conf,
     }
     return fields, confidences, text_norm, lang
@@ -316,7 +209,6 @@ class EnrichmentConfig:
             "region": 0.9,
             "location": 0.9,
             "title": 0.9,
-            "event_type": 0.85,
         }
     )
     pipeline_version: str = "1"
@@ -362,7 +254,6 @@ def _enrich_subbatch(
         "- Output must be strict JSON, no comments or extra text.\n"
         "- Each output object MUST include the id and ONLY the fields listed in missing_fields.\n"
         "- If a field is unknown, set it to an empty string.\n"
-        f"- event_type MUST be one of: {', '.join(EVENT_TYPES)}.\n"
         f"- title MUST be a short sentence (8-18 words) in {config.target_language}.\n"
         "- country must be the main impacted country in English, or empty string if uncertain.\n"
         "- region is a large area (province/region), or empty string.\n"

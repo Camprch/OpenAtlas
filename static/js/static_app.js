@@ -19,7 +19,7 @@ const NON_GEOREF_KEY = '__NO_COUNTRY__';
 const NON_GEOREF_LABEL = 'Ungeoref';
 
 // Current filter state (multi-select across categories).
-const selected = { date: new Set(), source: new Set(), label: new Set(), event_type: new Set() };
+const selected = { date: new Set(), source: new Set(), label: new Set() };
 let currentCountryKey = null;
 let searchQuery = '';
 let allDetails = [];
@@ -105,7 +105,7 @@ function applyFilters(events) {
     if (selected.date.size && (!e.date || !selected.date.has(e.date))) return false;
     if (selected.source.size && (!e.source || !selected.source.has(e.source))) return false;
     if (selected.label.size && (!e.label || !selected.label.has(e.label))) return false;
-    if (selected.event_type.size && (!e.event_type || !selected.event_type.has(e.event_type))) return false;
+    // event_type filter removed
     return true;
   });
 }
@@ -116,7 +116,7 @@ function applyFiltersToDetails(details) {
     if (selected.date.size && (!item.timestamp || !selected.date.has(item.timestamp))) return false;
     if (selected.source.size && (!item.source || !selected.source.has(item.source))) return false;
     if (selected.label.size && (!item.label || !selected.label.has(item.label))) return false;
-    if (selected.event_type.size && (!item.event_type || !selected.event_type.has(item.event_type))) return false;
+    // event_type filter removed
     return true;
   });
 }
@@ -199,7 +199,6 @@ function renderSearchResults(query, details) {
       item.location,
       item.source,
       item.label,
-      item.event_type,
     ].filter(Boolean).join(' ');
     return containsQuery(haystack, q);
   });
@@ -422,7 +421,6 @@ function renderFilters(filters) {
     { key: 'date', label: 'Date \uD83D\uDCC5' },
     { key: 'source', label: 'Source \uD83D\uDCF1' },
     { key: 'label', label: 'Label \uD83C\uDFF7\uFE0F' },
-    { key: 'event_type', label: 'Type \uD83D\uDCDD' },
   ];
   categories.forEach(cat => {
     const col = document.createElement('div');

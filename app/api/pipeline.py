@@ -66,6 +66,12 @@ def run_pipeline_real():
     Run the Python pipeline (tools/run_pipeline.py) in a thread and update status in real time.
     """
     def target():
+        # Clear cached settings so .env changes are picked up for each run.
+        try:
+            from app.config import get_settings
+            get_settings.cache_clear()
+        except Exception:
+            pass
         import subprocess
         import os
         import sys

@@ -65,7 +65,7 @@ export function setupSearch() {
                 const html = results.map((m, i) =>
                     `<div class='search-result-item' data-country="${encodeURIComponent(m.country || '')}" data-country-norm="${encodeURIComponent(m.country_norm || '')}" data-region="${encodeURIComponent(m.region || '')}" data-location="${encodeURIComponent(m.location || '')}" data-msgid="${m.id}" tabindex="0">
                         <b>${highlightQuery((m.country || '') + ' ' + (m.region || '') + ' ' + (m.location || ''), q)}</b><br>
-                        <span class='search-result-type'>${highlightQuery(m.event_type || '', q)}</span> <span class='search-result-label'>${highlightQuery(m.label || '', q)}</span><br>
+                        <span class='search-result-label'>${highlightQuery(m.label || '', q)}</span><br>
                         ${highlightQuery(m.translated_text || '', q)}
                     </div>`
                 ).join('');
