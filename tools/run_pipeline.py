@@ -2,7 +2,7 @@
 
 import asyncio
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # Load .env values before importing settings
 from dotenv import load_dotenv
@@ -26,12 +26,12 @@ from app.services.enrichment import enrich_messages, EnrichmentConfig
 from app.services.dedupe import dedupe_messages
 
 
-RUN_ID = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+RUN_ID = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
 
 
 def log(message: str) -> None:
     # Log with a timestamp and run identifier for grouping
-    timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     print(f"[pipeline] {timestamp} | run={RUN_ID} | {message}")
     sys.stdout.flush()
 
