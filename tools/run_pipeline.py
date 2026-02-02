@@ -59,11 +59,10 @@ def summarize_messages(messages: list[dict], label: str) -> None:
     with_region = sum(1 for m in messages if (m.get("region") or "").strip())
     with_location = sum(1 for m in messages if (m.get("location") or "").strip())
     with_title = sum(1 for m in messages if (m.get("title") or "").strip())
-    with_event_type = sum(1 for m in messages if (m.get("event_type") or "").strip())
     log(
         f"[{label}] total={len(messages)} | channels={len(channels)} | sources={len(sources)} | "
         f"text={with_text} | translated={with_translated} | country={with_country} | "
-        f"region={with_region} | location={with_location} | title={with_title} | event_type={with_event_type}"
+        f"region={with_region} | location={with_location} | title={with_title}"
     )
     if channels:
         # Summarize top channels to spot noisy sources quickly
@@ -192,9 +191,12 @@ def filter_existing_messages(messages: list[dict]) -> list[dict]:
     if not channels or not ids:
         return messages
     with get_session() as session:
+        from sqlmodel import or_
+        pairs = [(c, i) for c, i in keys if c is not None and i is not None]
+        if not pairs:
+            return messages
         stmt = select(Message.channel, Message.telegram_message_id).where(
-            Message.channel.in_(channels),
-            Message.telegram_message_id.in_(ids)
+            or_(*[(Message.channel == c) & (Message.telegram_message_id == i) for c, i in pairs])
         )
         existing = set((row[0], row[1]) for row in session.exec(stmt).all())
     filtered = [m for m in messages if (m.get("channel"), m.get("telegram_message_id")) not in existing]
@@ -202,7 +204,7 @@ def filter_existing_messages(messages: list[dict]) -> list[dict]:
     return filtered
 
 
-def delete_old_messages(days: int = 10) -> None:
+def delete_old_messages() -> None:
     """
     Supprime les messages dont l'event_timestamp est plus vieux que X jours.
     """
@@ -210,8 +212,7 @@ def delete_old_messages(days: int = 10) -> None:
     from datetime import timezone
     from app.config import get_settings
     settings = get_settings()
-    days = settings.auto_delete_days
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=settings.auto_delete_days)
     with get_session() as session:
         from sqlmodel import delete
 
@@ -221,7 +222,7 @@ def delete_old_messages(days: int = 10) -> None:
         session.commit()
 
     deleted = getattr(result, "rowcount", None)
-    log(f"[CLEAN] Deleted messages older than {days} days ({deleted}).")
+    log(f"[CLEAN] Deleted messages older than {settings.auto_delete_days} days ({deleted}).")
 
 
 async def run_pipeline_once():
@@ -299,7 +300,7 @@ async def run_pipeline_once():
     store_messages(deduped)
 
     log("delete_old_messages")
-    delete_old_messages(days=10)
+    delete_old_messages()
     log("Pipeline terminé")
 
 

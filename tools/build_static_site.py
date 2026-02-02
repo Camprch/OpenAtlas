@@ -171,85 +171,9 @@ def build_static_site() -> None:
     # Include the country coordinates/aliases lookup.
     countries_dst.write_text(countries_src.read_text(encoding="utf-8"), encoding="utf-8")
 
-    # Write static HTML that mirrors the dashboard map + filters.
-    (OUTPUT_DIR / "index.html").write_text(
-        """<!DOCTYPE html>
-<html lang=\"fr\">
-<head>
-  <meta charset=\"UTF-8\" />
-  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />
-  <title>OpenAtlas Static</title>
-  <link rel="stylesheet" href="static/css/dashboard.css" />
-  <link rel="stylesheet" href="static/css/sidepanel.css" />
-  <link rel="stylesheet" href="static/css/base.css" />
-  <link rel="stylesheet" href="static/css/dashboard_ui.css" />
-  <link rel="stylesheet" href="static/css/events.css" />
-  <link rel="stylesheet" href="static/css/filters.css" />
-  <link rel="stylesheet" href="static/css/map.css" />
-  <link rel="stylesheet" href="static/css/overrides.css" />
-  <link rel="stylesheet" href="static/css/search.css" />
-  <link rel="stylesheet" href="static/css/responsive.css" />
-  <link
-    rel=\"stylesheet\"
-    href=\"https://unpkg.com/leaflet@1.9.4/dist/leaflet.css\"
-    integrity=\"sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=\"
-    crossorigin=\"\"
-  >
-  <script
-    src=\"https://unpkg.com/leaflet@1.9.4/dist/leaflet.js\"
-    integrity=\"sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=\"
-    crossorigin=\"\"
-  ></script>
-</head>
-<body class="static-site">
-  <div id=\"filter-menu\">
-    <div id=\"filter-menu-header\">
-      <span id=\"filter-menu-title\">Filters</span>
-      <button id=\"filter-menu-close\">×</button>
-    </div>
-    <div id=\"filter-menu-options\"></div>
-  </div>
-
-  <header class=\"dashboard-header\">
-    <div class=\"dashboard-header-left\">
-      <span class=\"logo-icon logo-badge\">🌍</span>
-      <span class=\"dashboard-title\">MAP</span>
-      <div id=\"filter-container-global\">
-        <button id=\"filter-btn-global\" class=\"pill-btn\"><span class=\"pill-btn-icon\">🔬</span></button>
-      </div>
-      <button id=\"static-search-btn\" class=\"pill-btn header-search-btn\"><span class=\"pill-btn-icon\">🔎</span></button>
-      <button id=\"static-non-georef-toggle\" class=\"pill-btn\" title=\"Afficher les messages sans pays\"><span class=\"pill-btn-icon\">🗺️</span></button>
-    </div>
-    <div class=\"dashboard-header-right\">
-    </div>
-  </header>
-
-  <div id=\"dashboard-alert\"></div>
-  <div id=\"map\"></div>
-
-  <div id=\"sidepanel\">
-    <div id=\"sidepanel-header-row\">
-      <h2 id=\"panel-country-name\"><span id=\"panel-country-text\"></span></h2>
-      <button id=\"close-panel\">×</button>
-    </div>
-    <div id=\"sidepanel-content\">
-      <div id=\"sidepanel-search-row\">
-        <input id=\"static-search-input-panel\" type=\"search\" placeholder=\"Search...\" />
-      </div>
-      <div id=\"sidepanel-events-header\">
-        <h3>Events 📰</h3>
-      </div>
-      <div id=\"events\"></div>
-    </div>
-  </div>
-  <div id=\"sidepanel-backdrop\"></div>
-
-  <script type="module" src="static/js/static_app.js"></script>
-</body>
-</html>
-""",
-        encoding="utf-8",
-    )
+    # Write static HTML from template file.
+    template_path = Path("templates") / "static_index.html"
+    (OUTPUT_DIR / "index.html").write_text(template_path.read_text(encoding="utf-8"), encoding="utf-8")
 
 if __name__ == "__main__":
     build_static_site()

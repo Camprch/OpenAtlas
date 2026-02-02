@@ -31,36 +31,6 @@ def normalize_text(text: str) -> str:
     return text
 
 
-_LANG_STOPWORDS: Dict[str, List[str]] = {
-    "en": ["the", "and", "of", "to", "in", "with", "for", "on"],
-    "fr": ["le", "la", "les", "des", "et", "de", "dans", "pour"],
-    "es": ["el", "la", "los", "las", "y", "de", "en", "para"],
-    "de": ["der", "die", "das", "und", "von", "mit", "fur", "im"],
-}
-
-
-def detect_language(text: str) -> tuple[Optional[str], float]:
-    """
-    Naive deterministic language detection for common European languages.
-    Returns (lang, confidence).
-    """
-    if not text:
-        return None, 0.0
-    if re.search(r"[\u0400-\u04FF]", text):
-        return "ru", 0.9
-    lower = text.lower()
-    scores: Dict[str, int] = {}
-    padded = f" {lower} "
-    for lang, words in _LANG_STOPWORDS.items():
-        scores[lang] = sum(1 for w in words if f" {w} " in padded)
-    best_lang = max(scores, key=scores.get)
-    best_score = scores[best_lang]
-    if best_score <= 0:
-        return None, 0.0
-    if best_score >= 3:
-        return best_lang, 0.9
-    return best_lang, 0.6
-
 
 @lru_cache(maxsize=1)
 def _load_country_data() -> tuple[Dict[str, str], Dict[str, List[float]]]:
@@ -101,7 +71,7 @@ def _pycountry_names() -> List[str]:
     return sorted(unique, key=lambda s: (-len(s), s))
 
 
-def infer_country(text: str, lang: Optional[str]) -> tuple[Optional[str], float]:
+def infer_country(text: str) -> tuple[Optional[str], float]:
     """
     Try to infer a country name from text using aliases + pycountry.
     Returns (country_name, confidence).
@@ -147,7 +117,7 @@ _COORD_HEMI_REGEX = re.compile(
 )
 
 
-def infer_location(text: str, lang: Optional[str]) -> tuple[Optional[str], float]:
+def infer_location(text: str) -> tuple[Optional[str], float]:
     """
     Infer a location by extracting explicit coordinates from text.
     Returns (location, confidence).
@@ -174,17 +144,16 @@ def infer_location(text: str, lang: Optional[str]) -> tuple[Optional[str], float
     return None, 0.0
 
 
-def enrich_record(record: Dict[str, str]) -> tuple[Dict[str, Optional[str]], Dict[str, float], str, Optional[str]]:
+def enrich_record(record: Dict[str, str]) -> tuple[Dict[str, Optional[str]], Dict[str, float], str]:
     """
     Deterministic enrichment pass.
-    Returns (fields, confidences, normalized_text, language).
+    Returns (fields, confidences, normalized_text).
     """
     original_text = record.get("text") or ""
-    lang, lang_conf = detect_language(original_text)
     text_norm = normalize_text(original_text)
 
-    country, country_conf = infer_country(text_norm, lang)
-    location, location_conf = infer_location(text_norm, lang)
+    country, country_conf = infer_country(text_norm)
+    location, location_conf = infer_location(text_norm)
 
     fields: Dict[str, Optional[str]] = {
         "country": country,
@@ -197,18 +166,15 @@ def enrich_record(record: Dict[str, str]) -> tuple[Dict[str, Optional[str]], Dic
         "region": 0.0,
         "location": location_conf,
         "title": 0.0,
-        "language": lang_conf,
     }
-    return fields, confidences, text_norm, lang
+    return fields, confidences, text_norm
 
 @dataclass
 class EnrichmentConfig:
     min_confidence: Dict[str, float] = field(
         default_factory=lambda: {
             "country": 0.9,
-            "region": 0.9,
             "location": 0.9,
-            "title": 0.9,
         }
     )
     pipeline_version: str = "1"
@@ -218,10 +184,6 @@ class EnrichmentConfig:
     model_name: Optional[str] = None
     target_language: str = "fr"
     batch_size: int = 20
-
-
-def should_call_ai(missing_fields: List[str], confidences: Dict[str, float], config: EnrichmentConfig) -> bool:
-    return bool(missing_fields)
 
 
 def _get_openai_client(api_key: Optional[str]):
@@ -246,7 +208,6 @@ def _enrich_subbatch(
         "You will receive one JSON object per line. Each object contains:\n"
         "- id: integer\n"
         "- text: normalized message text\n"
-        "- lang: detected language code (if known)\n"
         "- known_fields: fields already extracted\n"
         "- missing_fields: list of fields that are still unknown\n\n"
         "For EACH input line, output ONE JSON object on a single line (JSONL).\n"
@@ -351,11 +312,10 @@ def enrich_messages(messages: List[dict], *, config: Optional[EnrichmentConfig] 
 
         ai_items: List[Dict[str, Any]] = []
         ai_payloads: List[Dict[str, Any]] = []
-        ai_skipped = 0
         deterministic_resolved = 0
 
         for idx, msg in enumerate(sub):
-            fields, confidences, text_norm, lang = enrich_record(msg)
+            fields, confidences, text_norm = enrich_record(msg)
 
             # Apply deterministic values only if confidence is high enough
             for field, value in fields.items():
@@ -378,14 +338,9 @@ def enrich_messages(messages: List[dict], *, config: Optional[EnrichmentConfig] 
                     print("[pipeline] [ENRICH][AI] AI enrichment skipped: all fields resolved deterministically")
                 continue
 
-            if not should_call_ai(missing_fields, confidences, config):
-                ai_skipped += 1
-                continue
-
             payload = {
                 "id": idx,
                 "text": text_norm,
-                "lang": lang or "",
                 "known_fields": {k: msg.get(k) for k in AI_FIELDS if msg.get(k)},
                 "missing_fields": missing_fields,
             }
@@ -399,7 +354,7 @@ def enrich_messages(messages: List[dict], *, config: Optional[EnrichmentConfig] 
 
         if config.debug:
             print(
-                f"[pipeline] [ENRICH][AI] skipped={ai_skipped} | to_call={len(ai_items)}"
+                f"[pipeline] [ENRICH][AI] to_call={len(ai_items)}"
             )
 
         if not ai_items:

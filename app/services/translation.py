@@ -2,7 +2,22 @@
 from typing import Dict, List, Optional, Tuple
 
 from app.config import get_settings
-from app.services.enrichment import detect_language, normalize_text
+from app.services.enrichment import normalize_text
+
+
+def detect_language(text: str) -> str | None:
+    """
+    Lightweight language detection wrapper.
+    Returns a language code or None if undetected.
+    """
+    try:
+        from langdetect import detect
+    except Exception:
+        return None
+    try:
+        return detect(text)
+    except Exception:
+        return None
 
 
 def _get_openai_client(api_key: Optional[str]):
@@ -139,7 +154,7 @@ def translate_messages(
     groups: Dict[str, List[Tuple[int, str, Optional[str]]]] = {}
     for idx, msg in enumerate(messages):
         text = msg.get("text", "") or ""
-        source_lang, _conf = detect_language(text)
+        source_lang = detect_language(text)
         if not source_lang:
             msg["translated_text"] = text
             print("[pipeline] [TRAD] Translation skipped: missing source_lang")
