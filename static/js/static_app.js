@@ -592,23 +592,28 @@ async function init() {
 
 init();
 
-function isOnMap(target) {
+function isAllowedScrollTarget(target) {
   if (!mapEl || !target) return false;
   if (!(target instanceof Element)) return false;
-  return mapEl.contains(target);
+  return (
+    mapEl.contains(target) ||
+    target.closest('#sidepanel-content') ||
+    target.closest('#filter-menu') ||
+    target.closest('#filter-menu-options')
+  );
 }
 
 // Block page zoom (Ctrl/Cmd+wheel) unless on the map
 document.addEventListener('wheel', (e) => {
   if (!e.ctrlKey && !e.metaKey) return;
-  if (isOnMap(e.target)) return;
+  if (isAllowedScrollTarget(e.target)) return;
   e.preventDefault();
 }, { passive: false });
 
 // Block double-tap zoom unless on the map (mobile)
 let lastTap = 0;
 document.addEventListener('touchend', (e) => {
-  if (isOnMap(e.target)) return;
+  if (isAllowedScrollTarget(e.target)) return;
   const now = Date.now();
   if (now - lastTap <= 350) {
     e.preventDefault();
@@ -619,12 +624,12 @@ document.addEventListener('touchend', (e) => {
 // iOS Safari pinch-zoom + scroll block unless on the map
 ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
   document.addEventListener(evt, (e) => {
-    if (isOnMap(e.target)) return;
+    if (isAllowedScrollTarget(e.target)) return;
     e.preventDefault();
   }, { passive: false });
 });
 
 document.addEventListener('touchmove', (e) => {
-  if (isOnMap(e.target)) return;
+  if (isAllowedScrollTarget(e.target)) return;
   e.preventDefault();
 }, { passive: false });
