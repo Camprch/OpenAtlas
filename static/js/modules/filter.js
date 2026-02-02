@@ -217,6 +217,7 @@ export function setupFilterMenuSync() {
     const filterBtnPanel = document.getElementById('filter-btn-panel');
     const filterMenu = document.getElementById('filter-menu');
     const filterMenuClose = document.getElementById('filter-menu-close');
+    const filterMenuOptions = document.getElementById('filter-menu-options');
     let lastOpener = null; // "global" ou "panel"
 
     function openMenu(opener) {
@@ -248,9 +249,21 @@ export function setupFilterMenuSync() {
         filterMenu.style.display = 'none';
         lastOpener = null;
     }
+    function handleFilterMenuClick(e) {
+        const target = e.target;
+        const columns = document.getElementById('filter-columns');
+        if (
+            target === filterMenu ||
+            target === filterMenuOptions ||
+            (columns && target === columns) ||
+            (target instanceof Element && target.classList.contains('filter-options-list'))
+        ) {
+            closeMenu();
+        }
+    }
     if (filterBtnGlobal) {
         filterBtnGlobal.addEventListener('click', () => {
-            if (filterMenu.style.display === 'block' && lastOpener === 'global') {
+            if (isMenuOpen() && lastOpener === 'global') {
                 closeMenu();
             } else {
                 openMenu('global');
@@ -259,7 +272,7 @@ export function setupFilterMenuSync() {
     }
     if (filterBtnPanel) {
         filterBtnPanel.addEventListener('click', () => {
-            if (filterMenu.style.display === 'block' && lastOpener === 'panel') {
+            if (isMenuOpen() && lastOpener === 'panel') {
                 closeMenu();
             } else {
                 openMenu('panel');
@@ -268,6 +281,9 @@ export function setupFilterMenuSync() {
     }
     if (filterMenuClose) {
         filterMenuClose.addEventListener('click', closeMenu);
+    }
+    if (filterMenu) {
+        filterMenu.addEventListener('click', handleFilterMenuClick);
     }
     function isMenuOpen() {
         const inline = filterMenu.style.display;

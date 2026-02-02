@@ -3,6 +3,8 @@ import { initMap, markerStyle, clearMarkers, map, markersByCountry } from './sta
 // Shared UI elements.
 const filterMenu = document.getElementById('filter-menu');
 const filterClose = document.getElementById('filter-menu-close');
+const filterMenuOptions = document.getElementById('filter-menu-options');
+let filterColumns = null;
 const filterBtn = document.getElementById('filter-btn-global');
 const filterBtnPanel = document.getElementById('filter-btn-panel');
 const sidepanel = document.getElementById('sidepanel');
@@ -417,6 +419,7 @@ function renderFilters(filters) {
   optionsDiv.innerHTML = '';
   const columns = document.createElement('div');
   columns.id = 'filter-columns';
+  filterColumns = columns;
   const categories = [
     { key: 'active', label: 'Activ \u2728' },
     { key: 'date', label: 'Date \uD83D\uDCC5' },
@@ -513,8 +516,20 @@ function closeFilterMenu() {
   filterMenu.style.display = 'none';
 }
 
+function handleFilterMenuClick(e) {
+  const target = e.target;
+  if (
+    target === filterMenu ||
+    target === filterMenuOptions ||
+    target === filterColumns ||
+    (target instanceof Element && target.classList.contains('filter-options-list'))
+  ) {
+    closeFilterMenu();
+  }
+}
+
 filterBtn.addEventListener('click', () => {
-  if (filterMenu.style.display === 'block') {
+  if (filterMenu.style.display !== 'none' && filterMenu.style.display !== '') {
     closeFilterMenu();
   } else {
     openFilterMenu('global');
@@ -523,7 +538,7 @@ filterBtn.addEventListener('click', () => {
 
 if (filterBtnPanel) {
   filterBtnPanel.addEventListener('click', () => {
-    if (filterMenu.style.display === 'block') {
+    if (filterMenu.style.display !== 'none' && filterMenu.style.display !== '') {
       closeFilterMenu();
     } else {
       openFilterMenu('panel');
@@ -532,11 +547,19 @@ if (filterBtnPanel) {
 }
 
 filterClose.addEventListener('click', closeFilterMenu);
+filterMenu.addEventListener('click', handleFilterMenuClick);
+document.addEventListener('click', (e) => {
+  if (filterMenu.style.display === 'none' || filterMenu.style.display === '') return;
+  const target = e.target;
+  if (target === filterBtn || filterBtn.contains(target)) return;
+  if (target === filterMenu || filterMenu.contains(target)) return;
+  closeFilterMenu();
+});
 
 // Close filter menu when clicking on the map
 if (mapEl) {
   mapEl.addEventListener('mousedown', () => {
-    if (filterMenu.style.display === 'block') {
+    if (filterMenu.style.display !== 'none' && filterMenu.style.display !== '') {
       closeFilterMenu();
     }
   });

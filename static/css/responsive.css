@@ -100,10 +100,6 @@
         align-items: center !important;
         gap: 12px;
     }
-    #close-panel {
-        color: #fff !important;
-        -webkit-text-fill-color: #fff;
-    }
     #timeline-container-panel select {
         appearance: none;
         -webkit-appearance: none;

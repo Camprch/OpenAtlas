@@ -17,7 +17,7 @@ body {
     background: none;
     color: #ccc;
     border: none;
-    font-size: 22px;
+    font-size: 40px;
     cursor: pointer;
     transition: transform 0.1s ease, color 0.15s ease;
 }
