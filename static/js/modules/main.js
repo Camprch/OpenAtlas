@@ -143,19 +143,24 @@ window.addEventListener("load", () => {
         });
     }
 
-    // Block page zoom (Ctrl/Cmd+wheel) outside of the map
+    const mapEl = document.getElementById('map');
+    function isOnMap(target) {
+        if (!mapEl || !target) return false;
+        if (!(target instanceof Element)) return false;
+        return mapEl.contains(target);
+    }
+
+    // Block page zoom (Ctrl/Cmd+wheel) unless on the map
     document.addEventListener('wheel', (e) => {
         if (!e.ctrlKey && !e.metaKey) return;
-        const mapEl = document.getElementById('map');
-        if (mapEl && mapEl.contains(e.target)) return;
+        if (isOnMap(e.target)) return;
         e.preventDefault();
     }, { passive: false });
 
-    // Block double-tap zoom outside of the map (mobile)
+    // Block double-tap zoom unless on the map (mobile)
     let lastTap = 0;
     document.addEventListener('touchend', (e) => {
-        const mapEl = document.getElementById('map');
-        if (mapEl && mapEl.contains(e.target)) return;
+        if (isOnMap(e.target)) return;
         const now = Date.now();
         if (now - lastTap <= 350) {
             e.preventDefault();
@@ -163,14 +168,18 @@ window.addEventListener("load", () => {
         lastTap = now;
     }, { passive: false });
 
-    // iOS Safari pinch-zoom block outside the map
+    // iOS Safari pinch-zoom + scroll block unless on the map
     ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
         document.addEventListener(evt, (e) => {
-            const mapEl = document.getElementById('map');
-            if (mapEl && mapEl.contains(e.target)) return;
+            if (isOnMap(e.target)) return;
             e.preventDefault();
         }, { passive: false });
     });
+
+    document.addEventListener('touchmove', (e) => {
+        if (isOnMap(e.target)) return;
+        e.preventDefault();
+    }, { passive: false });
 
 
     // Wire up the "country == none" quick access button
