@@ -69,6 +69,11 @@ python -m http.server -d static_site 8001
 ```
 Puis ouvrir `http://localhost:8001/index.html`.
 
+<p align="center">
+  <img src="static/img/screenD.jpg" alt="Export statique mobile 1" width="48%" />
+  <img src="static/img/screenE.jpg" alt="Export statique mobile 2" width="48%" />
+</p>
+
 ---
 
 ## 🏗️ Structure du projet
