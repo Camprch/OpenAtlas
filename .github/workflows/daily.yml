@@ -49,6 +49,15 @@ jobs:
       - name: Build static site
         run: python tools/build_static_site.py
 
+      - name: Verify static assets
+        run: |
+          set -euo pipefail
+          test -d static/css
+          test -d static/js
+          test -f static/data/countries.json
+          test -f templates/static_index.html
+          test -d static_site
+
       - name: Archive JSON exports
         run: |
           python - <<'PY'
@@ -101,3 +110,15 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  retry:
+    if: failure() && github.run_attempt < 2
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      actions: write
+    steps:
+      - name: Re-run failed jobs once
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run rerun $GITHUB_RUN_ID --failed
