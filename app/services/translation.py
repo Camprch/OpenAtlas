@@ -195,5 +195,9 @@ def translate_messages(
 
             for idx, trans in zip(indices, translations):
                 messages[idx]["translated_text"] = trans
+            print(
+                f"[pipeline] [TRAD] batch done {start + 1}-{min(start + batch_size, len(items))} / {total} "
+                f"(size={len(batch)} | lang={source_lang or source_lang_code})"
+            )
 
     return messages

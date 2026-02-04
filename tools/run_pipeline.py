@@ -24,6 +24,7 @@ from app.services.fetch import fetch_raw_messages_24h
 from app.services.translation import translate_messages
 from app.services.enrichment import enrich_messages, EnrichmentConfig
 from app.services.dedupe import dedupe_messages
+from sqlalchemy.exc import OperationalError
 
 
 RUN_ID = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
@@ -139,21 +140,22 @@ def store_messages(messages: list[dict]) -> None:
     """
     # Persist messages and report unknown countries once per run
     unknown_countries: list[str] = []
-    with get_session() as session:
-        for msg in messages:
-            raw_country = msg.get("country")
-            country_norm = compute_country_norm(raw_country)
-            if country_norm is None and raw_country:
-                raw_str = str(raw_country).strip()
-                if len(raw_str) == 1:
-                    pass
+    models: list[Message] = []
+    for msg in messages:
+        raw_country = msg.get("country")
+        country_norm = compute_country_norm(raw_country)
+        if country_norm is None and raw_country:
+            raw_str = str(raw_country).strip()
+            if len(raw_str) == 1:
+                pass
+            else:
+                normalized = normalize_country_names(raw_str, COUNTRY_ALIASES)
+                if normalized:
+                    unknown_countries.append(f"{raw_str} -> {normalized[0]}")
                 else:
-                    normalized = normalize_country_names(raw_str, COUNTRY_ALIASES)
-                    if normalized:
-                        unknown_countries.append(f"{raw_str} -> {normalized[0]}")
-                    else:
-                        unknown_countries.append(raw_str)
-            m = Message(
+                    unknown_countries.append(raw_str)
+        models.append(
+            Message(
                 source=msg.get("source") or "unknown",
                 channel=msg.get("channel"),
                 raw_text=msg.get("text", ""),
@@ -169,8 +171,22 @@ def store_messages(messages: list[dict]) -> None:
                 orientation=msg.get("orientation"),
                 label=msg.get("label"),
             )
-            session.add(m)
-        session.commit()
+        )
+
+    chunk_size = 200
+    for i in range(0, len(models), chunk_size):
+        chunk = models[i : i + chunk_size]
+        attempt = 0
+        while True:
+            try:
+                with get_session() as session:
+                    session.add_all(chunk)
+                    session.commit()
+                break
+            except OperationalError:
+                attempt += 1
+                if attempt >= 2:
+                    raise
     if unknown_countries:
         unique_unknowns = sorted(set(unknown_countries))
         sample = ", ".join(unique_unknowns[:10])

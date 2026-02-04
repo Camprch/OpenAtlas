@@ -23,6 +23,8 @@ engine = create_engine(
     echo=False,
     # check_same_thread uniquement pour SQLite
     connect_args={"check_same_thread": False} if is_sqlite else {},
+    # Validate connections before use to avoid stale/closed SSL sockets
+    pool_pre_ping=True,
 )
 
 
