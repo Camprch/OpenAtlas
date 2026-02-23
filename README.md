@@ -5,9 +5,9 @@ Grâce à sa fonction de recherche avancée, il permet d’explorer rapidement e
 
 🇬🇧 : OpenAtlas is an OSINT dashboard that automates Telegram data collection, translation, enrichment, and map-based visualization. It lets you explore events by country, date, label, and source, with a searchable database and an integrated .env editor for configuration.
 
-[![Carte principale](static/img/screenA.png)](static/img/screenA.png)
-[![Panneau latéral](static/img/screenB.png)](static/img/screenB.png)
-[![Formulaire de réglage](static/img/screenC.png)](static/img/screenC.png)
+[![Carte principale](static/img/desk1.png)](static/img/desk1.png)
+[![Panneau latéral](static/img/desk2.png)](static/img/desk2.png)
+[![Formulaire de réglage](static/img/desk3.png)](static/img/desk3.png)
 
 ## 🎯 Fonctionnalités principales
 
@@ -69,10 +69,7 @@ python -m http.server -d static_site 8001
 ```
 Puis ouvrir `http://localhost:8001/index.html`.
 
-<p align="center">
-  <img src="static/img/screenD.jpg" alt="Export statique mobile 1" width="48%" />
-  <img src="static/img/screenE.jpg" alt="Export statique mobile 2" width="48%" />
-</p>
+[![App Mobile](static/img/mob.png)](static/img/mob.png)
 
 ---
 
