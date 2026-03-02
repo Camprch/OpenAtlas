@@ -72,6 +72,7 @@ def get_active_countries_service(
     from sqlmodel import func
     from sqlmodel import or_
     ignored_countries = set()
+    non_georef_events_count = 0
     # Helper to apply optional filters consistently
 
     def add_ignored_country(raw_country: Optional[str]) -> None:
@@ -132,6 +133,15 @@ def get_active_countries_service(
         stmt_ignored = _apply_sources_labels_event_filters(stmt_ignored, sources, labels, event_types)
         for row in session.exec(stmt_ignored):
             add_ignored_country(row[0])
+        stmt_non_georef_count = select(func.count()).where(Message.country_norm.is_(None))
+        if date_ranges:
+            date_clauses = [
+                (Message.event_timestamp >= start_dt) & (Message.event_timestamp <= end_dt)
+                for start_dt, end_dt in date_ranges
+            ]
+            stmt_non_georef_count = stmt_non_georef_count.where(or_(*date_clauses))
+        stmt_non_georef_count = _apply_sources_labels_event_filters(stmt_non_georef_count, sources, labels, event_types)
+        non_georef_events_count = session.exec(stmt_non_georef_count).one()
         stats = all_stats
     else:
         if days is None:
@@ -163,6 +173,15 @@ def get_active_countries_service(
             stmt_ignored = _apply_sources_labels_event_filters(stmt_ignored, sources, labels, event_types)
             for row in session.exec(stmt_ignored):
                 add_ignored_country(row[0])
+            stmt_non_georef_count = (
+                select(func.count())
+                .where(
+                    Message.event_timestamp.is_not(None),
+                    Message.country_norm.is_(None)
+                )
+            )
+            stmt_non_georef_count = _apply_sources_labels_event_filters(stmt_non_georef_count, sources, labels, event_types)
+            non_georef_events_count = session.exec(stmt_non_georef_count).one()
         else:
             # Aggregate counts and last dates within a rolling window
             now = datetime.utcnow()
@@ -195,6 +214,15 @@ def get_active_countries_service(
             stmt_ignored = _apply_sources_labels_event_filters(stmt_ignored, sources, labels, event_types)
             for row in session.exec(stmt_ignored):
                 add_ignored_country(row[0])
+            stmt_non_georef_count = (
+                select(func.count())
+                .where(
+                    Message.event_timestamp >= start_dt,
+                    Message.country_norm.is_(None)
+                )
+            )
+            stmt_non_georef_count = _apply_sources_labels_event_filters(stmt_non_georef_count, sources, labels, event_types)
+            non_georef_events_count = session.exec(stmt_non_georef_count).one()
 
     # Format and sort the response payload
     result = [
@@ -206,7 +234,11 @@ def get_active_countries_service(
         for c, v in stats.items() if c in COUNTRY_COORDS
     ]
     result.sort(key=lambda c: c.events_count, reverse=True)
-    return ActiveCountriesResponse(countries=result, ignored_countries=sorted(ignored_countries))
+    return ActiveCountriesResponse(
+        countries=result,
+        ignored_countries=sorted(ignored_countries),
+        non_georef_events_count=non_georef_events_count,
+    )
 
 
 def get_country_latest_events_service(
@@ -283,17 +315,25 @@ def get_non_georef_events_service(
     event_types: Optional[List[str]] = None,
     session: Session = None,
 ) -> CountryEventsResponse:
-    # Return events with no country assigned (country is None or empty).
+    # Return events with no georeferenced country assigned.
     if target_date is not None:
         start_dt = datetime.combine(target_date, datetime.min.time())
         end_dt = datetime.combine(target_date, datetime.max.time())
         stmt = select(Message).where(
-            ((Message.country.is_(None)) | (Message.country == "")),
+            (
+                (Message.country_norm.is_(None))
+                | (Message.country.is_(None))
+                | (Message.country == "")
+            ),
             Message.event_timestamp >= start_dt,
             Message.event_timestamp <= end_dt,
         )
     else:
-        stmt = select(Message).where((Message.country.is_(None)) | (Message.country == ""))
+        stmt = select(Message).where(
+            (Message.country_norm.is_(None))
+            | (Message.country.is_(None))
+            | (Message.country == "")
+        )
     if sources:
         stmt = stmt.where(Message.source.in_(sources))
     if labels:

@@ -47,6 +47,31 @@ def _strip_emoji_prefix(value: str) -> str:
     return value.strip()
 
 
+@lru_cache(maxsize=1)
+def _country_name_lookup() -> Dict[str, str]:
+    aliases, coords = _load_country_data()
+    lookup: Dict[str, str] = {}
+    for canonical in coords:
+        lookup[canonical.lower()] = canonical
+        lookup[_strip_emoji_prefix(canonical).lower()] = canonical
+    for alias, canonical in aliases.items():
+        if canonical in coords:
+            lookup[alias.lower()] = canonical
+    return lookup
+
+
+def _normalize_country_output(value: str) -> Optional[str]:
+    if not value:
+        return None
+    candidate = str(value).strip()
+    canonical = _country_name_lookup().get(candidate.lower())
+    if not canonical:
+        canonical = _country_name_lookup().get(_strip_emoji_prefix(candidate).lower())
+    if not canonical:
+        return None
+    return _strip_emoji_prefix(canonical)
+
+
 def _alias_matches(text_lower: str, alias: str) -> Optional[int]:
     pattern = r"(?<!\w)" + re.escape(alias) + r"(?!\w)"
     match = re.search(pattern, text_lower)
@@ -370,6 +395,8 @@ def enrich_messages(messages: List[dict], *, config: Optional[EnrichmentConfig] 
             msg = sub[item["id"]]
             for field in missing_fields:
                 value = result.get(field, "")
+                if field == "country" and value:
+                    value = _normalize_country_output(value) or str(value).strip()
                 if value:
                     msg[field] = value
 

@@ -42,6 +42,7 @@ export async function loadActiveCountries(currentGlobalDate, sources = null, lab
     const apiData = await resp.json();
     const countries = apiData.countries || [];
     const ignored = apiData.ignored_countries || [];
+    const nonGeorefCount = apiData.non_georef_events_count || 0;
     // Reset existing markers before rendering the new set
     clearMarkers();
     const missing = [];
@@ -143,7 +144,11 @@ export async function loadActiveCountries(currentGlobalDate, sources = null, lab
     if (alert) {
         // Surface missing or unrecognized countries to the user
         let alertMsg = "";
+        if (nonGeorefCount > 0) {
+            alertMsg += `⚠️ Messages non géoréférencés : ${nonGeorefCount}`;
+        }
         if (missing.length > 0) {
+            if (alertMsg) alertMsg += " | ";
             alertMsg += `⚠️ Pays non géolocalisés : ${missing.join(", ")}`;
         }
         if (ignored.length > 0) {

@@ -17,6 +17,7 @@ class CountryStatus(BaseModel):
 class ActiveCountriesResponse(BaseModel):
     countries: List[CountryStatus]
     ignored_countries: List[str]
+    non_georef_events_count: int
 
 # Flattened event message used in API responses
 class EventMessage(BaseModel):

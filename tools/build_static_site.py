@@ -19,6 +19,7 @@ import shutil
 
 from app.database import get_session, init_db
 from app.models.message import Message
+from app.api.filters import COUNTRY_ALIASES, normalize_country_names
 from sqlmodel import select
 
 
@@ -52,11 +53,26 @@ def build_static_site() -> None:
     labels = set()
     event_types = set()
     dates = set()
+    non_georef_events_count = 0
+    ignored_countries = set()
+
+    def add_ignored_country(raw_country: str | None) -> None:
+        if not raw_country:
+            return
+        country = str(raw_country).strip()
+        if len(country) == 1:
+            return
+        norm_list = normalize_country_names(country, COUNTRY_ALIASES)
+        if norm_list:
+            ignored_countries.add(f"{country} → {norm_list[0]}")
+        else:
+            ignored_countries.add(country)
 
     with get_session() as session:
         # Lightweight rows for counts + filters.
         stmt = select(
             Message.country_norm,
+            Message.country,
             Message.event_timestamp,
             Message.source,
             Message.label,
@@ -86,7 +102,10 @@ def build_static_site() -> None:
         ).all()
 
     # Build filter sets + event list for the map markers.
-    for country_norm, event_timestamp, source, label, event_type in rows:
+    for country_norm, raw_country, event_timestamp, source, label, event_type in rows:
+        if not country_norm:
+            non_georef_events_count += 1
+            add_ignored_country(raw_country)
         if not country_norm:
             continue
         date_key = _date_key(event_timestamp)
@@ -134,6 +153,10 @@ def build_static_site() -> None:
             "source": sorted(sources),
             "label": sorted(labels),
             "event_type": sorted(event_types),
+        },
+        "alerts": {
+            "non_georef_events_count": non_georef_events_count,
+            "ignored_countries": sorted(ignored_countries),
         },
         "details": [
             {

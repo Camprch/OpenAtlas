@@ -194,6 +194,24 @@ function setupSearchHandlers(openAndRender, detailsByCountry) {
   }
 }
 
+function renderDashboardAlert(dataset) {
+  const alert = document.getElementById('dashboard-alert');
+  if (!alert) return;
+  const alerts = dataset.alerts || {};
+  const ignored = Array.isArray(alerts.ignored_countries) ? alerts.ignored_countries : [];
+  const nonGeorefCount = alerts.non_georef_events_count || 0;
+  let text = '';
+  if (nonGeorefCount > 0) {
+    text += `⚠️ Messages non géoréférencés : ${nonGeorefCount}`;
+  }
+  if (ignored.length > 0) {
+    if (text) text += ' | ';
+    text += `⚠️ Pays non reconnus côté backend : ${ignored.join(', ')}`;
+  }
+  alert.textContent = text;
+  alert.style.display = text ? 'block' : 'none';
+}
+
 async function init() {
   initMap();
   const [countriesResp, eventsResp] = await Promise.all([
@@ -202,6 +220,7 @@ async function init() {
   ]);
   const countries = await countriesResp.json();
   const dataset = await eventsResp.json();
+  renderDashboardAlert(dataset);
   const coords = countries.coordinates || {};
   const aliases = countries.aliases || {};
   const events = dataset.events || [];

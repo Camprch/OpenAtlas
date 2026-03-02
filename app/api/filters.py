@@ -5,6 +5,7 @@ from sqlmodel import Session, select
 from app.database import get_db
 from app.models.message import Message
 import json
+import re
 from pathlib import Path
 
 # Router for filter metadata endpoints
@@ -44,6 +45,16 @@ with open(COUNTRIES_JSON_PATH, encoding='utf-8') as f:
     COUNTRY_ALIASES = _countries_data.get('aliases', {})
     COUNTRY_COORDS = _countries_data.get('coordinates', {})
 
+
+def _strip_country_prefix(name: str) -> str:
+    return re.sub(r"^[^\w]+", "", str(name).strip(), flags=re.UNICODE).strip()
+
+
+CANONICAL_COUNTRY_NAMES = {
+    _strip_country_prefix(country).lower(): country
+    for country in COUNTRY_COORDS
+}
+
 def normalize_country_names(name: str, aliases: dict) -> list:
     # Normalize comma-separated country names using the aliases mapping
     if not name:
@@ -52,6 +63,10 @@ def normalize_country_names(name: str, aliases: dict) -> list:
     result = []
     for n in names:
         norm = aliases.get(n, None)
+        if not norm and n in COUNTRY_COORDS:
+            norm = n
+        if not norm:
+            norm = CANONICAL_COUNTRY_NAMES.get(_strip_country_prefix(n).lower())
         if norm:
             result.append(norm)
     return result
